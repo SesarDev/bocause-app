@@ -14,7 +14,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed:validate": "node scripts/validate-plan.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

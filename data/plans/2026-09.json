@@ -1,0 +1,3825 @@
+{
+  "id": "2026-09",
+  "name": "Septiembre 2026",
+  "issuedOn": "2026-09-27",
+  "validFrom": "2026-09-28",
+  "profiles": [
+    {
+      "profileId": "cristina",
+      "displayName": "Cristina",
+      "slots": [
+        "desayuno",
+        "snack",
+        "snack2",
+        "comida",
+        "cena"
+      ],
+      "training": [
+        "Gimnasio (Fuerza - Hipertrofia)",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "supplements": [
+        {
+          "trainingType": "Gimnasio (Fuerza - Hipertrofia)",
+          "pre": "Pre-work out sin cafeína (45 mins antes)",
+          "intra": "5-10 gr MAP / Aminoácidos esenciales",
+          "post": "30 gr proteína Whey + 1 Plátano + 7 gr creatina"
+        }
+      ],
+      "comodin": [
+        {
+          "id": "comodin-gelatina",
+          "label": "Gelatina proteica",
+          "amount": "100 g",
+          "measure": "1 ud"
+        },
+        {
+          "id": "comodin-pavo",
+          "label": "Pechuga de pavo",
+          "amount": "50 g",
+          "measure": "3 lonchas finas"
+        },
+        {
+          "id": "comodin-yogur",
+          "label": "Yogur proteico 0% M.G",
+          "amount": "120 g",
+          "measure": "1 ud"
+        },
+        {
+          "id": "comodin-jamon",
+          "label": "Jamón serrano",
+          "amount": "30 g",
+          "measure": "3-4 lonchas finas"
+        },
+        {
+          "id": "comodin-lomo",
+          "label": "Lomo embuchado",
+          "amount": "30 g",
+          "measure": "6 lonchas finas"
+        },
+        {
+          "id": "comodin-whey",
+          "label": "Proteína whey",
+          "amount": "20 g",
+          "measure": "+ 200 ml agua"
+        }
+      ]
+    },
+    {
+      "profileId": "andres",
+      "displayName": "Andrés",
+      "slots": [
+        "desayuno",
+        "almuerzo",
+        "comida",
+        "cena"
+      ],
+      "training": [
+        "Gimnasio (Fuerza - Hipertrofia)",
+        null,
+        "Running",
+        null,
+        null,
+        "Caminar",
+        null
+      ],
+      "supplements": [
+        {
+          "trainingType": "Gimnasio (Fuerza - Hipertrofia)",
+          "pre": "Pre-work out sin cafeína (45 mins antes)",
+          "intra": "5-10 gr MAP / Aminoácidos esenciales",
+          "post": "30 gr proteína Whey + 200 ml zumo de frutas + 7 gr creatina"
+        },
+        {
+          "trainingType": "Running",
+          "post": "30 gr proteína Whey + 1 Plátano + 7 gr creatina"
+        }
+      ],
+      "comodin": [
+        {
+          "id": "comodin-gelatina",
+          "label": "Gelatina proteica",
+          "amount": "200 g",
+          "measure": "2 uds"
+        },
+        {
+          "id": "comodin-pavo",
+          "label": "Pechuga de pavo",
+          "amount": "100 g",
+          "measure": "6 lonchas finas"
+        },
+        {
+          "id": "comodin-yogur",
+          "label": "Yogur proteico 0% M.G",
+          "amount": "240 g",
+          "measure": "2 uds"
+        },
+        {
+          "id": "comodin-jamon",
+          "label": "Jamón serrano",
+          "amount": "60 g",
+          "measure": "6-8 lonchas finas"
+        },
+        {
+          "id": "comodin-lomo",
+          "label": "Lomo embuchado",
+          "amount": "60 g",
+          "measure": "12 lonchas finas"
+        },
+        {
+          "id": "comodin-whey",
+          "label": "Proteína whey",
+          "amount": "20 g",
+          "measure": "+ 200 ml agua"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "desayuno-0-cristina",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "desayuno-0-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-0-cristina-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "cristina": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas pequeñas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-cristina-i2",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "3-4 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-cristina-i3",
+              "foodKey": "tomate",
+              "label": "Tomate",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-0-cristina-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-0-cristina-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "cristina": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-cristina-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "cristina": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-1-cristina",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "desayuno-1-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-1-cristina-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "cristina": {
+                  "rawG": 20,
+                  "measure": "1 rebanada pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i2",
+              "foodKey": "mermelada-0",
+              "label": "Mermelada 0% azúcar",
+              "portions": {
+                "cristina": {
+                  "measure": "1 cucharada de postre"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i3",
+              "foodKey": "crema-cacahuete",
+              "label": "Crema de cacahuete",
+              "portions": {
+                "cristina": {
+                  "measure": "1-2 cucharadas soperas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i4",
+              "foodKey": "yogur-proteico",
+              "label": "Yogur proteico 0% M.G",
+              "portions": {
+                "cristina": {
+                  "measure": "1 ud.",
+                  "rawG": 120
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i5",
+              "foodKey": "pera",
+              "label": "Pera",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i6",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i7",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "cristina": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-cristina-i8",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "cristina": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-2-cristina",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "desayuno-2-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-2-cristina-i1",
+              "foodKey": "kefir-natural",
+              "label": "Kéfir natural",
+              "portions": {
+                "cristina": {
+                  "rawG": 250,
+                  "measure": "1/2 tarrina"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-cristina-i2",
+              "foodKey": "avena-crunchy",
+              "label": "Avena crunchy",
+              "portions": {
+                "cristina": {
+                  "rawG": 25,
+                  "measure": "4-5 cucharadas soperas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-cristina-i3",
+              "foodKey": "arandanos",
+              "label": "Arándanos",
+              "portions": {
+                "cristina": {
+                  "measure": "1 plato pequeño o 1/2 pack tarrina"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-cristina-i4",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "cristina": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-cristina-i5",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-2-cristina-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "cristina": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-3-cristina",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "desayuno-3-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-3-cristina-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "cristina": {
+                  "rawG": 20,
+                  "measure": "1 rebanada pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i2",
+              "foodKey": "mermelada-0",
+              "label": "Mermelada 0% azúcar",
+              "portions": {
+                "cristina": {
+                  "measure": "1 cucharada de postre"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i3",
+              "foodKey": "crema-cacahuete",
+              "label": "Crema de cacahuete",
+              "portions": {
+                "cristina": {
+                  "measure": "1-2 cucharadas soperas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i4",
+              "foodKey": "yogur-proteico",
+              "label": "Yogur proteico 0% M.G",
+              "portions": {
+                "cristina": {
+                  "measure": "1 ud.",
+                  "rawG": 120
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i5",
+              "foodKey": "manzana",
+              "label": "Manzana",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i6",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i7",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "cristina": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-cristina-i8",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "cristina": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-4-cristina",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "desayuno-4-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-4-cristina-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "cristina": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas pequeñas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-cristina-i2",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "3-4 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-cristina-i3",
+              "foodKey": "tomate",
+              "label": "Tomate",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-4-cristina-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-4-cristina-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "cristina": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-cristina-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "cristina": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-5-cristina",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "desayuno-5-cristina-s1",
+          "kind": "plato",
+          "title": "Pan con huevos revueltos",
+          "items": [
+            {
+              "id": "desayuno-5-cristina-i1",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral",
+              "portions": {
+                "cristina": {
+                  "rawG": 40,
+                  "measure": "6 dedos de largo"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-cristina-i2",
+              "foodKey": "huevo",
+              "label": "Huevo",
+              "portions": {
+                "cristina": {
+                  "rawG": 60,
+                  "measure": "1 unidad pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-cristina-i3",
+              "foodKey": "clara-huevo",
+              "label": "Claras de huevo",
+              "portions": {
+                "cristina": {
+                  "rawG": 100,
+                  "measure": "3 claras de bote"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-cristina-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "cristina": {}
+              }
+            },
+            {
+              "id": "desayuno-5-cristina-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "cristina": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-cristina-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "cristina": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack-0-cristina",
+      "planId": "2026-09",
+      "slot": "snack",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack-0-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack-0-cristina-i1",
+              "foodKey": "yogur-proteico",
+              "label": "Yogur proteico 0% M.G",
+              "portions": {
+                "cristina": {
+                  "measure": "1 ud.",
+                  "rawG": 120
+                }
+              }
+            },
+            {
+              "id": "snack-0-cristina-i2",
+              "foodKey": "platano",
+              "label": "Plátano",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "snack-0-cristina-i3",
+              "foodKey": "almendra",
+              "label": "Almendra pelada",
+              "portions": {
+                "cristina": {
+                  "measure": "4-5 unidades"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack-1-cristina",
+      "planId": "2026-09",
+      "slot": "snack",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack-1-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack-1-cristina-i1",
+              "foodKey": "tortitas-arroz",
+              "label": "Tortitas de arroz",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "4 uds"
+                }
+              }
+            },
+            {
+              "id": "snack-1-cristina-i2",
+              "foodKey": "lomo-embuchado",
+              "label": "Lomo embuchado",
+              "portions": {
+                "cristina": {
+                  "rawG": 60,
+                  "measure": "12 lonchas finas"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack-2-cristina",
+      "planId": "2026-09",
+      "slot": "snack",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack-2-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack-2-cristina-i1",
+              "foodKey": "pera",
+              "label": "Pera",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "snack-2-cristina-i2",
+              "foodKey": "pechuga-pavo",
+              "label": "Pechuga pavo",
+              "portions": {
+                "cristina": {
+                  "rawG": 100,
+                  "measure": "6 lonchas finas"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack-3-cristina",
+      "planId": "2026-09",
+      "slot": "snack",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack-3-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack-3-cristina-i1",
+              "foodKey": "tortitas-arroz",
+              "label": "Tortitas de arroz",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "4 uds"
+                }
+              }
+            },
+            {
+              "id": "snack-3-cristina-i2",
+              "foodKey": "lomo-embuchado",
+              "label": "Lomo embuchado",
+              "portions": {
+                "cristina": {
+                  "rawG": 60,
+                  "measure": "12 lonchas finas"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack-4-cristina",
+      "planId": "2026-09",
+      "slot": "snack",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack-4-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack-4-cristina-i1",
+              "foodKey": "yogur-proteico",
+              "label": "Yogur proteico 0% M.G",
+              "portions": {
+                "cristina": {
+                  "measure": "1 ud.",
+                  "rawG": 120
+                }
+              }
+            },
+            {
+              "id": "snack-4-cristina-i2",
+              "foodKey": "platano",
+              "label": "Plátano",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "snack-4-cristina-i3",
+              "foodKey": "almendra",
+              "label": "Almendra pelada",
+              "portions": {
+                "cristina": {
+                  "measure": "4-5 unidades"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack-5-cristina",
+      "planId": "2026-09",
+      "slot": "snack",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack-5-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack-5-cristina-i1",
+              "foodKey": "kefir-natural",
+              "label": "Kéfir natural",
+              "portions": {
+                "cristina": {
+                  "rawG": 250,
+                  "measure": "1/2 tarrina"
+                }
+              }
+            },
+            {
+              "id": "snack-5-cristina-i2",
+              "foodKey": "kiwi",
+              "label": "Kiwi",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack2-0-cristina",
+      "planId": "2026-09",
+      "slot": "snack2",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack2-0-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack2-0-cristina-i1",
+              "foodKey": "tortitas-arroz",
+              "label": "Tortitas de arroz",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "4 uds"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack2-1-cristina",
+      "planId": "2026-09",
+      "slot": "snack2",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack2-1-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack2-1-cristina-i1",
+              "foodKey": "melocoton",
+              "label": "Melocotón",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack2-2-cristina",
+      "planId": "2026-09",
+      "slot": "snack2",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack2-2-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack2-2-cristina-i1",
+              "foodKey": "mandarina-naranja",
+              "label": "Mandarina",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad grande"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack2-3-cristina",
+      "planId": "2026-09",
+      "slot": "snack2",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack2-3-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack2-3-cristina-i1",
+              "foodKey": "melocoton",
+              "label": "Melocotón",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack2-4-cristina",
+      "planId": "2026-09",
+      "slot": "snack2",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack2-4-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack2-4-cristina-i1",
+              "foodKey": "tortitas-arroz",
+              "label": "Tortitas de arroz",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "4 uds"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "snack2-5-cristina",
+      "planId": "2026-09",
+      "slot": "snack2",
+      "scope": "cristina",
+      "sections": [
+        {
+          "id": "snack2-5-cristina-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "snack2-5-cristina-i1",
+              "foodKey": "mandarina-naranja",
+              "label": "Mandarina",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad grande"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-0-andres",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "desayuno-0-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-0-andres-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanada pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-andres-i2",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "andres": {
+                  "rawG": 30,
+                  "measure": "3 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-andres-i3",
+              "foodKey": "tomate-pelado-triturado",
+              "label": "Tomate pelado triturado",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-0-andres-i4",
+              "foodKey": "naranja",
+              "label": "Naranja exprimido",
+              "portions": {
+                "andres": {
+                  "measure": "2 unidades grandes o 1 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-andres-i5",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-0-andres-i6",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-0-andres-i7",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-1-andres",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "desayuno-1-andres-s1",
+          "kind": "plato",
+          "title": "Smoothie",
+          "items": [
+            {
+              "id": "desayuno-1-andres-i1",
+              "foodKey": "queso-fresco-burgos",
+              "label": "Queso fresco tipo \"burgos\"",
+              "portions": {
+                "andres": {
+                  "rawG": 120,
+                  "measure": "2 tarrinas pequeñas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-andres-i2",
+              "foodKey": "fresa",
+              "label": "Fresa",
+              "portions": {
+                "andres": {
+                  "measure": "8 unidades medianas",
+                  "units": 8
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-andres-i3",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 200,
+                  "measure": "1 vaso"
+                }
+              },
+              "note": "Batir todo junto"
+            },
+            {
+              "id": "desayuno-1-andres-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-1-andres-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-1-andres-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-2-andres",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "desayuno-2-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-2-andres-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanada pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-andres-i2",
+              "foodKey": "pechuga-pavo",
+              "label": "Pechuga pavo",
+              "portions": {
+                "andres": {
+                  "rawG": 100,
+                  "measure": "6 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-andres-i3",
+              "foodKey": "naranja",
+              "label": "Naranja exprimido",
+              "portions": {
+                "andres": {
+                  "measure": "2 unidades grandes o 1 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-andres-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-2-andres-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-2-andres-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-3-andres",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "desayuno-3-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-3-andres-i1",
+              "foodKey": "proteina-whey",
+              "label": "Proteína whey",
+              "portions": {
+                "andres": {
+                  "rawG": 20
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-andres-i2",
+              "foodKey": "agua",
+              "label": "Agua",
+              "portions": {
+                "andres": {
+                  "measure": "1 VASO"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-andres-i3",
+              "foodKey": "mandarina-naranja",
+              "label": "Mandarina/naranja",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad grande"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-andres-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-3-andres-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-3-andres-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-4-andres",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "desayuno-4-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "desayuno-4-andres-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanada pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-andres-i2",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "andres": {
+                  "rawG": 30,
+                  "measure": "3 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-andres-i3",
+              "foodKey": "tomate-pelado-triturado",
+              "label": "Tomate pelado triturado",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-4-andres-i4",
+              "foodKey": "naranja",
+              "label": "Naranja exprimido",
+              "portions": {
+                "andres": {
+                  "measure": "2 unidades grandes o 1 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-andres-i5",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-4-andres-i6",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-4-andres-i7",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "desayuno-5-andres",
+      "planId": "2026-09",
+      "slot": "desayuno",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "desayuno-5-andres-s1",
+          "kind": "plato",
+          "title": "Pan con huevos revueltos",
+          "items": [
+            {
+              "id": "desayuno-5-andres-i1",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral barra",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "6 dedos de largo"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-andres-i2",
+              "foodKey": "huevo",
+              "label": "Huevo",
+              "portions": {
+                "andres": {
+                  "rawG": 60,
+                  "measure": "1 unidad pequeña"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-andres-i3",
+              "foodKey": "clara-huevo",
+              "label": "Claras de huevo",
+              "portions": {
+                "andres": {
+                  "rawG": 100,
+                  "measure": "3 claras de bote"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-andres-i4",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            },
+            {
+              "id": "desayuno-5-andres-i5",
+              "foodKey": "leche-desnatada",
+              "label": "Leche desnatada",
+              "portions": {
+                "andres": {
+                  "ml": 100,
+                  "measure": "1/2 vaso"
+                }
+              }
+            },
+            {
+              "id": "desayuno-5-andres-i6",
+              "foodKey": "complejo-vitaminico",
+              "label": "Complejo vitamínico",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "almuerzo-0-andres",
+      "planId": "2026-09",
+      "slot": "almuerzo",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "almuerzo-0-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "almuerzo-0-andres-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas pequeñas"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-0-andres-i2",
+              "foodKey": "pechuga-pavo",
+              "label": "Pechuga pavo",
+              "portions": {
+                "andres": {
+                  "rawG": 100,
+                  "measure": "6 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-0-andres-i3",
+              "foodKey": "queso-untar-light",
+              "label": "Queso de untar light",
+              "portions": {
+                "andres": {
+                  "measure": "1-2 cucharadas"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-0-andres-i4",
+              "foodKey": "yogur-proteico",
+              "label": "Yogur proteico 0% M.G",
+              "portions": {
+                "andres": {
+                  "measure": "1 ud.",
+                  "rawG": 120
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "almuerzo-1-andres",
+      "planId": "2026-09",
+      "slot": "almuerzo",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "almuerzo-1-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "almuerzo-1-andres-i1",
+              "foodKey": "tortitas-arroz",
+              "label": "Tortitas de arroz",
+              "portions": {
+                "andres": {
+                  "rawG": 30,
+                  "measure": "4 uds"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-1-andres-i2",
+              "foodKey": "lomo-embuchado",
+              "label": "Lomo embuchado",
+              "portions": {
+                "andres": {
+                  "rawG": 60,
+                  "measure": "12 lonchas finas"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "almuerzo-2-andres",
+      "planId": "2026-09",
+      "slot": "almuerzo",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "almuerzo-2-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "almuerzo-2-andres-i1",
+              "foodKey": "pincho-tortilla",
+              "label": "Pincho de tortilla",
+              "portions": {
+                "andres": {
+                  "measure": "1/3 de unidad"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-2-andres-i2",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral barra",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas de 2-3 dedos largura"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-2-andres-i3",
+              "foodKey": "cafe",
+              "label": "Café",
+              "portions": {
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "almuerzo-3-andres",
+      "planId": "2026-09",
+      "slot": "almuerzo",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "almuerzo-3-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "almuerzo-3-andres-i1",
+              "foodKey": "tortitas-arroz",
+              "label": "Tortitas de arroz",
+              "portions": {
+                "andres": {
+                  "rawG": 30,
+                  "measure": "4 uds"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-3-andres-i2",
+              "foodKey": "lomo-embuchado",
+              "label": "Lomo embuchado",
+              "portions": {
+                "andres": {
+                  "rawG": 60,
+                  "measure": "12 lonchas finas"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "almuerzo-4-andres",
+      "planId": "2026-09",
+      "slot": "almuerzo",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "almuerzo-4-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "almuerzo-4-andres-i1",
+              "foodKey": "pan-molde-integral",
+              "label": "Pan de molde integral",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas pequeñas"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-4-andres-i2",
+              "foodKey": "pechuga-pavo",
+              "label": "Pechuga pavo",
+              "portions": {
+                "andres": {
+                  "rawG": 100,
+                  "measure": "6 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-4-andres-i3",
+              "foodKey": "queso-untar-light",
+              "label": "Queso de untar light",
+              "portions": {
+                "andres": {
+                  "measure": "1-2 cucharadas"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-4-andres-i4",
+              "foodKey": "yogur-proteico",
+              "label": "Yogur proteico 0% M.G",
+              "portions": {
+                "andres": {
+                  "measure": "1 ud.",
+                  "rawG": 120
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "almuerzo-5-andres",
+      "planId": "2026-09",
+      "slot": "almuerzo",
+      "scope": "andres",
+      "sections": [
+        {
+          "id": "almuerzo-5-andres-s1",
+          "kind": "plato",
+          "items": [
+            {
+              "id": "almuerzo-5-andres-i1",
+              "foodKey": "proteina-whey",
+              "label": "Proteína whey",
+              "portions": {
+                "andres": {
+                  "rawG": 30
+                }
+              }
+            },
+            {
+              "id": "almuerzo-5-andres-i2",
+              "foodKey": "agua",
+              "label": "Agua",
+              "portions": {
+                "andres": {
+                  "measure": "1 vaso"
+                }
+              }
+            },
+            {
+              "id": "almuerzo-5-andres-i3",
+              "foodKey": "melocoton-manzana",
+              "label": "Melocotón/manzana",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad mediana o 1 unidad pequeña"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "comida-0-shared",
+      "planId": "2026-09",
+      "slot": "comida",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "comida-0-shared-s1",
+          "kind": "plato",
+          "title": "Pasta con boloñesa",
+          "items": [
+            {
+              "id": "comida-0-shared-i1",
+              "foodKey": "pasta-lentejas",
+              "label": "Pasta de lentejas",
+              "portions": {
+                "cristina": {
+                  "rawG": 80,
+                  "cookedG": 160,
+                  "measure": "6 crudo/ 12 cocido cucharadas soperas"
+                },
+                "andres": {
+                  "rawG": 80,
+                  "cookedG": 160,
+                  "measure": "6 crudo/ 12 cocido cucharadas soperas"
+                }
+              }
+            },
+            {
+              "id": "comida-0-shared-i2",
+              "foodKey": "carne-picada-ternera",
+              "label": "Carne picada ternera",
+              "portions": {
+                "cristina": {
+                  "rawG": 150,
+                  "measure": "3 cucharadas soperas o 1/3 de bandeja 500 g"
+                },
+                "andres": {
+                  "rawG": 150,
+                  "measure": "3 cucharadas soperas o 1/3 de bandeja 500 g"
+                }
+              }
+            },
+            {
+              "id": "comida-0-shared-i3",
+              "foodKey": "cebolla",
+              "label": "Cebolla",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-0-shared-i4",
+              "foodKey": "tomate-pelado-triturado",
+              "label": "Tomate pelado triturado",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-0-shared-s2",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "comida-0-shared-i5",
+              "foodKey": "melocoton",
+              "label": "Melocotón",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "comida-1-shared",
+      "planId": "2026-09",
+      "slot": "comida",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "comida-1-shared-s1",
+          "kind": "plato",
+          "title": "Judías verdes con jamón y patata",
+          "items": [
+            {
+              "id": "comida-1-shared-i1",
+              "foodKey": "judia-verde",
+              "label": "Judía verde",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-1-shared-i2",
+              "foodKey": "zanahoria",
+              "label": "Zanahoria",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-1-shared-i3",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "2 cucharadas soperas"
+                },
+                "andres": {
+                  "rawG": 30,
+                  "measure": "2 cucharadas soperas"
+                }
+              }
+            },
+            {
+              "id": "comida-1-shared-i4",
+              "foodKey": "patata",
+              "label": "Patata",
+              "portions": {
+                "cristina": {
+                  "rawG": 140,
+                  "cookedG": 130,
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "rawG": 140,
+                  "cookedG": 130,
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-1-shared-s2",
+          "kind": "plato",
+          "title": "Carne a la plancha",
+          "items": [
+            {
+              "id": "comida-1-shared-i5",
+              "foodKey": "pavo-pechuga",
+              "label": "Pavo pechuga sin piel",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "2 filetes grandes o 3-4 finos"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "2 filetes grandes o 3-4 finos"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-1-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "comida-1-shared-i6",
+              "foodKey": "platano",
+              "label": "Plátano",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "comida-1-shared-i7",
+              "foodKey": "manzana",
+              "label": "Manzana",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad pequeña"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "comida-2-shared",
+      "planId": "2026-09",
+      "slot": "comida",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "comida-2-shared-s1",
+          "kind": "plato",
+          "title": "Lentejas con verduras",
+          "items": [
+            {
+              "id": "comida-2-shared-i1",
+              "foodKey": "lentejas-legumbres",
+              "label": "Lentejas/legumbres",
+              "portions": {
+                "cristina": {
+                  "rawG": 45,
+                  "cookedG": 140,
+                  "measure": "1/2 bote"
+                },
+                "andres": {
+                  "rawG": 45,
+                  "cookedG": 140,
+                  "measure": "1/2 bote"
+                }
+              }
+            },
+            {
+              "id": "comida-2-shared-i2",
+              "foodKey": "puerro",
+              "label": "Puerro",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-2-shared-i3",
+              "foodKey": "zanahoria",
+              "label": "Zanahoria",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-2-shared-i4",
+              "foodKey": "cebolla",
+              "label": "Cebolla",
+              "portions": {
+                "cristina": {
+                  "measure": "1 guarnición mediana"
+                },
+                "andres": {
+                  "measure": "1 guarnición mediana"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-2-shared-s2",
+          "kind": "plato",
+          "title": "Pescado a la plancha",
+          "items": [
+            {
+              "id": "comida-2-shared-i5",
+              "foodKey": "salmon",
+              "label": "Salmón fresco",
+              "portions": {
+                "cristina": {
+                  "rawG": 150,
+                  "measure": "1 filete mediano"
+                },
+                "andres": {
+                  "rawG": 150,
+                  "measure": "1 filete mediano"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-2-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "comida-2-shared-i6",
+              "foodKey": "melocoton",
+              "label": "Melocotón",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "comida-2-shared-i7",
+              "foodKey": "mandarina-naranja",
+              "label": "Mandarina/naranja",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad grande"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "comida-3-shared",
+      "planId": "2026-09",
+      "slot": "comida",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "comida-3-shared-s1",
+          "kind": "plato",
+          "title": "Brócoli con ajo y jamón",
+          "items": [
+            {
+              "id": "comida-3-shared-i1",
+              "foodKey": "brocoli",
+              "label": "Brócoli",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-3-shared-i2",
+              "foodKey": "ajo",
+              "label": "Ajo",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-3-shared-i3",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "2 cucharadas soperas"
+                },
+                "andres": {
+                  "rawG": 30,
+                  "measure": "2 cucharadas soperas"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-3-shared-s2",
+          "kind": "plato",
+          "title": "Hamburguesa con tomate",
+          "items": [
+            {
+              "id": "comida-3-shared-i4",
+              "foodKey": "hamburguesa-pavo-pollo",
+              "label": "Hamburguesa pavo/pollo",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "2 hamburguesas"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "2 hamburguesas"
+                }
+              }
+            },
+            {
+              "id": "comida-3-shared-i5",
+              "foodKey": "cebolla",
+              "label": "Cebolla",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-3-shared-i6",
+              "foodKey": "tomate-pelado-triturado",
+              "label": "Tomate pelado triturado",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-3-shared-s3",
+          "kind": "pan",
+          "items": [
+            {
+              "id": "comida-3-shared-i7",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral barra",
+              "portions": {
+                "cristina": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas de 2-3 dedos de largura"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "comida-3-shared-s4",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "comida-3-shared-i8",
+              "foodKey": "platano",
+              "label": "Plátano",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "comida-3-shared-i9",
+              "foodKey": "manzana",
+              "label": "Manzana",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad pequeña"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "comida-4-shared",
+      "planId": "2026-09",
+      "slot": "comida",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "comida-4-shared-s1",
+          "kind": "plato",
+          "title": "Ñoquis con pollo",
+          "items": [
+            {
+              "id": "comida-4-shared-i1",
+              "foodKey": "noquis",
+              "label": "Ñoquis airfryer",
+              "portions": {
+                "cristina": {
+                  "rawG": 150,
+                  "measure": "1/3 bolsa"
+                },
+                "andres": {
+                  "rawG": 150,
+                  "measure": "1/3 bolsa"
+                }
+              }
+            },
+            {
+              "id": "comida-4-shared-i2",
+              "foodKey": "pollo-pechuga",
+              "label": "Pollo pechuga sin piel",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "2 filetes grandes o 3-4 finos"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "2 filetes grandes o 3-4 finos"
+                }
+              }
+            },
+            {
+              "id": "comida-4-shared-i3",
+              "foodKey": "verduras",
+              "label": "Verduras",
+              "portions": {
+                "cristina": {
+                  "measure": "bolsa o al gusto"
+                },
+                "andres": {
+                  "measure": "bolsa o al gusto"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "comida-5-shared",
+      "planId": "2026-09",
+      "slot": "comida",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "comida-5-shared-s1",
+          "kind": "plato",
+          "title": "Arroz con ternera al curry",
+          "items": [
+            {
+              "id": "comida-5-shared-i1",
+              "foodKey": "arroz-integral",
+              "label": "Arroz integral",
+              "portions": {
+                "cristina": {
+                  "rawG": 60,
+                  "cookedG": 180,
+                  "measure": "4 crudo/ 8 cocido cucharadas soperas"
+                },
+                "andres": {
+                  "rawG": 60,
+                  "cookedG": 180,
+                  "measure": "4 crudo/ 8 cocido cucharadas soperas"
+                }
+              }
+            },
+            {
+              "id": "comida-5-shared-i2",
+              "foodKey": "ternera",
+              "label": "Ternera",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "2 filetes grandes o 3-4 filetes finos"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "2 filetes grandes o 3-4 filetes finos"
+                }
+              }
+            },
+            {
+              "id": "comida-5-shared-i3",
+              "foodKey": "cebolla",
+              "label": "Cebolla",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-5-shared-i4",
+              "foodKey": "setas",
+              "label": "Setas",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "comida-5-shared-i5",
+              "foodKey": "curry",
+              "label": "Curry",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "cena-0-shared",
+      "planId": "2026-09",
+      "slot": "cena",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "cena-0-shared-s1",
+          "kind": "plato",
+          "title": "Huevos rotos airfryer",
+          "items": [
+            {
+              "id": "cena-0-shared-i1",
+              "foodKey": "patata",
+              "label": "Patata",
+              "portions": {
+                "cristina": {
+                  "rawG": 140,
+                  "cookedG": 130,
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "rawG": 140,
+                  "cookedG": 130,
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "cena-0-shared-i2",
+              "foodKey": "jamon-serrano",
+              "label": "Jamón serrano sin grasa",
+              "portions": {
+                "cristina": {
+                  "rawG": 60,
+                  "measure": "6-8 lonchas finas"
+                },
+                "andres": {
+                  "rawG": 30,
+                  "measure": "3-4 lonchas finas"
+                }
+              }
+            },
+            {
+              "id": "cena-0-shared-i3",
+              "foodKey": "huevo",
+              "label": "Huevo",
+              "portions": {
+                "cristina": {
+                  "rawG": 120,
+                  "measure": "2 unidades pequeñas"
+                },
+                "andres": {
+                  "rawG": 120,
+                  "measure": "2 unidades pequeñas"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-0-shared-s2",
+          "kind": "plato",
+          "title": "Ensalada",
+          "items": [
+            {
+              "id": "cena-0-shared-i4",
+              "foodKey": "ensalada-completa",
+              "label": "Ensalada completa",
+              "portions": {
+                "cristina": {
+                  "measure": "SIN H.C NI PROTEÍNA"
+                },
+                "andres": {
+                  "measure": "SIN H.C NI PROTEÍNA"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-0-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "cena-0-shared-i5",
+              "foodKey": "kefir-natural",
+              "label": "Kéfir natural",
+              "portions": {
+                "andres": {
+                  "measure": "1/2 tarrina",
+                  "rawG": 250
+                }
+              }
+            },
+            {
+              "id": "cena-0-shared-i6",
+              "foodKey": "kiwi",
+              "label": "Kiwi",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "cena-1-shared",
+      "planId": "2026-09",
+      "slot": "cena",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "cena-1-shared-s1",
+          "kind": "plato",
+          "title": "Carne a la plancha con verduras",
+          "items": [
+            {
+              "id": "cena-1-shared-i1",
+              "foodKey": "solomillo-cerdo",
+              "label": "Solomillo cerdo sin grasa",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "6 ruedas pequeñas"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "6 ruedas pequeñas"
+                }
+              }
+            },
+            {
+              "id": "cena-1-shared-i2",
+              "foodKey": "verduras",
+              "label": "Verduras",
+              "portions": {
+                "cristina": {
+                  "measure": "bolsa o al gusto"
+                },
+                "andres": {
+                  "measure": "bolsa o al gusto"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-1-shared-s2",
+          "kind": "pan",
+          "items": [
+            {
+              "id": "cena-1-shared-i3",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral barra",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas de 2-3 dedos de largura"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-1-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "cena-1-shared-i4",
+              "foodKey": "pera",
+              "label": "Pera",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "cena-1-shared-i5",
+              "foodKey": "chocolate-70-90",
+              "label": "Chocolate 70-90%",
+              "portions": {
+                "cristina": {
+                  "units": 1,
+                  "measure": "1 onza"
+                },
+                "andres": {
+                  "units": 1,
+                  "measure": "1 onza"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "cena-2-shared",
+      "planId": "2026-09",
+      "slot": "cena",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "cena-2-shared-s1",
+          "kind": "plato",
+          "title": "Tortilla de brócoli",
+          "items": [
+            {
+              "id": "cena-2-shared-i1",
+              "foodKey": "brocoli-champinones-calabacin",
+              "label": "Brócoli/champiñones/calabacín",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "cena-2-shared-i2",
+              "foodKey": "huevo",
+              "label": "Huevo",
+              "portions": {
+                "cristina": {
+                  "rawG": 120,
+                  "measure": "2 unidades pequeñas"
+                },
+                "andres": {
+                  "rawG": 120,
+                  "measure": "2 unidades pequeñas"
+                }
+              }
+            },
+            {
+              "id": "cena-2-shared-i3",
+              "foodKey": "clara-huevo",
+              "label": "Clara huevo",
+              "portions": {
+                "cristina": {
+                  "rawG": 100,
+                  "measure": "3 claras de bote"
+                },
+                "andres": {
+                  "rawG": 100,
+                  "measure": "3 claras de bote"
+                }
+              }
+            },
+            {
+              "id": "cena-2-shared-i4",
+              "foodKey": "queso-rallado",
+              "label": "Queso rallado",
+              "portions": {
+                "cristina": {
+                  "rawG": 30,
+                  "measure": "2-3 cucharadas soperas"
+                },
+                "andres": {
+                  "rawG": 30,
+                  "measure": "2-3 cucharadas soperas"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-2-shared-s2",
+          "kind": "pan",
+          "items": [
+            {
+              "id": "cena-2-shared-i5",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral barra",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas de 2-3 dedos de largura"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-2-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "cena-2-shared-i6",
+              "foodKey": "manzana",
+              "label": "Manzana",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad pequeña"
+                },
+                "andres": {
+                  "measure": "1 unidad pequeña"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "cena-3-shared",
+      "planId": "2026-09",
+      "slot": "cena",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "cena-3-shared-s1",
+          "kind": "plato",
+          "title": "Dorada al horno",
+          "items": [
+            {
+              "id": "cena-3-shared-i1",
+              "foodKey": "dorada",
+              "label": "Dorada",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "1 filete grande"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "1 filete grande"
+                }
+              }
+            },
+            {
+              "id": "cena-3-shared-i2",
+              "foodKey": "tomate",
+              "label": "Tomate",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "cena-3-shared-i3",
+              "foodKey": "calabacin",
+              "label": "Calabacín",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "cena-3-shared-i4",
+              "foodKey": "berenjena",
+              "label": "Berenjena",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-3-shared-s2",
+          "kind": "pan",
+          "items": [
+            {
+              "id": "cena-3-shared-i5",
+              "foodKey": "pan-integral-barra",
+              "label": "Pan integral barra",
+              "portions": {
+                "andres": {
+                  "rawG": 40,
+                  "measure": "2 rebanadas de 2-3 dedos de largura"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-3-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "cena-3-shared-i6",
+              "foodKey": "pera",
+              "label": "Pera",
+              "portions": {
+                "cristina": {
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "cena-3-shared-i7",
+              "foodKey": "chocolate-70-90",
+              "label": "Chocolate 70-90%",
+              "portions": {
+                "cristina": {
+                  "units": 1,
+                  "measure": "1 onza"
+                },
+                "andres": {
+                  "units": 1,
+                  "measure": "1 onza"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "cena-4-shared",
+      "planId": "2026-09",
+      "slot": "cena",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "cena-4-shared-s1",
+          "kind": "plato",
+          "title": "Alita de pollo airfryer/horno con boniato",
+          "items": [
+            {
+              "id": "cena-4-shared-i1",
+              "foodKey": "boniato-patata",
+              "label": "Boniato/patata",
+              "portions": {
+                "cristina": {
+                  "rawG": 140,
+                  "cookedG": 130,
+                  "measure": "1 unidad mediana"
+                },
+                "andres": {
+                  "rawG": 140,
+                  "cookedG": 130,
+                  "measure": "1 unidad mediana"
+                }
+              }
+            },
+            {
+              "id": "cena-4-shared-i2",
+              "foodKey": "alitas-pollo",
+              "label": "Alitas completa",
+              "portions": {
+                "cristina": {
+                  "rawG": 165
+                },
+                "andres": {
+                  "rawG": 165
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-4-shared-s2",
+          "kind": "plato",
+          "title": "Ensalada",
+          "items": [
+            {
+              "id": "cena-4-shared-i3",
+              "foodKey": "ensalada-completa",
+              "label": "Ensalada completa",
+              "portions": {
+                "cristina": {
+                  "measure": "SIN H.C NI PROTEÍNA"
+                },
+                "andres": {
+                  "measure": "SIN H.C NI PROTEÍNA"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "cena-4-shared-s3",
+          "kind": "postre",
+          "items": [
+            {
+              "id": "cena-4-shared-i4",
+              "foodKey": "kefir-natural",
+              "label": "Kéfir natural",
+              "portions": {
+                "andres": {
+                  "measure": "1/2 tarrina",
+                  "rawG": 250
+                }
+              }
+            },
+            {
+              "id": "cena-4-shared-i5",
+              "foodKey": "kiwi",
+              "label": "Kiwi",
+              "portions": {
+                "andres": {
+                  "measure": "1 unidad mediana"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    },
+    {
+      "id": "cena-5-shared",
+      "planId": "2026-09",
+      "slot": "cena",
+      "scope": "shared",
+      "sections": [
+        {
+          "id": "cena-5-shared-s1",
+          "kind": "plato",
+          "title": "Hamburguesa casera",
+          "items": [
+            {
+              "id": "cena-5-shared-i1",
+              "foodKey": "pan-hamburguesa",
+              "label": "Pan de hamburguesa",
+              "portions": {
+                "cristina": {
+                  "rawG": 75,
+                  "measure": "1 panecillo"
+                },
+                "andres": {
+                  "rawG": 75,
+                  "measure": "1 panecillo"
+                }
+              }
+            },
+            {
+              "id": "cena-5-shared-i2",
+              "foodKey": "hamburguesa-pavo-pollo",
+              "label": "Hamburguesa pavo/pollo",
+              "portions": {
+                "cristina": {
+                  "rawG": 200,
+                  "measure": "2 hamburguesas"
+                },
+                "andres": {
+                  "rawG": 200,
+                  "measure": "2 hamburguesas"
+                }
+              }
+            },
+            {
+              "id": "cena-5-shared-i3",
+              "foodKey": "queso-entrepinares",
+              "label": "Queso entrepinares",
+              "portions": {
+                "cristina": {
+                  "measure": "1-2 lonchas"
+                },
+                "andres": {
+                  "measure": "1-2 lonchas"
+                }
+              }
+            },
+            {
+              "id": "cena-5-shared-i4",
+              "foodKey": "cebolla",
+              "label": "Cebolla",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "cena-5-shared-i5",
+              "foodKey": "tomate",
+              "label": "Tomate",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "cena-5-shared-i6",
+              "foodKey": "lechuga",
+              "label": "Lechuga",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            },
+            {
+              "id": "cena-5-shared-i7",
+              "foodKey": "tomate-pelado-triturado",
+              "label": "Tomate pelado triturado",
+              "portions": {
+                "cristina": {},
+                "andres": {}
+              }
+            }
+          ]
+        }
+      ],
+      "isOriginal": true
+    }
+  ],
+  "template": [
+    {
+      "day": 0,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": "desayuno-0-cristina"
+    },
+    {
+      "day": 1,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": "desayuno-1-cristina"
+    },
+    {
+      "day": 2,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": "desayuno-2-cristina"
+    },
+    {
+      "day": 3,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": "desayuno-3-cristina"
+    },
+    {
+      "day": 4,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": "desayuno-4-cristina"
+    },
+    {
+      "day": 5,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": "desayuno-5-cristina"
+    },
+    {
+      "day": 6,
+      "slot": "desayuno",
+      "scope": "cristina",
+      "blockId": null
+    },
+    {
+      "day": 0,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": "snack-0-cristina"
+    },
+    {
+      "day": 1,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": "snack-1-cristina"
+    },
+    {
+      "day": 2,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": "snack-2-cristina"
+    },
+    {
+      "day": 3,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": "snack-3-cristina"
+    },
+    {
+      "day": 4,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": "snack-4-cristina"
+    },
+    {
+      "day": 5,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": "snack-5-cristina"
+    },
+    {
+      "day": 6,
+      "slot": "snack",
+      "scope": "cristina",
+      "blockId": null
+    },
+    {
+      "day": 0,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": "snack2-0-cristina"
+    },
+    {
+      "day": 1,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": "snack2-1-cristina"
+    },
+    {
+      "day": 2,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": "snack2-2-cristina"
+    },
+    {
+      "day": 3,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": "snack2-3-cristina"
+    },
+    {
+      "day": 4,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": "snack2-4-cristina"
+    },
+    {
+      "day": 5,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": "snack2-5-cristina"
+    },
+    {
+      "day": 6,
+      "slot": "snack2",
+      "scope": "cristina",
+      "blockId": null
+    },
+    {
+      "day": 0,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": "desayuno-0-andres"
+    },
+    {
+      "day": 1,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": "desayuno-1-andres"
+    },
+    {
+      "day": 2,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": "desayuno-2-andres"
+    },
+    {
+      "day": 3,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": "desayuno-3-andres"
+    },
+    {
+      "day": 4,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": "desayuno-4-andres"
+    },
+    {
+      "day": 5,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": "desayuno-5-andres"
+    },
+    {
+      "day": 6,
+      "slot": "desayuno",
+      "scope": "andres",
+      "blockId": null
+    },
+    {
+      "day": 0,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": "almuerzo-0-andres"
+    },
+    {
+      "day": 1,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": "almuerzo-1-andres"
+    },
+    {
+      "day": 2,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": "almuerzo-2-andres"
+    },
+    {
+      "day": 3,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": "almuerzo-3-andres"
+    },
+    {
+      "day": 4,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": "almuerzo-4-andres"
+    },
+    {
+      "day": 5,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": "almuerzo-5-andres"
+    },
+    {
+      "day": 6,
+      "slot": "almuerzo",
+      "scope": "andres",
+      "blockId": null
+    },
+    {
+      "day": 0,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": "comida-0-shared"
+    },
+    {
+      "day": 1,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": "comida-1-shared"
+    },
+    {
+      "day": 2,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": "comida-2-shared"
+    },
+    {
+      "day": 3,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": "comida-3-shared"
+    },
+    {
+      "day": 4,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": "comida-4-shared"
+    },
+    {
+      "day": 5,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": "comida-5-shared"
+    },
+    {
+      "day": 6,
+      "slot": "comida",
+      "scope": "shared",
+      "blockId": null
+    },
+    {
+      "day": 0,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": "cena-0-shared"
+    },
+    {
+      "day": 1,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": "cena-1-shared"
+    },
+    {
+      "day": 2,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": "cena-2-shared"
+    },
+    {
+      "day": 3,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": "cena-3-shared"
+    },
+    {
+      "day": 4,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": "cena-4-shared"
+    },
+    {
+      "day": 5,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": "cena-5-shared"
+    },
+    {
+      "day": 6,
+      "slot": "cena",
+      "scope": "shared",
+      "blockId": null
+    }
+  ],
+  "recipes": [
+    {
+      "id": "cheat-tortitas-platano-canela",
+      "title": "Tortitas de plátano y canela",
+      "kind": "cheat_meal",
+      "ingredients": [
+        {
+          "label": "Huevo de gallina",
+          "cookedG": "60",
+          "measure": "1 unidad pequeña"
+        },
+        {
+          "label": "Clara de huevo",
+          "cookedG": "100",
+          "measure": "3 claras"
+        },
+        {
+          "label": "Plátano",
+          "rawG": "120",
+          "cookedG": "70",
+          "measure": "1 unidad mediana"
+        },
+        {
+          "label": "Aceite de oliva virgen extra",
+          "measure": "unas gotas"
+        },
+        {
+          "label": "Canela",
+          "measure": "al gusto"
+        },
+        {
+          "label": "Copos de avena / harina de avena sabor arroz con leche",
+          "rawG": "80",
+          "measure": "4 cucharadas soperas"
+        },
+        {
+          "label": "Leche desnatada",
+          "cookedG": "100-200",
+          "measure": "1/2 vaso o 1 vaso"
+        }
+      ],
+      "steps": [
+        "Machacar el plátano en un bol. Machacar y triturar los copos de avena (que sea harina) y agregar al bol junto con el plátano.",
+        "Añadir el huevo y las claras, mezclar/batir todo. Añadir la canela y la leche. Mezclar/batir todo muy bien hasta obtener homogénea.",
+        "En una sartén antiadherente poco de Aceite de oliva virgen extra, para evitar que se peguen, preparar las tortitas en pequeñas, medianas o grandes masas.",
+        "Servir y ¡¡a disfrutar!!"
+      ]
+    }
+  ],
+  "foods": [
+    {
+      "key": "pan-molde-integral",
+      "name": "Pan de molde integral",
+      "section": "panaderia",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "pan-integral-barra",
+      "name": "Pan integral de barra",
+      "section": "panaderia",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "pan-hamburguesa",
+      "name": "Pan de hamburguesa",
+      "section": "panaderia",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "jamon-serrano",
+      "name": "Jamón serrano sin grasa",
+      "section": "charcuteria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "pechuga-pavo",
+      "name": "Pechuga de pavo",
+      "section": "charcuteria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "lomo-embuchado",
+      "name": "Lomo embuchado",
+      "section": "charcuteria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "queso-fresco-burgos",
+      "name": "Queso fresco tipo burgos",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "queso-untar-light",
+      "name": "Queso de untar light",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "queso-rallado",
+      "name": "Queso rallado",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "queso-entrepinares",
+      "name": "Queso entrepinares",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "yogur-proteico",
+      "name": "Yogur proteico 0% M.G",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "kefir-natural",
+      "name": "Kéfir natural",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "leche-desnatada",
+      "name": "Leche desnatada",
+      "section": "lacteos_huevos",
+      "unit": "ml",
+      "batchable": false
+    },
+    {
+      "key": "huevo",
+      "name": "Huevo",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "clara-huevo",
+      "name": "Claras de huevo",
+      "section": "lacteos_huevos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "tomate",
+      "name": "Tomate",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "tomate-pelado-triturado",
+      "name": "Tomate pelado triturado",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "naranja",
+      "name": "Naranja",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "mandarina-naranja",
+      "name": "Mandarina o naranja",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "platano",
+      "name": "Plátano",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "manzana",
+      "name": "Manzana",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "pera",
+      "name": "Pera",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "melocoton",
+      "name": "Melocotón",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "melocoton-manzana",
+      "name": "Melocotón o manzana",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "kiwi",
+      "name": "Kiwi",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "fresa",
+      "name": "Fresa",
+      "section": "fruteria",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "arandanos",
+      "name": "Arándanos",
+      "section": "fruteria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "almendra",
+      "name": "Almendra pelada",
+      "section": "despensa",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "cafe",
+      "name": "Café",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "complejo-vitaminico",
+      "name": "Complejo vitamínico",
+      "section": "suplementos",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "proteina-whey",
+      "name": "Proteína whey",
+      "section": "suplementos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "agua",
+      "name": "Agua",
+      "section": "otros",
+      "unit": "ml",
+      "batchable": false
+    },
+    {
+      "key": "mermelada-0",
+      "name": "Mermelada 0% azúcar",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "crema-cacahuete",
+      "name": "Crema de cacahuete",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "avena-crunchy",
+      "name": "Avena crunchy",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "copos-avena",
+      "name": "Copos de avena o harina de avena",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "tortitas-arroz",
+      "name": "Tortitas de arroz",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "pasta-lentejas",
+      "name": "Pasta de lentejas",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 3
+    },
+    {
+      "key": "lentejas-legumbres",
+      "name": "Lentejas o legumbres",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 4
+    },
+    {
+      "key": "arroz-integral",
+      "name": "Arroz integral",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 4
+    },
+    {
+      "key": "noquis",
+      "name": "Ñoquis",
+      "section": "congelados",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 2
+    },
+    {
+      "key": "patata",
+      "name": "Patata",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 3
+    },
+    {
+      "key": "boniato-patata",
+      "name": "Boniato o patata",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 3
+    },
+    {
+      "key": "carne-picada-ternera",
+      "name": "Carne picada de ternera",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 2
+    },
+    {
+      "key": "ternera",
+      "name": "Ternera",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 2
+    },
+    {
+      "key": "pavo-pechuga",
+      "name": "Pechuga de pavo sin piel",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 2
+    },
+    {
+      "key": "pollo-pechuga",
+      "name": "Pechuga de pollo sin piel",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 2
+    },
+    {
+      "key": "hamburguesa-pavo-pollo",
+      "name": "Hamburguesa de pavo o pollo",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "solomillo-cerdo",
+      "name": "Solomillo de cerdo sin grasa",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 2
+    },
+    {
+      "key": "alitas-pollo",
+      "name": "Alitas de pollo",
+      "section": "carniceria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "salmon",
+      "name": "Salmón fresco",
+      "section": "pescaderia",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "dorada",
+      "name": "Dorada",
+      "section": "pescaderia",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "judia-verde",
+      "name": "Judía verde",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 3
+    },
+    {
+      "key": "zanahoria",
+      "name": "Zanahoria",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 3
+    },
+    {
+      "key": "cebolla",
+      "name": "Cebolla",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "puerro",
+      "name": "Puerro",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "ajo",
+      "name": "Ajo",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "brocoli",
+      "name": "Brócoli",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": true,
+      "keepsDays": 3
+    },
+    {
+      "key": "brocoli-champinones-calabacin",
+      "name": "Brócoli, champiñones o calabacín",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "calabacin",
+      "name": "Calabacín",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "berenjena",
+      "name": "Berenjena",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "lechuga",
+      "name": "Lechuga",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "ensalada-completa",
+      "name": "Ensalada completa",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "verduras",
+      "name": "Verduras",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "setas",
+      "name": "Setas",
+      "section": "verduleria",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "curry",
+      "name": "Curry",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "chocolate-70-90",
+      "name": "Chocolate 70-90%",
+      "section": "despensa",
+      "unit": "ud",
+      "batchable": false
+    },
+    {
+      "key": "pincho-tortilla",
+      "name": "Pincho de tortilla",
+      "section": "otros",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "gelatina-proteica",
+      "name": "Gelatina proteica",
+      "section": "suplementos",
+      "unit": "g",
+      "batchable": false
+    },
+    {
+      "key": "aove",
+      "name": "Aceite de oliva virgen extra",
+      "section": "despensa",
+      "unit": "ml",
+      "batchable": false
+    },
+    {
+      "key": "canela",
+      "name": "Canela",
+      "section": "despensa",
+      "unit": "g",
+      "batchable": false
+    }
+  ],
+  "rules": {
+    "aoveMaxSpoonsPerWeek": 14,
+    "freeMealsPerWeek": 2,
+    "waterLitersMin": 2,
+    "waterLitersMax": 3,
+    "comodinRequired": true,
+    "recommendations": [
+      "Beber 2-3 litros de agua al día.",
+      "Controla la cantidad de aceite para cocinar y aliñar tus platos.",
+      "Si eres deportista incorpora diariamente en tus principales comidas arroz integral, pasta integral, pan integral, patata o boniato.",
+      "Duerme al menos 7,5 horas diarias.",
+      "Reduce al máximo el consumo de alcohol.",
+      "No abuses de la tecnología.",
+      "El comodín proteico es obligatorio: añade una de las opciones una vez al día, en la comida, la cena o el momento del día que prefieras.",
+      "Puedes usar como máximo 13-14 cucharadas soperas de aceite de oliva virgen extra (AOVE) a la semana para cocinar y aliñar tus platos y/o snacks."
+    ]
+  }
+}

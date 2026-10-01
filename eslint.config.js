@@ -34,13 +34,19 @@ export default tseslint.config(
         {
           patterns: [
             {
+              // Las rutas relativas apuntan a las carpetas hermanas dentro de src/. Se
+              // listan con "../" a propósito: "**/data/*" también bloquearía
+              // data/plans/*.json, que es un dato de entrada legítimo, no una capa.
               group: [
-                '**/data/*',
-                '**/features/*',
-                '**/components/*',
-                '**/stores/*',
+                '../data/*',
+                '../features/*',
+                '../components/*',
+                '../stores/*',
+                '../app/*',
                 'react',
                 'react-dom',
+                'zustand',
+                '@tanstack/*',
                 '@supabase/*',
               ],
               message: 'src/domain/ es lógica pura: no importa React, Supabase ni otras capas.',
