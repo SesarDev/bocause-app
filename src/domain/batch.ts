@@ -13,8 +13,9 @@ import type { Food, ProfileId } from './schema';
 export type BatchIngredient = {
   foodKey: string;
   label: string;
-  unit: Unit;
-  total: number;
+  /** Ausentes cuando el plan no da cantidad ("brócoli", "al gusto"): se adelanta igual. */
+  unit?: Unit;
+  total?: number;
   perProfile: Record<ProfileId, number>;
 };
 
@@ -88,19 +89,21 @@ export function suggestBatchCooking(input: BatchInput): BatchSuggestion[] {
             entry.batchable = true;
             if (food.keepsDays !== undefined) entry.keeps.push(food.keepsDays);
 
-            const quantity = quantityOf(portion);
-            if (quantity === null) continue;
-
             const ingredient = entry.ingredients.get(item.foodKey) ?? {
               foodKey: item.foodKey,
               label: food.name,
-              unit: quantity.unit,
-              total: 0,
               perProfile: {},
             };
-            ingredient.total += quantity.amount;
-            ingredient.perProfile[profileId] =
-              (ingredient.perProfile[profileId] ?? 0) + quantity.amount;
+
+            // Sin cantidad se lista igual, solo que sin número: el plato se adelanta
+            // aunque el plan diga "brócoli" a secas.
+            const quantity = quantityOf(portion);
+            if (quantity !== null) {
+              ingredient.unit = quantity.unit;
+              ingredient.total = (ingredient.total ?? 0) + quantity.amount;
+              ingredient.perProfile[profileId] =
+                (ingredient.perProfile[profileId] ?? 0) + quantity.amount;
+            }
             entry.ingredients.set(item.foodKey, ingredient);
           }
 

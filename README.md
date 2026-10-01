@@ -35,8 +35,9 @@ supabase/        Migraciones de Postgres
 | `npm test`              | Vitest una pasada                               |
 | `npm run test:watch`    | Vitest en modo vigilancia                       |
 | `npm run test:coverage` | Vitest con cobertura (mínimo 90% en `domain/`)  |
+| `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
 
-## Estado: fase 2 completada
+## Estado: fase 3 completada
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -56,8 +57,13 @@ shell con cabecera y cuatro pestañas (Semana, Hoy, Compra, Más), todas con est
 | `shopping.ts`  | Lista de la compra sumando a las dos personas                 |
 | `batch.ts`     | Sugerencias de batch cooking                                  |
 
+**Fase 3** extrae los dos PDF a `data/plans/2026-09.json`: 42 bloques, 188 alimentos y un
+catálogo de 71 entradas con su sección del súper. Las decisiones de extracción están en
+[docs/extraccion-informe.md](docs/extraccion-informe.md) y se comprueban solas con
+`npm run seed:validate` y con `src/domain/plan-real.test.ts`.
+
 La interfaz aún no usa nada de esto: la vista Semana llega en la fase 5, después de que la
-fase 3 extraiga los PDFs y la 4 conecte Supabase.
+fase 4 conecte Supabase.
 
 ### Configuración local
 
