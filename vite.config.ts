@@ -62,5 +62,13 @@ export default defineConfig({
     // La lógica pura de src/domain no necesita DOM.
     environment: 'node',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      // La exigencia de cobertura es para el dominio, que es donde vive la flexibilidad
+      // del plan. La UI se prueba con Playwright en la fase 10.
+      include: ['src/domain/**/*.ts'],
+      exclude: ['src/domain/**/*.test.ts', 'src/domain/__fixtures__/**'],
+      thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
+    },
   },
 });
