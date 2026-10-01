@@ -23,6 +23,7 @@ export const SupermarketSection = z.enum([
   "fruteria", "verduleria", "carniceria", "charcuteria", "pescaderia",
   "lacteos_huevos", "panaderia", "despensa", "congelados", "suplementos", "otros",
 ]);
+export type SupermarketSection = z.infer<typeof SupermarketSection>;
 
 /** Catálogo normalizado para sumar cantidades en la lista de la compra. */
 export const Food = z.object({
@@ -58,6 +59,7 @@ export type FoodItem = z.infer<typeof FoodItem>;
 /* ───────────────────────────── Bloques ───────────────────────────── */
 
 export const SectionKind = z.enum(["plato", "pan", "postre", "bebida", "extra"]);
+export type SectionKind = z.infer<typeof SectionKind>;
 
 export const Section = z.object({
   id: z.string(),
@@ -131,6 +133,10 @@ export const ProfilePlan = z.object({
   supplements: z.array(SupplementProtocol),
   comodin: z.array(ComodinOption),
 });
+export type ProfilePlan = z.infer<typeof ProfilePlan>;
+export type SupplementProtocol = z.infer<typeof SupplementProtocol>;
+export type ComodinOption = z.infer<typeof ComodinOption>;
+export type Recipe = z.infer<typeof Recipe>;
 
 export const Rules = z.object({
   aoveMaxSpoonsPerWeek: z.number().default(14),
@@ -140,6 +146,7 @@ export const Rules = z.object({
   comodinRequired: z.boolean().default(true),
   recommendations: z.array(z.string()),
 });
+export type Rules = z.infer<typeof Rules>;
 
 /** Documento completo de un plan mensual tal como sale del PDF. */
 export const Plan = z.object({
@@ -166,6 +173,7 @@ export const Check = z.object({
   itemId: z.string(),
   checked: z.boolean(),
 });
+export type Check = z.infer<typeof Check>;
 
 export const DailyLog = z.object({
   profileId: ProfileId,
@@ -175,6 +183,7 @@ export const DailyLog = z.object({
   waterMl: z.number().int().min(0).default(0),
   aoveSpoons: z.number().int().min(0).default(0),
 });
+export type DailyLog = z.infer<typeof DailyLog>;
 
 export const MealNote = z.object({
   profileId: ProfileId,
@@ -183,6 +192,7 @@ export const MealNote = z.object({
   hunger: z.number().int().min(1).max(5).optional(),
   text: z.string().max(500).optional(),
 });
+export type MealNote = z.infer<typeof MealNote>;
 
 export const ShoppingItem = z.object({
   id: z.string(),
@@ -195,3 +205,4 @@ export const ShoppingItem = z.object({
   checked: z.boolean().default(false),
   inPantry: z.boolean().default(false),      // "ya lo tengo"
 });
+export type ShoppingItem = z.infer<typeof ShoppingItem>;
