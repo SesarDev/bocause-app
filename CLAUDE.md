@@ -29,11 +29,14 @@ Antes de dar una tarea por terminada: `typecheck`, `lint`, `test` y `build` en v
 
 ```
 src/
+  app/         Composición de proveedores (QueryClient persistido, ThemeProvider)
   domain/      Lógica pura sin React ni Supabase: esquemas, resolveWeek, swap, compra, adherencia
   data/        Cliente Supabase, queries, mutations, suscripciones Realtime
   features/    Una carpeta por funcionalidad (week, checklist, swap, editor, shopping, ...)
   components/  Primitivas de UI reutilizables (Sheet, Chip, Checkbox, Toast...)
+  stores/      Estado de interfaz con Zustand (tema, pestaña, perfil activo)
   styles/      tokens.css y estilos globales
+  sw.ts        Service worker propio (injectManifest)
 data/plans/    Planes mensuales en JSON (fuente original, solo lectura)
 ```
 

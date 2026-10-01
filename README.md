@@ -9,32 +9,52 @@ fases en [docs/PLAN.md](docs/PLAN.md).
 ## Estructura
 
 ```
+src/app/         Composición de proveedores (TanStack Query, tema)
 src/domain/      Lógica pura (esquemas Zod, resolución de semana, intercambios, compra)
+src/data/        Cliente de Supabase, queries y caché persistida
+src/features/    Una carpeta por funcionalidad (shell, theme, week, checklist...)
+src/components/  Primitivas de UI propias
+src/stores/      Estado de interfaz con Zustand (tema, pestaña, perfil activo)
 src/styles/      tokens.css con la paleta y tipografía de marca
+src/sw.ts        Service worker propio (precaché ahora, Web Push en la fase 15)
 docs/pdfs/       Planes originales en PDF (fuente de la extracción de la fase 3)
 supabase/        Migraciones de Postgres
 ```
 
 ## Comandos
 
-| Comando | Qué hace |
-|---|---|
-| `npm run dev` | Servidor de desarrollo en http://localhost:5173 |
-| `npm run build` | Compila TypeScript y genera `dist/` |
-| `npm run lint` | Oxlint |
-| `npm run preview` | Sirve el build de producción |
+| Comando                | Qué hace                                        |
+| ---------------------- | ----------------------------------------------- |
+| `npm run dev`          | Servidor de desarrollo en http://localhost:5173 |
+| `npm run build`        | Compila TypeScript y genera `dist/`             |
+| `npm run preview`      | Sirve el build de producción                    |
+| `npm run typecheck`    | TypeScript en los tres proyectos                |
+| `npm run lint`         | ESLint                                          |
+| `npm run format`       | Prettier (escribe)                              |
+| `npm run format:check` | Prettier (solo comprueba)                       |
+| `npm test`             | Vitest una pasada                               |
+| `npm run test:watch`   | Vitest en modo vigilancia                       |
 
-## Estado: fase 0 completada
+## Estado: fase 1 completada
 
-Solo está montado el andamiaje de Vite + React 19 + TypeScript. Las dependencias del stack
-(Tailwind v4, TanStack Query, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa) y los scripts
-`typecheck`, `test` y `seed:validate` llegan en la fase 1.
+Andamiaje, tema y PWA. Están montados el stack completo (Tailwind v4, TanStack Query con
+caché persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), el tema
+claro/oscuro/sistema sin parpadeo al recargar, el manifest instalable con iconos maskable y
+el shell con cabecera y cuatro pestañas (Semana, Hoy, Compra, Más).
 
-Hasta entonces `npm run build` falla a propósito: `src/domain/schema.ts` importa `zod` y
-`src/styles/tokens.css` importa `tailwindcss`, y ninguna de las dos está instalada todavía.
+Las cuatro pestañas muestran estados vacíos: el contenido real llega en las fases 5 a 11.
 
-### Pendiente manual de la fase 0
+### Configuración local
 
-1. Crear el proyecto en Supabase (región `eu-west`), `npx supabase init` y `link`.
-2. Crear `.env.local` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
-3. En Supabase Auth: activar magic link y añadir las URL de redirección (localhost y Vercel).
+Copia `.env.example` a `.env.local` y rellena las dos variables de Supabase. La app todavía
+no se conecta a Supabase; empieza a hacerlo en la fase 4.
+
+### Decisiones que conviene recordar
+
+- **Linter**: ESLint + Prettier, como pide `docs/PLAN.md`. El template de Vite venía con
+  Oxlint y se retiró.
+- **El tema se guarda en `localStorage`**, no en IndexedDB, porque el script antiparpadeo de
+  `index.html` tiene que leerlo de forma síncrona antes del primer pintado. Es preferencia de
+  interfaz, no dato de dominio.
+- **`src/domain/schema.ts` y `src/styles/tokens.css` están en `.prettierignore`**: vienen del
+  kit con el formato cuidado a mano.
