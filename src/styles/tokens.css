@@ -1,0 +1,116 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700&display=swap");
+@import "tailwindcss";
+
+/* Tema por clase: <html data-theme="dark|light">; sin atributo = sigue al sistema */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ───────── Paleta de marca Bocause (extraída del PDF) ───────── */
+:root {
+  --bc-yellow: #facc15;      /* amarillo principal (cabeceras, días alternos) */
+  --bc-yellow-ink: #3d2f00;  /* texto sobre amarillo */
+  --bc-navy: #121e2c;        /* marino casi negro (etiquetas de franja, portada) */
+  --bc-slate: #2f3742;       /* pizarra (página de objetivos) */
+  --bc-mint: #e5f2f2;        /* verde agua de la contraportada */
+  --bc-white: #ffffff;
+
+  /* ───────── Tokens semánticos · modo claro ───────── */
+  --color-bg: #f7fafa;
+  --color-surface: var(--bc-white);
+  --color-surface-alt: #fff6d1;          /* tarjeta de día "amarilla" (mar, jue, sáb) */
+  --color-surface-alt-edge: var(--bc-yellow);
+  --color-ink: var(--bc-navy);
+  --color-ink-muted: #5b6673;
+  --color-line: #dce6e6;
+  --color-slot: var(--bc-navy);          /* etiqueta de franja */
+  --color-slot-ink: var(--bc-white);
+  --color-accent: var(--bc-yellow);
+  --color-accent-ink: var(--bc-yellow-ink);
+  --color-check: var(--bc-navy);         /* check marcado: marino con tic amarillo */
+  --color-check-tick: var(--bc-yellow);
+  --color-shared: var(--bc-mint);        /* fondo de bloques compartidos (comida/cena) */
+  --color-free: #fde68a;                 /* ingesta libre */
+  --color-danger: #b42318;
+  --color-focus: #2563eb;
+}
+
+/* ───────── Modo oscuro: el marino pasa a ser el lienzo ───────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #0b131d;
+    --color-surface: var(--bc-navy);
+    --color-surface-alt: #2a2410;        /* "día amarillo" en oscuro: fondo ámbar profundo + borde amarillo */
+    --color-surface-alt-edge: var(--bc-yellow);
+    --color-ink: #eef4f4;
+    --color-ink-muted: #9aa8b4;
+    --color-line: #263446;
+    --color-slot: var(--bc-yellow);
+    --color-slot-ink: var(--bc-navy);
+    --color-check: var(--bc-yellow);
+    --color-check-tick: var(--bc-navy);
+    --color-shared: #16283a;
+    --color-free: #4a3b05;
+    --color-focus: #60a5fa;
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #0b131d;
+  --color-surface: var(--bc-navy);
+  --color-surface-alt: #2a2410;
+  --color-surface-alt-edge: var(--bc-yellow);
+  --color-ink: #eef4f4;
+  --color-ink-muted: #9aa8b4;
+  --color-line: #263446;
+  --color-slot: var(--bc-yellow);
+  --color-slot-ink: var(--bc-navy);
+  --color-check: var(--bc-yellow);
+  --color-check-tick: var(--bc-navy);
+  --color-shared: #16283a;
+  --color-free: #4a3b05;
+  --color-focus: #60a5fa;
+}
+
+/* ───────── Exponer a Tailwind (bg-surface, text-ink, etc.) ───────── */
+@theme inline {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-alt: var(--color-surface-alt);
+  --color-surface-alt-edge: var(--color-surface-alt-edge);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-line: var(--color-line);
+  --color-slot: var(--color-slot);
+  --color-slot-ink: var(--color-slot-ink);
+  --color-accent: var(--color-accent);
+  --color-accent-ink: var(--color-accent-ink);
+  --color-check: var(--color-check);
+  --color-check-tick: var(--color-check-tick);
+  --color-shared: var(--color-shared);
+  --color-free: var(--color-free);
+  --color-danger: var(--color-danger);
+  --color-brand-yellow: var(--bc-yellow);
+  --color-brand-navy: var(--bc-navy);
+
+  /* Escala tipográfica (móvil primero) */
+  --text-day: 1.375rem;      /* nombre del día: 800, mayúsculas */
+  --text-slot: 0.8125rem;    /* etiqueta de franja: 800, mayúsculas, tracking 0.06em */
+  --text-dish: 1rem;         /* título de plato: 700 */
+  --text-item: 0.9375rem;    /* alimento: 500 */
+  --text-measure: 0.8125rem; /* medida casera: 500, ink-muted */
+
+  /* Radios con jerarquía: tarjeta de día > bloque > chip */
+  --radius-day: 1.25rem;
+  --radius-block: 0.75rem;
+  --radius-chip: 999px;
+
+  --spacing-tap: 2.75rem;    /* 44 px, objetivo táctil mínimo */
+}
+
+html { background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); }
+
+:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
