@@ -1,0 +1,14 @@
+dist
+dev-dist
+coverage
+node_modules
+package-lock.json
+*.png
+*.svg
+
+# Archivos del kit: formato cuidado a mano (comentarios alineados), no los tocamos.
+docs
+src/domain/schema.ts
+src/styles/tokens.css
+supabase/migrations
+data/plans
