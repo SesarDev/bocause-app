@@ -83,6 +83,11 @@ function SlotRow({
       </div>
 
       <div className="min-w-0 flex-1">
+        {slot.source !== 'original' && !slot.isFree && (
+          <p className="mb-1 inline-flex items-center gap-1 rounded-chip bg-free px-2 py-0.5 text-measure font-semibold text-ink">
+            Modificado{slot.source === 'week' ? ' esta semana' : ' en todo el plan'}
+          </p>
+        )}
         {slot.isFree ? (
           <p className="flex items-center gap-2 rounded-block bg-free p-3 text-item font-semibold text-ink">
             <Icon name="libre" size={18} />
