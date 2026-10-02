@@ -80,6 +80,11 @@ Regla: `features/` puede importar de `domain/` y `data/`; `domain/` no importa n
 - Modo claro, oscuro y "sistema". Contraste AA mínimo en ambos.
 - Objetivos táctiles ≥ 44 px. Respetar `prefers-reduced-motion`.
 - Textos de interfaz en español, voz activa, frases cortas ("Intercambiar", "Restaurar original").
+- **Cuidado con `text-slot`:** `tokens.css` define `--color-slot` y `--text-slot`, y Tailwind
+  genera la misma clase para las dos. Gana el color, así que usar `text-slot` para el tamaño
+  pinta el texto de marino (invisible sobre la etiqueta). Para el tamaño:
+  `text-(length:--text-slot)`. El resto de tamaños (`text-day`, `text-dish`, `text-item`,
+  `text-measure`) no chocan con ningún color.
 
 ## No hacer
 

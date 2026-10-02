@@ -271,7 +271,8 @@
               "label": "Pera",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -439,7 +440,8 @@
               "label": "Manzana",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad pequeña"
+                  "measure": "1 unidad pequeña",
+                  "units": 1
                 }
               }
             },
@@ -650,7 +652,8 @@
               "label": "Plátano",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -722,7 +725,8 @@
               "label": "Pera",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -806,7 +810,8 @@
               "label": "Plátano",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -852,7 +857,8 @@
               "label": "Kiwi",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             }
@@ -903,7 +909,8 @@
               "label": "Melocotón",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             }
@@ -928,7 +935,8 @@
               "label": "Mandarina",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad grande"
+                  "measure": "1 unidad grande",
+                  "units": 1
                 }
               }
             }
@@ -953,7 +961,8 @@
               "label": "Melocotón",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             }
@@ -1004,7 +1013,8 @@
               "label": "Mandarina",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad grande"
+                  "measure": "1 unidad grande",
+                  "units": 1
                 }
               }
             }
@@ -1059,7 +1069,8 @@
               "label": "Naranja exprimido",
               "portions": {
                 "andres": {
-                  "measure": "2 unidades grandes o 1 vaso"
+                  "measure": "2 unidades grandes o 1 vaso",
+                  "units": 2
                 }
               }
             },
@@ -1210,7 +1221,8 @@
               "label": "Naranja exprimido",
               "portions": {
                 "andres": {
-                  "measure": "2 unidades grandes o 1 vaso"
+                  "measure": "2 unidades grandes o 1 vaso",
+                  "units": 2
                 }
               }
             },
@@ -1282,7 +1294,8 @@
               "label": "Mandarina/naranja",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad grande"
+                  "measure": "1 unidad grande",
+                  "units": 1
                 }
               }
             },
@@ -1364,7 +1377,8 @@
               "label": "Naranja exprimido",
               "portions": {
                 "andres": {
-                  "measure": "2 unidades grandes o 1 vaso"
+                  "measure": "2 unidades grandes o 1 vaso",
+                  "units": 2
                 }
               }
             },
@@ -1746,7 +1760,8 @@
               "label": "Melocotón/manzana",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad mediana o 1 unidad pequeña"
+                  "measure": "1 unidad mediana o 1 unidad pequeña",
+                  "units": 1
                 }
               }
             }
@@ -1828,7 +1843,8 @@
               "label": "Melocotón",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             }
@@ -1932,10 +1948,12 @@
               "label": "Plátano",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 },
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -1945,7 +1963,8 @@
               "label": "Manzana",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad pequeña"
+                  "measure": "1 unidad pequeña",
+                  "units": 1
                 }
               }
             }
@@ -2047,10 +2066,12 @@
               "label": "Melocotón",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 },
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -2060,7 +2081,8 @@
               "label": "Mandarina/naranja",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad grande"
+                  "measure": "1 unidad grande",
+                  "units": 1
                 }
               }
             }
@@ -2182,10 +2204,12 @@
               "label": "Plátano",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 },
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -2195,7 +2219,8 @@
               "label": "Manzana",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad pequeña"
+                  "measure": "1 unidad pequeña",
+                  "units": 1
                 }
               }
             }
@@ -2439,7 +2464,8 @@
               "label": "Kiwi",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             }
@@ -2516,10 +2542,12 @@
               "label": "Pera",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 },
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -2637,10 +2665,12 @@
               "label": "Manzana",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad pequeña"
+                  "measure": "1 unidad pequeña",
+                  "units": 1
                 },
                 "andres": {
-                  "measure": "1 unidad pequeña"
+                  "measure": "1 unidad pequeña",
+                  "units": 1
                 }
               }
             }
@@ -2731,10 +2761,12 @@
               "label": "Pera",
               "portions": {
                 "cristina": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 },
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             },
@@ -2842,7 +2874,8 @@
               "label": "Kiwi",
               "portions": {
                 "andres": {
-                  "measure": "1 unidad mediana"
+                  "measure": "1 unidad mediana",
+                  "units": 1
                 }
               }
             }

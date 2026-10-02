@@ -36,8 +36,9 @@ supabase/        Migraciones de Postgres
 | `npm run test:watch`    | Vitest en modo vigilancia                       |
 | `npm run test:coverage` | Vitest con cobertura (mínimo 90% en `domain/`)  |
 | `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
+| `npm run seed`          | Crea el hogar en Supabase e inserta el plan     |
 
-## Estado: fase 3 completada
+## Estado: fase 4 completada
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -62,13 +63,43 @@ catálogo de 71 entradas con su sección del súper. Las decisiones de extracci�
 [docs/extraccion-informe.md](docs/extraccion-informe.md) y se comprueban solas con
 `npm run seed:validate` y con `src/domain/plan-real.test.ts`.
 
-La interfaz aún no usa nada de esto: la vista Semana llega en la fase 5, después de que la
-fase 4 conecte Supabase.
+**Fase 4** conecta Supabase: cliente tipado, consultas y mutaciones optimistas con TanStack
+Query, sincronización Realtime y las dos pantallas de entrada (magic link y "¿Quién eres?").
 
-### Configuración local
+| Archivo                      | Qué hace                                                  |
+| ---------------------------- | --------------------------------------------------------- |
+| `src/data/database.types.ts` | Tipos de las tablas, escritos a partir de la migración    |
+| `src/data/mappers.ts`        | Filas de Postgres ↔ tipos del dominio, validando con Zod  |
+| `src/data/queries.ts`        | Lecturas y `useResolvedWeek`, el puente con la fase 5     |
+| `src/data/mutations.ts`      | Escrituras optimistas que se reanudan al recuperar la red |
+| `src/data/realtime.ts`       | Suscripción a las seis tablas que publica la migración    |
+| `src/data/auth.ts`           | Sesión, magic link y vinculación con el perfil            |
 
-Copia `.env.example` a `.env.local` y rellena las dos variables de Supabase. La app todavía
-no se conecta a Supabase; empieza a hacerlo en la fase 4.
+**Fase 5** es la vista Semana y la vista Hoy, con datos reales: barra de días pegajosa con
+anillo de progreso, siete tarjetas con el ritmo de colores del PDF (martes, jueves y sábado
+en amarillo), etiquetas de franja marinas con icono, pan y postre como subsecciones, bloques
+compartidos con su fondo y, el domingo, la tarjeta de las dos ingestas libres. El selector
+de perfil permite ver el plan de la otra persona o el de "Casa", que enseña solo comida y
+cena con las dos raciones y la suma para cocinar.
+
+Faltan los checks por alimento y los contadores de agua, aceite y comodín: son la fase 6.
+
+## Puesta en marcha
+
+Hace falta una vez por proyecto de Supabase.
+
+1. **Variables de entorno.** Copia `.env.example` a `.env.local` y rellena `VITE_SUPABASE_URL`
+   y `VITE_SUPABASE_ANON_KEY` (Project Settings → API).
+2. **Esquema.** Aplica en orden `supabase/migrations/0001_init.sql` y
+   `0002_claim_profile.sql`. Lo más rápido es pegarlos en el SQL Editor del panel de
+   Supabase; con la CLI sería `npx supabase db push`.
+3. **Datos.** Añade a `.env.local` la clave `SUPABASE_SERVICE_ROLE_KEY` y, si queréis
+   reservar cada perfil a un correo, `SEED_EMAIL_CRISTINA` y `SEED_EMAIL_ANDRES`. Luego
+   `npm run seed`. Es repetible y no pisa lo que ya hayáis cambiado.
+4. **Auth.** En Authentication → URL Configuration pon `http://localhost:5173` como Site URL
+   y en Redirect URLs (y más adelante la URL de Vercel). El proveedor Email ya viene activo.
+
+Después, `npm run dev`, entra con tu correo y elige perfil.
 
 ### Decisiones que conviene recordar
 
@@ -79,3 +110,8 @@ no se conecta a Supabase; empieza a hacerlo en la fase 4.
   interfaz, no dato de dominio.
 - **`src/domain/schema.ts` y `src/styles/tokens.css` están en `.prettierignore`**: vienen del
   kit con el formato cuidado a mano.
+- **El dominio habla de "cristina" y "andres"; la base de datos, de UUIDs.** El plan sale del
+  PDF con slugs y las políticas RLS comparan `scope = my_profile_id()::text`. La traducción
+  vive en `src/data/mappers.ts` y es el único sitio donde se cruza esa frontera.
+- **`0002_claim_profile.sql` existe porque faltaba una pieza en la migración original**: sin
+  él, un usuario recién registrado no puede ni ver los perfiles para elegir el suyo.

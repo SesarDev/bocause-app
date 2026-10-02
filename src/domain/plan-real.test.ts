@@ -158,6 +158,17 @@ describe('la compra de la semana', () => {
     expect(jamon?.perProfile['andres']).toBe(150);
   });
 
+  it('suma la fruta, que lleva la cantidad dentro de la medida casera', () => {
+    // "Plátano (1 unidad mediana)": el 1 es la cantidad. Si se leyera solo como texto, toda
+    // la fruta acabaría en la lista de lo no sumable y la frutería quedaría vacía.
+    expect(findLine(compra, 'platano')).toMatchObject({ unit: 'ud', total: 6 });
+    expect(findLine(compra, 'pera')?.total).toBe(6);
+    expect(findLine(compra, 'manzana')?.total).toBe(5);
+    expect(findLine(compra, 'melocoton')?.total).toBe(5);
+    expect(findLine(compra, 'kiwi')?.total).toBe(3);
+    expect(findLine(compra, 'naranja')?.total).toBe(6);
+  });
+
   it('agrupa por sección del súper y deja aparte lo que no se puede sumar', () => {
     const secciones = compra.groups.map((group) => group.section);
     expect(secciones).toContain('carniceria');

@@ -1,0 +1,17 @@
+/* Animaciones propias de la app. Van aparte de tokens.css, que viene del kit. */
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(12%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* El scroll a un día tiene que dejar sitio a la cabecera y a la barra de días. */
+[data-day-anchor] {
+  scroll-margin-top: calc(7.5rem + env(safe-area-inset-top));
+}
