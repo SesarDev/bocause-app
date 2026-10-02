@@ -9,10 +9,11 @@ import { minutesNow, nextSlot } from '../../domain/mealTimes';
 import { CheckIndex, dayProgress, type Progress } from '../../domain/progress';
 import { cellId, isSharedSlot, type ResolvedSlot } from '../../domain/resolve';
 import { swapCells, type SwapCell, type SwapLevel } from '../../domain/swap';
-import type { SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
+import type { Block, SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
 import { useMyProfile } from '../../data/auth';
-import { useApplyCells, useRestoreCell, useSetCheck } from '../../data/mutations';
+import { useApplyCells, useRestoreCell, useSaveBlock, useSetCheck } from '../../data/mutations';
 import {
+  useEditedBlocks,
   useHouseholdWeeks,
   useProfileDirectory,
   useResolvedWeek,
@@ -23,6 +24,8 @@ import {
 } from '../../data/queries';
 import { useRealtimeSync } from '../../data/realtime';
 import { useUiStore } from '../../stores/ui';
+import { BlockEditor } from '../editor/BlockEditor';
+import { emptyBlock } from '../editor/draft';
 import { SwapSheet } from '../swap/SwapSheet';
 import { TodayTrackers } from '../trackers/Trackers';
 import { CheckContext, type CheckApi } from './checkContext';
@@ -42,6 +45,7 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
 
   const [menuSlot, setMenuSlot] = useState<ResolvedSlot | null>(null);
   const [swapOrigin, setSwapOrigin] = useState<ResolvedSlot | null>(null);
+  const [editorSlot, setEditorSlot] = useState<ResolvedSlot | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const isHouse = activeProfile === 'casa';
@@ -54,11 +58,13 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const logs = useWeekDailyLogs(weekStart, directory);
   const overrides = useWeekOverrides(plan?.id, weekStart, directory);
   const templateCells = useTemplateCells(plan?.id, directory);
+  const editedBlocks = useEditedBlocks(plan?.id, directory);
   const myProfile = useMyProfile(true);
 
   const setCheck = useSetCheck();
   const applyCells = useApplyCells();
   const restore = useRestoreCell();
+  const saveBlock = useSaveBlock();
 
   useRealtimeSync(plan?.id, weekStart);
 
@@ -181,6 +187,53 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const otherName = plan.profiles.find(
     (profile) => profile.profileId !== week.profileId,
   )?.displayName;
+
+  /**
+   * Bloques SIN filtrar por persona. La vista enseña solo lo tuyo, pero para editar un
+   * plato compartido hacen falta las raciones de los dos.
+   */
+  const blockById = new Map<string, Block>();
+  for (const block of plan.blocks) blockById.set(block.id, block);
+  for (const block of editedBlocks.data ?? []) blockById.set(block.id, block);
+
+  const originalBlockFor = (slot: ResolvedSlot): Block | null => {
+    const cell = plan.template.find(
+      (row) =>
+        row.day === slot.cell.day && row.slot === slot.cell.slot && row.scope === slot.cell.scope,
+    );
+    return cell?.blockId ? (plan.blocks.find((b) => b.id === cell.blockId) ?? null) : null;
+  };
+
+  const peopleFor = (slot: ResolvedSlot) =>
+    (slot.cell.scope === 'shared'
+      ? plan.profiles
+      : plan.profiles.filter((profile) => profile.profileId === slot.cell.scope)
+    ).map((profile) => ({ profileId: profile.profileId, displayName: profile.displayName }));
+
+  const doSaveBlock = (block: Block, level: SwapLevel) => {
+    if (!editorSlot) return;
+    const { day, slot: slotKey, scope } = editorSlot.cell;
+
+    saveBlock.mutate({
+      planId: plan.id,
+      weekStart,
+      block,
+      upserts:
+        level === 'week'
+          ? [
+              {
+                level: 'week',
+                row: { weekStart, day, slot: slotKey, scope, blockId: block.id, isFree: false },
+              },
+            ]
+          : [{ level: 'template', row: { day, slot: slotKey, scope, blockId: block.id } }],
+    });
+
+    setEditorSlot(null);
+    setToast({
+      message: level === 'week' ? 'Guardado para esta semana' : 'Guardado en todo el plan',
+    });
+  };
 
   const asSwapCell = (slot: ResolvedSlot): SwapCell => ({
     cell: slot.cell,
@@ -334,6 +387,20 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
             />
 
             <MenuAction
+              icon="mas"
+              label={menuSlot.blockId === null ? 'Crear comida aquí' : 'Editar'}
+              hint={
+                menuSlot.blockId === null
+                  ? 'La celda está vacía'
+                  : 'Crea una copia; el plan original no se toca'
+              }
+              onClick={() => {
+                setEditorSlot(menuSlot);
+                setMenuSlot(null);
+              }}
+            />
+
+            <MenuAction
               icon="libre"
               label={menuSlot.isFree ? 'Quitar la ingesta libre' : 'Marcar como ingesta libre'}
               hint={
@@ -373,6 +440,27 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
         onConfirm={(target, level) => swapOrigin && doSwap(swapOrigin, target, level)}
       />
 
+      {editorSlot && (
+        <BlockEditor
+          key={cellId(editorSlot.cell)}
+          open
+          onClose={() => setEditorSlot(null)}
+          source={
+            (editorSlot.blockId ? blockById.get(editorSlot.blockId) : undefined) ??
+            emptyBlock(
+              plan.id,
+              editorSlot.cell.slot,
+              editorSlot.cell.scope,
+              peopleFor(editorSlot).map((person) => person.profileId),
+            )
+          }
+          original={originalBlockFor(editorSlot)}
+          people={peopleFor(editorSlot)}
+          foods={plan.foods}
+          onSave={doSaveBlock}
+        />
+      )}
+
       <Toast toast={toast} onClose={() => setToast(null)} />
     </CheckContext.Provider>
   );
@@ -385,7 +473,7 @@ function MenuAction({
   disabled = false,
   onClick,
 }: {
-  icon: 'semana' | 'libre' | 'hoy';
+  icon: 'semana' | 'libre' | 'hoy' | 'mas';
   label: string;
   hint?: string | undefined;
   disabled?: boolean;

@@ -12,11 +12,14 @@ export function Sheet({
   onClose,
   title,
   children,
+  /** A pantalla casi completa: para el editor, que necesita sitio. */
+  tall = false,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  tall?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<Element | null>(null);
@@ -59,7 +62,9 @@ export function Sheet({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative w-full max-w-screen-sm rounded-t-day bg-surface pb-[env(safe-area-inset-bottom)] shadow-lg outline-none motion-safe:animate-[sheet-in_180ms_ease-out]"
+        className={`relative flex w-full max-w-screen-sm flex-col rounded-t-day bg-surface pb-[env(safe-area-inset-bottom)] shadow-lg outline-none motion-safe:animate-[sheet-in_180ms_ease-out] ${
+          tall ? 'h-[92dvh]' : 'max-h-[88dvh]'
+        }`}
       >
         <div className="flex items-center gap-2 border-b border-line px-4 py-3">
           <span
@@ -75,7 +80,7 @@ export function Sheet({
             Cerrar
           </button>
         </div>
-        <div className="px-4 py-3">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>
       </div>
     </div>
   );
