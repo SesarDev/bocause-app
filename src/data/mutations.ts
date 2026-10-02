@@ -7,7 +7,14 @@
  * a abrir el cliente necesita encontrar la función por su clave para reanudarla.
  */
 import { useMutation, type QueryClient } from '@tanstack/react-query';
-import type { Block, Check, DailyLog, TemplateCell, WeekOverride } from '../domain/schema';
+import type {
+  Block,
+  Check,
+  DailyLog,
+  ShoppingItem,
+  TemplateCell,
+  WeekOverride,
+} from '../domain/schema';
 import type { CellUpsert } from '../domain/swap';
 import type { RestorePlan } from '../domain/edit';
 import { supabase } from './supabase';
@@ -27,6 +34,9 @@ export const mutationKeys = {
   applyCells: [...keys.all, 'mutation', 'apply-cells'] as const,
   restoreCell: [...keys.all, 'mutation', 'restore-cell'] as const,
   saveBlock: [...keys.all, 'mutation', 'save-block'] as const,
+  generateShopping: [...keys.all, 'mutation', 'generate-shopping'] as const,
+  setShoppingItem: [...keys.all, 'mutation', 'set-shopping-item'] as const,
+  removeShoppingItem: [...keys.all, 'mutation', 'remove-shopping-item'] as const,
 };
 
 /** El directorio sale de la caché, que está persistida: también funciona sin red. */
@@ -81,6 +91,28 @@ export type SaveBlockVars = {
   /** Dónde engancharlo: la celda pasa a apuntar al bloque nuevo. */
   upserts: CellUpsert[];
 };
+
+export type ShoppingLineInput = {
+  foodKey: string;
+  label: string;
+  quantityText: string | null;
+  section: string;
+  source: 'auto' | 'manual';
+};
+
+export type GenerateShoppingVars = {
+  householdId: string;
+  weekStart: string;
+  lines: ShoppingLineInput[];
+};
+
+export type SetShoppingItemVars = {
+  weekStart: string;
+  id: string;
+  patch: Partial<Pick<ShoppingItem, 'checked' | 'inPantry'>>;
+};
+
+export type RemoveShoppingItemVars = { weekStart: string; id: string };
 
 /* ─────────────────────── Registro ─────────────────────── */
 
@@ -260,6 +292,101 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
       });
     },
   });
+  /* ─────────── Lista de la compra ─────────── */
+
+  queryClient.setMutationDefaults(mutationKeys.generateShopping, {
+    mutationFn: async (vars: GenerateShoppingVars) => {
+      // Regenerar NO puede perder lo ya marcado: se leen las filas que hay y se conservan
+      // `checked` e `in_pantry`, que son del usuario y no del cálculo.
+      const { data: existing, error: readError } = await supabase
+        .from('shopping_items')
+        .select('food_key, checked, in_pantry')
+        .eq('household_id', vars.householdId)
+        .eq('week_start', vars.weekStart);
+      if (readError) throw readError;
+
+      const previous = new Map(
+        (existing ?? []).map((row) => [
+          row.food_key,
+          { checked: row.checked, inPantry: row.in_pantry },
+        ]),
+      );
+
+      const rows = vars.lines.map((line) => ({
+        household_id: vars.householdId,
+        week_start: vars.weekStart,
+        source: line.source,
+        food_key: line.foodKey,
+        label: line.label,
+        quantity_text: line.quantityText,
+        section: line.section,
+        checked: previous.get(line.foodKey)?.checked ?? false,
+        in_pantry: previous.get(line.foodKey)?.inPantry ?? false,
+      }));
+
+      if (rows.length === 0) return;
+      const { error } = await supabase
+        .from('shopping_items')
+        .upsert(rows, { onConflict: 'household_id,week_start,source,food_key' });
+      if (error) throw error;
+    },
+    onSettled: (_data, _error, vars: GenerateShoppingVars) => {
+      void queryClient.invalidateQueries({ queryKey: keys.shoppingItems(vars.weekStart) });
+    },
+  });
+
+  queryClient.setMutationDefaults(mutationKeys.setShoppingItem, {
+    mutationFn: async (vars: SetShoppingItemVars) => {
+      const { error } = await supabase
+        .from('shopping_items')
+        .update({
+          ...(vars.patch.checked === undefined ? {} : { checked: vars.patch.checked }),
+          ...(vars.patch.inPantry === undefined ? {} : { in_pantry: vars.patch.inPantry }),
+        })
+        .eq('id', vars.id);
+      if (error) throw error;
+    },
+    onMutate: async (vars: SetShoppingItemVars) => {
+      const key = keys.shoppingItems(vars.weekStart);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ShoppingItem[]>(key);
+
+      queryClient.setQueryData<ShoppingItem[]>(key, (current = []) =>
+        current.map((item) => (item.id === vars.id ? { ...item, ...vars.patch } : item)),
+      );
+      return { previous, key };
+    },
+    onError: (_error, _vars, context) => {
+      const ctx = context as { previous?: ShoppingItem[]; key?: readonly unknown[] } | undefined;
+      if (ctx?.key) queryClient.setQueryData(ctx.key, ctx.previous);
+    },
+    onSettled: (_data, _error, vars: SetShoppingItemVars) => {
+      void queryClient.invalidateQueries({ queryKey: keys.shoppingItems(vars.weekStart) });
+    },
+  });
+
+  queryClient.setMutationDefaults(mutationKeys.removeShoppingItem, {
+    mutationFn: async (vars: RemoveShoppingItemVars) => {
+      const { error } = await supabase.from('shopping_items').delete().eq('id', vars.id);
+      if (error) throw error;
+    },
+    onMutate: async (vars: RemoveShoppingItemVars) => {
+      const key = keys.shoppingItems(vars.weekStart);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ShoppingItem[]>(key);
+      queryClient.setQueryData<ShoppingItem[]>(key, (current = []) =>
+        current.filter((item) => item.id !== vars.id),
+      );
+      return { previous, key };
+    },
+    onError: (_error, _vars, context) => {
+      const ctx = context as { previous?: ShoppingItem[]; key?: readonly unknown[] } | undefined;
+      if (ctx?.key) queryClient.setQueryData(ctx.key, ctx.previous);
+    },
+    onSettled: (_data, _error, vars: RemoveShoppingItemVars) => {
+      void queryClient.invalidateQueries({ queryKey: keys.shoppingItems(vars.weekStart) });
+    },
+  });
 }
 
 function emptyLog(profileId: string, date: string): DailyLog {
@@ -390,3 +517,11 @@ export const useRestoreCell = () =>
   useMutation<void, Error, RestoreCellVars>({ mutationKey: mutationKeys.restoreCell });
 export const useSaveBlock = () =>
   useMutation<void, Error, SaveBlockVars>({ mutationKey: mutationKeys.saveBlock });
+export const useGenerateShopping = () =>
+  useMutation<void, Error, GenerateShoppingVars>({ mutationKey: mutationKeys.generateShopping });
+export const useSetShoppingItem = () =>
+  useMutation<void, Error, SetShoppingItemVars>({ mutationKey: mutationKeys.setShoppingItem });
+export const useRemoveShoppingItem = () =>
+  useMutation<void, Error, RemoveShoppingItemVars>({
+    mutationKey: mutationKeys.removeShoppingItem,
+  });
