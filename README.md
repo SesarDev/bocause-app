@@ -82,7 +82,16 @@ compartidos con su fondo y, el domingo, la tarjeta de las dos ingestas libres. E
 de perfil permite ver el plan de la otra persona o el de "Casa", que enseña solo comida y
 cena con las dos raciones y la suma para cocinar.
 
-Faltan los checks por alimento y los contadores de agua, aceite y comodín: son la fase 6.
+**Fase 6** añade el registro diario: check por alimento con la franja atenuada y marcada
+"Hecho" al completarla (mantener pulsada la etiqueta marca la franja entera), avatar de
+quién ya lo ha marcado en la vista Casa, y en Hoy las tarjetas de comodín proteico, aceite
+con barra semanal hacia las 14 cucharadas y agua a golpe de vaso. Desde el menú de cada
+franja se marca una ingesta libre, con el cupo de dos por semana.
+
+Cada uno marca lo suyo: viendo el plan de la otra persona los checks se ven pero no se
+tocan, igual que imponen las políticas de la base de datos.
+
+Lo siguiente es el intercambio de bloques entre días (fase 7).
 
 ## Puesta en marcha
 
