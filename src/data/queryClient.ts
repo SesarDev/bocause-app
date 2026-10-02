@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { del, get, set } from 'idb-keyval';
+import { registerMutationDefaults } from './mutations';
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -41,3 +42,7 @@ export const persister = createAsyncStoragePersister({
 });
 
 export const persistOptions = { persister, maxAge: ONE_WEEK } as const;
+
+// Las mutaciones se registran por clave para que, al rehidratar la caché tras cerrar la app
+// sin cobertura, el cliente sepa qué función ejecutar y pueda reanudarlas.
+registerMutationDefaults(queryClient);

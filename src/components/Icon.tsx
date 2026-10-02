@@ -1,7 +1,22 @@
 import type { SVGProps } from 'react';
 
 export type IconName =
-  'semana' | 'hoy' | 'compra' | 'mas' | 'sistema' | 'claro' | 'oscuro' | 'perfil';
+  | 'semana'
+  | 'hoy'
+  | 'compra'
+  | 'mas'
+  | 'sistema'
+  | 'claro'
+  | 'oscuro'
+  | 'perfil'
+  | 'desayuno'
+  | 'snack'
+  | 'cubiertos'
+  | 'cena'
+  | 'entreno'
+  | 'compartido'
+  | 'libre'
+  | 'casa';
 
 /** Iconos propios en línea: sin librerías ni imágenes externas (CLAUDE.md). */
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -49,6 +64,54 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="8.5" r="3.8" />
       <path d="M4.8 20a7.2 7.2 0 0 1 14.4 0" />
+    </>
+  ),
+  // Taza, como la columna de DESAYUNO del PDF.
+  desayuno: (
+    <>
+      <path d="M4 8h12v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" />
+      <path d="M16 10h2.2a2.3 2.3 0 0 1 0 4.6H16" />
+      <path d="M7 3.5v2M11 3.5v2" />
+    </>
+  ),
+  snack: (
+    <>
+      <path d="M12 8.5c-1.6-2-5.5-1.6-6.4 1.6-.8 3 1.4 8.4 4 9.4 1.3.5 1.9-.4 2.4-.4s1.1.9 2.4.4c2.6-1 4.8-6.4 4-9.4-.9-3.2-4.8-3.6-6.4-1.6z" />
+      <path d="M12 8.5c0-2 1-3.4 2.8-4" />
+    </>
+  ),
+  // Cuchillo y tenedor, como la columna de COMIDA del PDF.
+  cubiertos: (
+    <>
+      <path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10" />
+      <path d="M17 21v-8c2 0 3-1.2 3-4s-1-6-3-6-3 3.2-3 6 1 4 3 4z" />
+    </>
+  ),
+  cena: (
+    <>
+      <path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10" />
+      <path d="M20 15.5A5.5 5.5 0 0 1 14 8a6.5 6.5 0 1 0 6 7.5z" />
+    </>
+  ),
+  entreno: (
+    <>
+      <circle cx="15.5" cy="4.6" r="1.7" />
+      <path d="M8 21l2.6-5.2 3-1.6-1-4.4-3.4 2L7 14" />
+      <path d="M13.6 14.2 16 17l1.5 4" />
+    </>
+  ),
+  compartido: (
+    <>
+      <circle cx="8.5" cy="8.5" r="2.8" />
+      <circle cx="16.5" cy="9.5" r="2.2" />
+      <path d="M3.5 19a5 5 0 0 1 10 0M14.5 19a4.2 4.2 0 0 1 6 0" />
+    </>
+  ),
+  libre: <path d="M12 3.5l2.3 4.9 5.2.7-3.8 3.7.9 5.3-4.6-2.6-4.6 2.6.9-5.3L4.5 9.1l5.2-.7z" />,
+  casa: (
+    <>
+      <path d="M3.5 11 12 4l8.5 7" />
+      <path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" />
     </>
   ),
 };
