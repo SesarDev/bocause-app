@@ -101,7 +101,14 @@ durante seis segundos, y las celdas que ya no vienen del plan original llevan el
 **Pendiente de la fase 7:** el modo de arrastrar con `@dnd-kit` en la vista Semana, que
 `docs/PLAN.md` describe como alternativa al carrusel. El flujo principal está completo.
 
-Lo siguiente es el editor de bloques (fase 8).
+**Fase 8** es el editor de bloques, en hoja a pantalla casi completa: títulos de plato,
+añadir, quitar y reordenar secciones y alimentos, autocompletado contra el catálogo de
+alimentos y, en los platos compartidos, una columna por persona con "Copiar de…". Lo que
+cambias se resalta mientras editas y, al guardar, nace una copia que apunta al original
+(copy-on-write), aplicada a esta semana o a todo el plan. En las celdas vacías el menú
+ofrece "Crear comida aquí".
+
+Lo siguiente es la lista de la compra (fase 9).
 
 ## Puesta en marcha
 
