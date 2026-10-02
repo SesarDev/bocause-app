@@ -1,16 +1,12 @@
 import { Icon, type IconName } from '../../components/Icon';
 import { useUiStore, type TabId } from '../../stores/ui';
+import { ShoppingView } from '../shopping/ShoppingView';
 import { WeekView } from '../week/WeekView';
 import { AppHeader } from './AppHeader';
 import { BottomNav } from './BottomNav';
 
 /** Lo que todavía no existe dice en qué fase llega, en vez de quedarse en blanco. */
 const PLACEHOLDERS: Partial<Record<TabId, { icon: IconName; title: string; body: string }>> = {
-  compra: {
-    icon: 'compra',
-    title: 'Lista de la compra',
-    body: 'La compra de los dos sumada y agrupada por sección del súper. Fase 9.',
-  },
   mas: {
     icon: 'mas',
     title: 'Más',
@@ -29,6 +25,7 @@ export function AppShell() {
       <main className="mx-auto max-w-screen-sm px-4 pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {tab === 'semana' && <WeekView />}
         {tab === 'hoy' && <WeekView onlyToday />}
+        {tab === 'compra' && <ShoppingView />}
 
         {placeholder && (
           <section className="mt-6 rounded-day bg-surface p-6 text-center">

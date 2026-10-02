@@ -108,7 +108,14 @@ cambias se resalta mientras editas y, al guardar, nace una copia que apunta al o
 (copy-on-write), aplicada a esta semana o a todo el plan. En las celdas vacías el menú
 ofrece "Crear comida aquí".
 
-Lo siguiente es la lista de la compra (fase 9).
+**Fase 9** cierra el hito B con la lista de la compra: se genera sumando lo que comen los
+dos, en los rangos "semana actual", "lo que queda" y "próxima semana", agrupada por sección
+del súper en orden de recorrido. Cada línea se despliega con el desglose por persona y de
+cuántos días viene. Regenerar **no pierde** lo ya marcado, "ya lo tengo" se guarda aparte de
+"comprado", se pueden añadir cosas a mano y compartir la lista como texto.
+
+Con esto la app ya se puede usar a diario. `docs/PLAN.md` sugiere desplegar aquí (fase 16) y
+seguir iterando con la app en los móviles.
 
 ## Puesta en marcha
 
