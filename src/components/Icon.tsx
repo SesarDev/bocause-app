@@ -16,7 +16,8 @@ export type IconName =
   | 'entreno'
   | 'compartido'
   | 'libre'
-  | 'casa';
+  | 'casa'
+  | 'agua';
 
 /** Iconos propios en línea: sin librerías ni imágenes externas (CLAUDE.md). */
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -114,6 +115,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" />
     </>
   ),
+  agua: <path d="M12 3.5c3.4 4 6 7 6 9.8a6 6 0 0 1-12 0c0-2.8 2.6-5.8 6-9.8z" />,
 };
 
 type IconProps = SVGProps<SVGSVGElement> & { name: IconName; size?: number };

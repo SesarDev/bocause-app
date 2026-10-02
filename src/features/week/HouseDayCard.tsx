@@ -7,6 +7,7 @@ import {
   totalForProfiles,
 } from '../../domain/format';
 import type { ResolvedWeek } from '../../domain/resolve';
+import type { CheckIndex } from '../../domain/progress';
 import type { FoodItem, SlotKey } from '../../domain/schema';
 import { isAccentDay, SLOT_ICON, SLOT_LABEL } from './slots';
 
@@ -18,7 +19,19 @@ type Person = { profileId: string; displayName: string };
  * Vista "Casa": solo comida y cena, con las dos raciones una al lado de otra y la suma
  * para cocinar. Es la vista de quien está delante de la sartén, no la de quien come.
  */
-function CookingItem({ item, people }: { item: FoodItem; people: Person[] }) {
+function CookingItem({
+  item,
+  people,
+  date,
+  slot,
+  checkIndexes,
+}: {
+  item: FoodItem;
+  people: Person[];
+  date: string;
+  slot: SlotKey;
+  checkIndexes: Map<string, CheckIndex>;
+}) {
   const eaters = people.filter((person) => item.portions[person.profileId]);
   if (eaters.length === 0) return null;
 
@@ -41,8 +54,22 @@ function CookingItem({ item, people }: { item: FoodItem; people: Person[] }) {
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
         {eaters.map((person) => {
           const { amount, measure } = formatPortion(item.portions[person.profileId]!);
+          // Quién lo ha marcado ya: cocinando interesa saber si el otro ha comido.
+          const done = checkIndexes.get(person.profileId)?.has(date, slot, item.id) ?? false;
+
           return (
-            <p key={person.profileId} className="text-measure text-ink-muted">
+            <p
+              key={person.profileId}
+              className="flex items-center gap-1 text-measure text-ink-muted"
+            >
+              {done && (
+                <span
+                  aria-label={`${person.displayName} ya lo ha marcado`}
+                  className="grid size-4 place-items-center rounded-chip bg-check text-[0.5625rem] font-bold text-check-tick"
+                >
+                  ✓
+                </span>
+              )}
               <span className="font-semibold text-ink">{person.displayName}:</span>{' '}
               {amount ?? measure ?? 'al gusto'}
               {amount && measure && ` (${measure})`}
@@ -59,11 +86,13 @@ export function HouseDayCard({
   weeks,
   people,
   isToday,
+  checkIndexes,
 }: {
   day: number;
   weeks: ResolvedWeek[];
   people: Person[];
   isToday: boolean;
+  checkIndexes: Map<string, CheckIndex>;
 }) {
   // Los bloques compartidos son los mismos en las dos semanas: basta la primera que lo tenga.
   const reference = weeks[0]?.days[day];
@@ -122,7 +151,7 @@ export function HouseDayCard({
 
           return (
             <section key={slotKey} className="flex gap-2" aria-label={SLOT_LABEL[slotKey]}>
-              <p className="flex w-24 shrink-0 flex-col items-center gap-1 rounded-block bg-slot px-1.5 py-2 text-slot-ink">
+              <p className="flex w-[5.5rem] shrink-0 flex-col items-center gap-1 rounded-block bg-slot px-1 py-2 text-slot-ink">
                 <Icon name={SLOT_ICON[slotKey]} size={20} />
                 {/* text-(length:--text-slot), no text-slot: esa clase la genera también
                     --color-slot y pintaría el texto de marino sobre marino. */}
@@ -139,7 +168,14 @@ export function HouseDayCard({
                     )}
                     <ul>
                       {[...section.items.values()].map((item) => (
-                        <CookingItem key={item.id} item={item} people={people} />
+                        <CookingItem
+                          key={item.id}
+                          item={item}
+                          people={people}
+                          date={reference.date}
+                          slot={slotKey}
+                          checkIndexes={checkIndexes}
+                        />
                       ))}
                     </ul>
                   </div>
