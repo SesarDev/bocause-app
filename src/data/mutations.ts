@@ -54,10 +54,18 @@ export type UpdateDailyLogVars = {
   patch: Partial<Pick<DailyLog, 'waterMl' | 'aoveSpoons' | 'comodinDone' | 'comodinOptionId'>>;
 };
 
+export type OverrideKey = { weekStart: string; day: number; slot: string; scope: string };
+
 export type ApplyCellsVars = {
   planId: string;
   weekStart: string;
   upserts: CellUpsert[];
+  /**
+   * Overrides a borrar. Hace falta para deshacer bien: si la celda no tenía override antes
+   * del cambio, volver a escribirlo dejaría la celda marcada como "modificada esta semana"
+   * cuando en realidad venía del plan original.
+   */
+  deleteOverrides?: OverrideKey[];
 };
 
 export type RestoreCellVars = {
@@ -180,6 +188,7 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
   /* Intercambios e ingestas libres: filas de plantilla o de semana */
   queryClient.setMutationDefaults(mutationKeys.applyCells, {
     mutationFn: async (vars: ApplyCellsVars) => {
+      await deleteOverrideRows(queryClient, vars.planId, vars.deleteOverrides ?? []);
       await writeCellUpserts(queryClient, vars.planId, vars.upserts);
     },
     onMutate: (vars: ApplyCellsVars) => applyCellsOptimistically(queryClient, vars),
@@ -264,6 +273,27 @@ function emptyLog(profileId: string, date: string): DailyLog {
   };
 }
 
+async function deleteOverrideRows(
+  queryClient: QueryClient,
+  planId: string,
+  keys: readonly OverrideKey[],
+): Promise<void> {
+  if (keys.length === 0) return;
+  const scopes = directoryFrom(queryClient);
+
+  for (const key of keys) {
+    const { error } = await supabase
+      .from('week_overrides')
+      .delete()
+      .eq('plan_id', planId)
+      .eq('week_start', key.weekStart)
+      .eq('day', key.day)
+      .eq('slot', key.slot)
+      .eq('scope', scopes.toDbScope(key.scope));
+    if (error) throw error;
+  }
+}
+
 async function writeCellUpserts(
   queryClient: QueryClient,
   planId: string,
@@ -315,6 +345,14 @@ function applyCellsOptimistically(queryClient: QueryClient, vars: ApplyCellsVars
     (a: { day: number; slot: string; scope: string }) =>
     (b: { day: number; slot: string; scope: string }) =>
       a.day === b.day && a.slot === b.slot && a.scope === b.scope;
+
+  for (const key of vars.deleteOverrides ?? []) {
+    queryClient.setQueryData<WeekOverride[]>(weekKey, (current = []) =>
+      current.filter(
+        (row) => !(row.day === key.day && row.slot === key.slot && row.scope === key.scope),
+      ),
+    );
+  }
 
   for (const upsert of vars.upserts) {
     if (upsert.level === 'template') {

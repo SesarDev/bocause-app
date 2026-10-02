@@ -91,7 +91,17 @@ franja se marca una ingesta libre, con el cupo de dos por semana.
 Cada uno marca lo suyo: viendo el plan de la otra persona los checks se ven pero no se
 tocan, igual que imponen las políticas de la base de datos.
 
-Lo siguiente es el intercambio de bloques entre días (fase 7).
+**Fase 7** añade el intercambio: desde el menú de la franja se abre una hoja con un carrusel
+de los siete días (scroll-snap, sin librerías), se elige destino y alcance ("Solo esta
+semana" o "Todo el plan") y se confirma. Los platos compartidos avisan de que el cambio
+afecta también a la otra persona. Después aparece un aviso "Intercambiado · Deshacer"
+durante seis segundos, y las celdas que ya no vienen del plan original llevan el distintivo
+"Modificado", con "Restaurar original" en su menú.
+
+**Pendiente de la fase 7:** el modo de arrastrar con `@dnd-kit` en la vista Semana, que
+`docs/PLAN.md` describe como alternativa al carrusel. El flujo principal está completo.
+
+Lo siguiente es el editor de bloques (fase 8).
 
 ## Puesta en marcha
 

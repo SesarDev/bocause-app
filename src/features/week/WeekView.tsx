@@ -1,23 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/Icon';
 import { Sheet } from '../../components/Sheet';
+import { Toast, type ToastState } from '../../components/Toast';
 import { currentWeekStart, dayIndexOf, todayIn } from '../../domain/dates';
+import { restoreCell } from '../../domain/edit';
 import { canMarkFree, countFreeMeals } from '../../domain/freeMeals';
 import { minutesNow, nextSlot } from '../../domain/mealTimes';
 import { CheckIndex, dayProgress, type Progress } from '../../domain/progress';
-import type { ResolvedSlot } from '../../domain/resolve';
-import type { SlotKey } from '../../domain/schema';
+import { cellId, isSharedSlot, type ResolvedSlot } from '../../domain/resolve';
+import { swapCells, type SwapCell, type SwapLevel } from '../../domain/swap';
+import type { SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
 import { useMyProfile } from '../../data/auth';
-import { useApplyCells, useSetCheck } from '../../data/mutations';
+import { useApplyCells, useRestoreCell, useSetCheck } from '../../data/mutations';
 import {
   useHouseholdWeeks,
   useProfileDirectory,
   useResolvedWeek,
+  useTemplateCells,
   useWeekChecks,
   useWeekDailyLogs,
+  useWeekOverrides,
 } from '../../data/queries';
 import { useRealtimeSync } from '../../data/realtime';
 import { useUiStore } from '../../stores/ui';
+import { SwapSheet } from '../swap/SwapSheet';
 import { TodayTrackers } from '../trackers/Trackers';
 import { CheckContext, type CheckApi } from './checkContext';
 import { DayBar } from './DayBar';
@@ -28,16 +34,15 @@ import { SundayCard } from './SundayCard';
 
 const EMPTY_PROGRESS: Progress = { total: 0, done: 0, ratio: 0, complete: false };
 
-/**
- * Vista Semana. `onlyToday` la reutiliza la pestaña Hoy: la misma tarjeta de día, sin barra
- * de días y con los contadores de agua, aceite y comodín debajo.
- */
 export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const activeProfile = useUiStore((state) => state.activeProfile);
   const weekStart = currentWeekStart();
   const todayIndex = dayIndexOf(todayIn());
   const scrolled = useRef(false);
+
   const [menuSlot, setMenuSlot] = useState<ResolvedSlot | null>(null);
+  const [swapOrigin, setSwapOrigin] = useState<ResolvedSlot | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   const isHouse = activeProfile === 'casa';
   const profileSlug = isHouse ? undefined : (activeProfile ?? undefined);
@@ -47,14 +52,16 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const directory = useProfileDirectory();
   const checks = useWeekChecks(weekStart, directory);
   const logs = useWeekDailyLogs(weekStart, directory);
+  const overrides = useWeekOverrides(plan?.id, weekStart, directory);
+  const templateCells = useTemplateCells(plan?.id, directory);
   const myProfile = useMyProfile(true);
 
   const setCheck = useSetCheck();
   const applyCells = useApplyCells();
+  const restore = useRestoreCell();
 
   useRealtimeSync(plan?.id, weekStart);
 
-  // Cada uno marca lo suyo: viendo el plan de la otra persona o la vista Casa, solo se mira.
   const mySlug = myProfile.data?.slug;
   const editable = !isHouse && profileSlug !== undefined && profileSlug === mySlug;
 
@@ -171,6 +178,78 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
 
   const freeUsed = countFreeMeals(week);
   const days = onlyToday ? week.days.filter((day) => day.day === todayIndex) : week.days;
+  const otherName = plan.profiles.find(
+    (profile) => profile.profileId !== week.profileId,
+  )?.displayName;
+
+  const asSwapCell = (slot: ResolvedSlot): SwapCell => ({
+    cell: slot.cell,
+    blockId: slot.blockId,
+    isFree: slot.isFree,
+  });
+
+  /* ── Intercambio ── */
+
+  const doSwap = (origin: ResolvedSlot, target: ResolvedSlot, level: SwapLevel) => {
+    const result = swapCells(
+      asSwapCell(origin),
+      asSwapCell(target),
+      level === 'week' ? { level: 'week', weekStart } : { level: 'template' },
+    );
+
+    if (!result.ok) {
+      setToast({ message: 'No se puede intercambiar ahí.' });
+      return;
+    }
+
+    // Para deshacer hay que devolver el estado EXACTO, no solo los bloques: si una celda no
+    // tenía override, volver a escribirlo la dejaría marcada como cambiada esta semana.
+    const touched = [origin.cell, target.cell];
+    const undoUpserts =
+      level === 'week'
+        ? (overrides.data ?? [])
+            .filter((row) => touched.some((cell) => cellId(cell) === cellId(row)))
+            .map((row) => ({ level: 'week' as const, row: row as WeekOverride }))
+        : (templateCells.data ?? [])
+            .filter((row) => touched.some((cell) => cellId(cell) === cellId(row)))
+            .map((row) => ({ level: 'template' as const, row: row as TemplateCell }));
+
+    const undoDeletes =
+      level === 'week'
+        ? touched
+            .filter((cell) => !(overrides.data ?? []).some((row) => cellId(row) === cellId(cell)))
+            .map((cell) => ({
+              weekStart,
+              day: cell.day,
+              slot: cell.slot,
+              scope: cell.scope,
+            }))
+        : [];
+
+    applyCells.mutate({ planId: plan.id, weekStart, upserts: result.upserts });
+    setSwapOrigin(null);
+    setMenuSlot(null);
+
+    setToast({
+      message: result.affectsBothProfiles ? 'Intercambiado para los dos' : 'Intercambiado',
+      actionLabel: 'Deshacer',
+      onAction: () =>
+        applyCells.mutate({
+          planId: plan.id,
+          weekStart,
+          upserts: undoUpserts,
+          deleteOverrides: undoDeletes,
+        }),
+    });
+  };
+
+  const doRestore = (slot: ResolvedSlot) => {
+    const level = slot.source === 'template' ? 'template' : 'week';
+    const plan2 = restoreCell(slot.cell, plan.template, { level, weekStart });
+    restore.mutate({ planId: plan.id, weekStart, plan: plan2 });
+    setMenuSlot(null);
+    setToast({ message: 'Restaurado el original' });
+  };
 
   const markFree = (slot: ResolvedSlot, next: boolean) => {
     applyCells.mutate({
@@ -235,38 +314,96 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
         />
       )}
 
+      {/* Menú de la franja */}
       <Sheet
-        open={menuSlot !== null}
+        open={menuSlot !== null && swapOrigin === null}
         onClose={() => setMenuSlot(null)}
         title={menuSlot ? SLOT_LABEL[menuSlot.cell.slot] : ''}
       >
         {menuSlot && (
-          <div className="pb-2">
-            <button
-              type="button"
+          <div className="flex flex-col gap-2 pb-2">
+            <MenuAction
+              icon="semana"
+              label="Intercambiar con otro día"
+              hint={
+                isSharedSlot(menuSlot.cell.slot) && otherName
+                  ? `Cambia también para ${otherName}`
+                  : undefined
+              }
+              onClick={() => setSwapOrigin(menuSlot)}
+            />
+
+            <MenuAction
+              icon="libre"
+              label={menuSlot.isFree ? 'Quitar la ingesta libre' : 'Marcar como ingesta libre'}
+              hint={
+                menuSlot.isFree
+                  ? 'Volverá a contar como una comida del plan'
+                  : canFree
+                    ? `Has usado ${freeUsed} de ${plan.rules.freeMealsPerWeek} esta semana`
+                    : `Ya has usado las ${plan.rules.freeMealsPerWeek} de esta semana`
+              }
               disabled={!canFree}
               onClick={() => markFree(menuSlot, !menuSlot.isFree)}
-              className="flex min-h-tap w-full items-center gap-3 rounded-block border border-line px-4 py-3 text-left disabled:opacity-50"
-            >
-              <Icon name="libre" size={20} />
-              <span className="flex-1 text-item font-semibold text-ink">
-                {menuSlot.isFree ? 'Quitar la ingesta libre' : 'Marcar como ingesta libre'}
-              </span>
-            </button>
-            <p className="mt-2 text-measure text-ink-muted">
-              {menuSlot.isFree
-                ? 'Volverá a contar como una comida del plan.'
-                : canFree
-                  ? `Has usado ${freeUsed} de ${plan.rules.freeMealsPerWeek} esta semana.`
-                  : `Ya has usado las ${plan.rules.freeMealsPerWeek} de esta semana.`}
-            </p>
-            <p className="mt-3 text-measure text-ink-muted">
-              Intercambiar y editar llegan en las fases 7 y 8.
-            </p>
+            />
+
+            {menuSlot.source !== 'original' && (
+              <MenuAction
+                icon="hoy"
+                label="Restaurar original"
+                hint={
+                  menuSlot.source === 'week'
+                    ? 'Deshace el cambio de esta semana'
+                    : 'Deshace el cambio en todo el plan'
+                }
+                onClick={() => doRestore(menuSlot)}
+              />
+            )}
           </div>
         )}
       </Sheet>
+
+      <SwapSheet
+        key={swapOrigin ? cellId(swapOrigin.cell) : 'sin-origen'}
+        open={swapOrigin !== null}
+        onClose={() => setSwapOrigin(null)}
+        origin={swapOrigin}
+        week={week}
+        otherName={otherName}
+        onConfirm={(target, level) => swapOrigin && doSwap(swapOrigin, target, level)}
+      />
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </CheckContext.Provider>
+  );
+}
+
+function MenuAction({
+  icon,
+  label,
+  hint,
+  disabled = false,
+  onClick,
+}: {
+  icon: 'semana' | 'libre' | 'hoy';
+  label: string;
+  hint?: string | undefined;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="flex min-h-tap w-full items-center gap-3 rounded-block border border-line px-4 py-3 text-left disabled:opacity-50"
+    >
+      <Icon name={icon} size={20} />
+      <span className="flex-1">
+        <span className="block text-item font-semibold text-ink">{label}</span>
+        {hint && <span className="block text-measure text-ink-muted">{hint}</span>}
+      </span>
+    </button>
   );
 }
 
