@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { persistOptions, queryClient } from '../data/queryClient';
 import { supabaseConfigured } from '../data/supabase';
@@ -36,6 +36,7 @@ function Gate() {
   const { session, loading } = useSession();
   const profileQuery = useMyProfile(session !== null);
   const setActiveProfile = useUiStore((state) => state.setActiveProfile);
+  const tarda = useTimeout(6000);
 
   const slug = profileQuery.data?.slug;
 
@@ -46,10 +47,87 @@ function Gate() {
   if (!supabaseConfigured) return <SetupScreen />;
   if (loading) return <Splash />;
   if (!session) return <LoginScreen />;
-  if (profileQuery.isLoading) return <Splash />;
+
+  // Mientras no se sepa si hay perfil, no se decide nada. `isPending` también cubre la
+  // consulta pausada por falta de red, que `isLoading` daba por terminada: con eso, un
+  // corte de cobertura mandaba al selector de perfil a quien ya tenía el suyo.
+  if (profileQuery.isPending) {
+    if (profileQuery.fetchStatus === 'paused') {
+      return (
+        <Problem
+          title="Sin conexión"
+          detail="No se puede comprobar tu perfil ahora mismo. Se reintenta solo al volver la cobertura."
+          onRetry={() => void profileQuery.refetch()}
+        />
+      );
+    }
+    // Sin red, la consulta puede tardar más de veinte segundos en darse por vencida. Nadie
+    // se queda mirando un splash mudo tanto rato: a los seis segundos se explica y se ofrece
+    // reintentar, sin cancelar lo que siga en marcha por debajo.
+    if (tarda) {
+      return (
+        <Problem
+          title="Esto está tardando"
+          detail="No se ha podido confirmar tu perfil todavía. Comprueba la conexión."
+          onRetry={() => void profileQuery.refetch()}
+        />
+      );
+    }
+    return <Splash />;
+  }
+
+  if (profileQuery.isError) {
+    return (
+      <Problem
+        title="No se pudo cargar tu perfil"
+        detail={profileQuery.error instanceof Error ? profileQuery.error.message : ''}
+        onRetry={() => void profileQuery.refetch()}
+      />
+    );
+  }
+
   if (!profileQuery.data) return <ProfilePicker />;
 
   return <AppShell />;
+}
+
+/** Pasa a true cuando han transcurrido `ms` desde el montaje. Para no esperar indefinidamente. */
+function useTimeout(ms: number): boolean {
+  const [cumplido, setCumplido] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setCumplido(true), ms);
+    return () => clearTimeout(id);
+  }, [ms]);
+
+  return cumplido;
+}
+
+/** Pantalla de parada: dice qué pasa y deja reintentar, en vez de dejar a alguien encerrado. */
+function Problem({
+  title,
+  detail,
+  onRetry,
+}: {
+  title: string;
+  detail: string;
+  onRetry: () => void;
+}) {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-screen-sm flex-col justify-center px-6">
+      <section className="rounded-day bg-surface p-6">
+        <h1 className="text-dish font-bold text-ink">{title}</h1>
+        {detail !== '' && <p className="mt-2 text-item text-ink-muted">{detail}</p>}
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 min-h-tap w-full rounded-block bg-slot px-4 py-3 text-item font-semibold text-slot-ink"
+        >
+          Reintentar
+        </button>
+      </section>
+    </main>
+  );
 }
 
 function Splash() {

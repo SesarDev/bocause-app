@@ -92,8 +92,14 @@ export function useMyProfile(enabled: boolean) {
     queryKey: authKeys.myProfile,
     enabled,
     queryFn: async (): Promise<Profile | null> => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
+      // getSession() lee la sesión del almacenamiento local. Antes esto usaba getUser(),
+      // que va a la red: sin cobertura devolvía "no hay usuario", y aquí eso se confundía
+      // con "este usuario no tiene perfil". El resultado era mandar al selector de perfil
+      // a alguien que ya tenía el suyo, y dejarlo encerrado allí.
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      const userId = sessionData.session?.user.id;
       if (!userId) return null;
 
       const { data, error } = await supabase

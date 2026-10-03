@@ -9,19 +9,29 @@ import { admin, env, expect, openTab, test } from './fixtures';
 test.skip(env === null, 'Hace falta .env.local con SUPABASE_SERVICE_ROLE_KEY');
 
 /**
- * La limpieza va en un afterEach y no al final del test: si una comprobación falla a mitad,
- * la última línea no se ejecuta y la lista se queda puesta, lo que hace que la siguiente
- * ejecución se salte sola y parezca que todo va bien.
+ * La limpieza va en un afterEach y no al final de cada prueba: si una comprobación falla a
+ * mitad, la última línea nunca se ejecuta, las filas se quedan puestas y la siguiente
+ * ejecución arranca sucia. Pasó con la lista de la compra (la prueba se saltaba sola y la
+ * suite seguía diciendo que todo iba bien) y volvió a pasar con los checks y los overrides.
+ *
+ * Se borra por ventana de tiempo y no la tabla entera, a propósito: esto corre contra el
+ * Supabase de casa, donde hay comidas marcadas de verdad que no son nuestras para borrar.
  */
-let listaGenerada = false;
+const TABLAS_QUE_ENSUCIAN = ['checks', 'week_overrides', 'shopping_items'] as const;
+
+let desde = '';
+
+test.beforeEach(() => {
+  desde = new Date(Date.now() - 2000).toISOString();
+});
 
 test.afterEach(async () => {
-  if (!listaGenerada) return;
-  listaGenerada = false;
-  const response = await admin('shopping_items?id=neq.00000000-0000-0000-0000-000000000000', {
-    method: 'DELETE',
-  });
-  if (!response.ok) throw new Error(`No se pudo limpiar la lista: HTTP ${response.status}`);
+  for (const tabla of TABLAS_QUE_ENSUCIAN) {
+    const response = await admin(`${tabla}?updated_at=gte.${desde}`, { method: 'DELETE' });
+    if (!response.ok) {
+      throw new Error(`No se pudo limpiar ${tabla}: HTTP ${response.status}`);
+    }
+  }
 });
 
 test('entra con la sesión y ve su plan', async ({ app }) => {
@@ -48,10 +58,9 @@ test('marca un alimento y se guarda', async ({ app }) => {
     )
     .toBeGreaterThan(0);
 
-  // Y se deja como estaba.
+  // Y se deja como estaba. Lo que llegó a la base de datos lo borra el afterEach.
   await check.click();
   await expect(check).toHaveAttribute('aria-checked', 'false');
-  await admin('checks?item_id=neq.imposible', { method: 'DELETE' });
 });
 
 test('intercambia dos días y lo deshace', async ({ app }) => {
@@ -98,7 +107,6 @@ test('genera la compra sumando a los dos', async ({ app }) => {
 
   await openTab(app, 'Compra');
   await app.getByRole('button', { name: /Generar lista/ }).click();
-  listaGenerada = true;
 
   await expect(app.getByRole('heading', { name: 'FRUTERÍA' })).toBeVisible({ timeout: 20_000 });
 

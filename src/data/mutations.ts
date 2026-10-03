@@ -272,10 +272,11 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
   queryClient.setMutationDefaults(mutationKeys.saveBlock, {
     mutationFn: async (vars: SaveBlockVars) => {
       const scopes = directoryFrom(queryClient);
-      const { data: userData } = await supabase.auth.getUser();
+      // De la sesión guardada, no de la red: si no, guardar sin cobertura perdía el autor.
+      const { data: sessionData } = await supabase.auth.getSession();
       const me = queryClient
         .getQueryData<Profile[]>(keys.profiles())
-        ?.find((profile) => profile.userId === userData.user?.id);
+        ?.find((profile) => profile.userId === sessionData.session?.user.id);
 
       const { error } = await supabase
         .from('blocks')
