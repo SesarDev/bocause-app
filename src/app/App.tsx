@@ -36,7 +36,9 @@ function Gate() {
   const { session, loading } = useSession();
   const profileQuery = useMyProfile(session !== null);
   const setActiveProfile = useUiStore((state) => state.setActiveProfile);
-  const tarda = useTimeout(6000);
+  // Diez segundos, no seis: un móvil que despierta de la pantalla apagada tarda lo suyo en
+  // tener red, y asustar a alguien con un aviso mientras todo va bien es peor que esperar.
+  const tarda = useTimeout(10_000);
 
   const slug = profileQuery.data?.slug;
 
@@ -62,13 +64,13 @@ function Gate() {
       );
     }
     // Sin red, la consulta puede tardar más de veinte segundos en darse por vencida. Nadie
-    // se queda mirando un splash mudo tanto rato: a los seis segundos se explica y se ofrece
-    // reintentar, sin cancelar lo que siga en marcha por debajo.
+    // se queda mirando un splash mudo tanto rato: pasado un tiempo se dice qué ocurre. La
+    // app sigue reintentando sola por debajo, así que el botón es un atajo, no la salida.
     if (tarda) {
       return (
         <Problem
-          title="Esto está tardando"
-          detail="No se ha podido confirmar tu perfil todavía. Comprueba la conexión."
+          title="Tardando más de lo normal"
+          detail="Seguimos intentándolo. Si no arranca, comprueba la conexión del móvil."
           onRetry={() => void profileQuery.refetch()}
         />
       );
