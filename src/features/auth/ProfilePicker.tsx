@@ -1,5 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '../../components/Icon';
-import { signOut, useAvailableProfiles, useClaimProfile } from '../../data/auth';
+import { authKeys, signOut, useAvailableProfiles, useClaimProfile } from '../../data/auth';
 
 /**
  * "¿Quién eres?": vincula el usuario con su perfil del hogar. Solo se puede elegir un
@@ -7,8 +8,25 @@ import { signOut, useAvailableProfiles, useClaimProfile } from '../../data/auth'
  * qué puede editar cada uno.
  */
 export function ProfilePicker() {
-  const { data: profiles, isLoading, error } = useAvailableProfiles(true);
+  const { data: profiles, isPending, fetchStatus, error, refetch } = useAvailableProfiles(true);
   const claim = useClaimProfile();
+
+  const queryClient = useQueryClient();
+
+  // Sin red la consulta se queda pausada: ni carga, ni falla, ni trae lista. Antes eso
+  // pintaba la pantalla sin una sola opción ni explicación, que es la peor de las salidas.
+  const paused = isPending && fetchStatus === 'paused';
+  const todosOcupados =
+    profiles !== undefined && profiles.length > 0 && profiles.every((p) => p.taken);
+
+  /**
+   * Reintentar tiene que releer también "¿cuál es mi perfil?": si alguien acaba aquí es
+   * porque esa consulta dijo que no tenía, y volver a pedir solo la lista no lo sacaría.
+   */
+  const reintentar = () => {
+    void queryClient.invalidateQueries({ queryKey: authKeys.myProfile });
+    void refetch();
+  };
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-screen-sm flex-col justify-center px-6">
@@ -18,7 +36,15 @@ export function ProfilePicker() {
           Elige tu perfil. Se queda guardado en este móvil y no hace falta volver a elegirlo.
         </p>
 
-        {isLoading && <p className="mt-6 text-item text-ink-muted">Cargando perfiles…</p>}
+        {isPending && !paused && (
+          <p className="mt-6 text-item text-ink-muted">Cargando perfiles…</p>
+        )}
+
+        {paused && (
+          <p className="mt-6 text-item text-ink-muted">
+            Sin conexión: no se ha podido traer la lista de perfiles.
+          </p>
+        )}
 
         {error !== null && (
           <p role="alert" className="mt-6 text-measure text-danger">
@@ -51,11 +77,28 @@ export function ProfilePicker() {
           ))}
         </ul>
 
-        {profiles?.length === 0 && !isLoading && (
+        {profiles?.length === 0 && (
           <p className="mt-6 text-item text-ink-muted">
             No hay ningún perfil disponible para tu correo. Revisa que el hogar esté creado y que tu
             correo sea el que tiene asignado.
           </p>
+        )}
+
+        {todosOcupados && (
+          <p className="mt-4 text-measure text-ink-muted">
+            Si uno de estos eres tú, es que tu perfil ya está vinculado a esta cuenta y no hace
+            falta elegir nada: vuelve a intentarlo con el botón de abajo.
+          </p>
+        )}
+
+        {(paused || error !== null || todosOcupados) && (
+          <button
+            type="button"
+            onClick={reintentar}
+            className="mt-4 min-h-tap w-full rounded-block bg-slot px-4 py-3 text-item font-semibold text-slot-ink"
+          >
+            Reintentar
+          </button>
         )}
 
         {claim.isError && (

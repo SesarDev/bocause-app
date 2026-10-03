@@ -34,6 +34,9 @@ coverage
 *.sln
 *.sw?
 
+# Vercel (guarda el id del proyecto al usar la CLI)
+.vercel
+
 # Playwright
 /test-results/
 /playwright-report/

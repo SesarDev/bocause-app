@@ -175,3 +175,10 @@ Después, `npm run dev`, entra con tu correo y elige perfil.
   vive en `src/data/mappers.ts` y es el único sitio donde se cruza esa frontera.
 - **`0002_claim_profile.sql` existe porque faltaba una pieza en la migración original**: sin
   él, un usuario recién registrado no puede ni ver los perfiles para elegir el suyo.
+- **Quién eres se lee de la sesión guardada, no con `supabase.auth.getUser()`**, que va a la
+  red. Al desplegar apareció el fallo: sin cobertura, `getUser()` decía "no hay usuario",
+  `useMyProfile` lo traducía a "esta persona no tiene perfil" y la app mandaba al selector de
+  perfil a alguien que ya tenía el suyo, donde además no había nada que elegir. Regla
+  general: **una consulta que falla no es una respuesta**, y el `Gate` de `App.tsx` ahora
+  distingue los cuatro estados (cargando, pausada sin red, error y respuesta) en vez de
+  tratar "sin datos" como "no tiene perfil".
