@@ -114,6 +114,33 @@ del súper en orden de recorrido. Cada línea se despliega con el desglose por p
 cuántos días viene. Regenerar **no pierde** lo ya marcado, "ya lo tengo" se guarda aparte de
 "comprado", se pueden añadir cosas a mano y compartir la lista como texto.
 
+**Fase 10** pule el MVP: esqueletos de carga en vez de un texto de "cargando", aviso de sin
+conexión que no tapa el contenido, errores de red con botón de reintentar, foco atrapado
+dentro de las hojas inferiores y repaso de contraste de los dos temas (todos los pares de
+tokens pasan AA). Añade además pruebas de extremo a extremo con Playwright de los cuatro
+flujos críticos: entrar, marcar un alimento, intercambiar y deshacer, y generar la compra.
+
+### Pruebas de extremo a extremo
+
+```
+npm run test:e2e
+```
+
+Van **contra el Supabase real**, porque no hay un proyecto de pruebas. Cada test deshace lo
+que toca y el de la compra se salta solo si ya hay una lista, pero no están pensadas para
+correr en cada commit: por eso no entran en `npm test`. Sin `SUPABASE_SERVICE_ROLE_KEY` en
+`.env.local` se saltan solas.
+
+**Fase 11** llena la pestaña Más: protocolos de entreno con su pre/ETT/post (también se
+abren tocando el chip de entreno de cada día), las opciones del comodín con sus cantidades,
+las recetas del plan con la del cheat meal, las recomendaciones como tarjetas con iconos
+propios, y cerrar sesión.
+
+**Pendiente de la fase 11:** el editor de recetas. `docs/PLAN.md` lo pide, pero las recetas
+viven dentro de `plans.data`, que es inmutable, y no hay tabla donde guardar las que
+escribáis vosotros. Haría falta una migración nueva. Ahora mismo las recetas son de solo
+lectura y el plan solo trae una, así que el editor no tendría nada que editar todavía.
+
 Con esto la app ya se puede usar a diario. `docs/PLAN.md` sugiere desplegar aquí (fase 16) y
 seguir iterando con la app en los móviles.
 

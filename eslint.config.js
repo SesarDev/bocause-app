@@ -6,7 +6,9 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['dist', 'dev-dist', 'coverage', 'node_modules'] },
+  {
+    ignores: ['dist', 'dev-dist', 'coverage', 'node_modules', 'test-results', 'playwright-report'],
+  },
   {
     extends: [js.configs.recommended, tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -64,6 +66,16 @@ export default tseslint.config(
   {
     files: ['*.config.{js,ts}', 'scripts/**/*.ts'],
     languageOptions: { globals: globals.node },
+  },
+  // Las pruebas de Playwright no son React. La regla de hooks confunde el callback `use`
+  // de los fixtures con el hook `use()`, así que aquí no aplica.
+  {
+    files: ['e2e/**/*.ts'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
   },
   prettier,
 );
