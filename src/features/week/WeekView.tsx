@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../../components/Icon';
 import { Sheet } from '../../components/Sheet';
+import { DaySkeleton, LoadingAnnounce } from '../../components/Skeleton';
 import { Toast, type ToastState } from '../../components/Toast';
 import { currentWeekStart, dayIndexOf, todayIn } from '../../domain/dates';
 import { restoreCell } from '../../domain/edit';
@@ -27,6 +28,7 @@ import { useUiStore } from '../../stores/ui';
 import { BlockEditor } from '../editor/BlockEditor';
 import { emptyBlock } from '../editor/draft';
 import { SwapSheet } from '../swap/SwapSheet';
+import { TrainingSheet } from '../training/TrainingSheet';
 import { TodayTrackers } from '../trackers/Trackers';
 import { CheckContext, type CheckApi } from './checkContext';
 import { DayBar } from './DayBar';
@@ -46,12 +48,13 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const [menuSlot, setMenuSlot] = useState<ResolvedSlot | null>(null);
   const [swapOrigin, setSwapOrigin] = useState<ResolvedSlot | null>(null);
   const [editorSlot, setEditorSlot] = useState<ResolvedSlot | null>(null);
+  const [training, setTraining] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const isHouse = activeProfile === 'casa';
   const profileSlug = isHouse ? undefined : (activeProfile ?? undefined);
 
-  const { plan, week, isLoading, error } = useResolvedWeek(profileSlug, weekStart);
+  const { plan, week, isLoading, error, planQuery } = useResolvedWeek(profileSlug, weekStart);
   const household = useHouseholdWeeks(weekStart);
   const directory = useProfileDirectory();
   const checks = useWeekChecks(weekStart, directory);
@@ -129,12 +132,27 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
       ?.scrollIntoView({ block: 'start', behavior: 'auto' });
   }, [onlyToday, week, todayIndex]);
 
-  if (isLoading || (isHouse && household.isLoading)) return <Message>Cargando el plan…</Message>;
+  if (isLoading || (isHouse && household.isLoading)) {
+    return (
+      <div className="mt-3 flex flex-col gap-3">
+        <LoadingAnnounce>Cargando el plan</LoadingAnnounce>
+        <DaySkeleton />
+        <DaySkeleton />
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <Message tone="error">
         No se pudo cargar el plan. Comprueba la conexión; lo último que se vio sigue guardado.
+        <button
+          type="button"
+          onClick={() => void refetchAll()}
+          className="mt-3 block min-h-tap w-full rounded-chip bg-accent px-4 font-bold text-accent-ink"
+        >
+          Reintentar
+        </button>
       </Message>
     );
   }
@@ -147,6 +165,16 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
       </Message>
     );
   }
+
+  const refetchAll = async () => {
+    await Promise.all([
+      planQuery.refetch(),
+      overrides.refetch(),
+      templateCells.refetch(),
+      editedBlocks.refetch(),
+      checks.refetch(),
+    ]);
+  };
 
   const goToDay = (day: number) =>
     document.getElementById(`dia-${day}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -351,6 +379,7 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
               isToday={day.day === todayIndex}
               nextSlotKey={nextSlotKey}
               onSlotMenu={setMenuSlot}
+              onTraining={setTraining}
             />
           ),
         )}
@@ -460,6 +489,14 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
           onSave={doSaveBlock}
         />
       )}
+
+      <TrainingSheet
+        training={training}
+        protocols={
+          plan.profiles.find((profile) => profile.profileId === week.profileId)?.supplements ?? []
+        }
+        onClose={() => setTraining(null)}
+      />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </CheckContext.Provider>

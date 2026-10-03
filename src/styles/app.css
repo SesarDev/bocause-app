@@ -1,4 +1,24 @@
-/* Animaciones propias de la app. Van aparte de tokens.css, que viene del kit. */
+/* Añadidos propios de la app. Van aparte de tokens.css, que viene del kit. */
+
+/*
+ * Corrección de contraste en modo oscuro.
+ *
+ * tokens.css redefine casi todos los tokens para el tema oscuro, pero se deja
+ * --color-danger en #b42318. Sobre la tarjeta oscura (#121e2c) eso da 2,56:1, muy por
+ * debajo del 4,5:1 que exige AA: un mensaje de error quedaría casi ilegible. Con #f87171
+ * sube a 6,08:1.
+ *
+ * Se corrige aquí y no en tokens.css para no tocar el archivo del kit. Si algún día se
+ * arregla allí, esta regla se puede borrar.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-danger: #f87171;
+  }
+}
+:root[data-theme='dark'] {
+  --color-danger: #f87171;
+}
 
 @keyframes sheet-in {
   from {

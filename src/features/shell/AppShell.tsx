@@ -1,41 +1,41 @@
-import { Icon, type IconName } from '../../components/Icon';
-import { useUiStore, type TabId } from '../../stores/ui';
+import { useOnline } from '../../components/useOnline';
+import { useUiStore } from '../../stores/ui';
+import { MoreView } from '../more/MoreView';
 import { ShoppingView } from '../shopping/ShoppingView';
 import { WeekView } from '../week/WeekView';
 import { AppHeader } from './AppHeader';
 import { BottomNav } from './BottomNav';
 
-/** Lo que todavía no existe dice en qué fase llega, en vez de quedarse en blanco. */
-const PLACEHOLDERS: Partial<Record<TabId, { icon: IconName; title: string; body: string }>> = {
-  mas: {
-    icon: 'mas',
-    title: 'Más',
-    body: 'Entrenos, recetas, recomendaciones del plan y ajustes de notificaciones. Fases 11 y 15.',
-  },
-};
-
 export function AppShell() {
   const tab = useUiStore((state) => state.tab);
-  const placeholder = PLACEHOLDERS[tab];
+  const online = useOnline();
 
   return (
     <div className="min-h-dvh bg-bg">
       <AppHeader />
 
-      <main className="mx-auto max-w-screen-sm px-4 pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      {!online && (
+        <p
+          role="status"
+          className="fixed inset-x-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 bg-slot px-4 py-1.5 text-center text-measure font-semibold text-slot-ink"
+        >
+          Sin conexión · lo que marques se guardará al volver
+        </p>
+      )}
+
+      {/* Cuando aparece el aviso de offline, el contenido tiene que bajar su altura: si no,
+          la barra fija le tapa la cabecera del día. */}
+      <main
+        className={`mx-auto max-w-screen-sm px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] ${
+          online
+            ? 'pt-[calc(3.5rem+env(safe-area-inset-top))]'
+            : 'pt-[calc(5.25rem+env(safe-area-inset-top))]'
+        }`}
+      >
         {tab === 'semana' && <WeekView />}
         {tab === 'hoy' && <WeekView onlyToday />}
         {tab === 'compra' && <ShoppingView />}
-
-        {placeholder && (
-          <section className="mt-6 rounded-day bg-surface p-6 text-center">
-            <span className="mx-auto grid size-12 place-items-center rounded-chip bg-slot text-slot-ink">
-              <Icon name={placeholder.icon} size={24} />
-            </span>
-            <h1 className="mt-4 text-dish font-bold text-ink">{placeholder.title}</h1>
-            <p className="mt-2 text-item text-ink-muted">{placeholder.body}</p>
-          </section>
-        )}
+        {tab === 'mas' && <MoreView />}
       </main>
 
       <BottomNav />

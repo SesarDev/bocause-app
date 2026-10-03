@@ -17,7 +17,13 @@ export type IconName =
   | 'compartido'
   | 'libre'
   | 'casa'
-  | 'agua';
+  | 'agua'
+  | 'aceite'
+  | 'sueno'
+  | 'alcohol'
+  | 'tecnologia'
+  | 'receta'
+  | 'salir';
 
 /** Iconos propios en línea: sin librerías ni imágenes externas (CLAUDE.md). */
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -116,6 +122,43 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   agua: <path d="M12 3.5c3.4 4 6 7 6 9.8a6 6 0 0 1-12 0c0-2.8 2.6-5.8 6-9.8z" />,
+  aceite: (
+    <>
+      <path d="M10 3h4v2.5l3.5 2.6A3 3 0 0 1 18.7 10v8a2 2 0 0 1-2 2H7.3a2 2 0 0 1-2-2v-8a3 3 0 0 1 1.2-1.9L10 5.5z" />
+      <path d="M9 13h6" />
+    </>
+  ),
+  sueno: (
+    <>
+      <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" />
+      <path d="M15 3h4l-4 4h4" />
+    </>
+  ),
+  alcohol: (
+    <>
+      <path d="M6 3h12l-5 7v8M8 21h8M13 18h-2" />
+      <path d="M4 4l16 16" />
+    </>
+  ),
+  tecnologia: (
+    <>
+      <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+      <path d="M10.5 5.5h3" />
+      <path d="M4 4l16 16" />
+    </>
+  ),
+  receta: (
+    <>
+      <path d="M6 3h11a2 2 0 0 1 2 2v16l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2z" />
+      <path d="M9 8h7M9 12h7" />
+    </>
+  ),
+  salir: (
+    <>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 8l-4 4 4 4M6 12h9" />
+    </>
+  ),
 };
 
 type IconProps = SVGProps<SVGSVGElement> & { name: IconName; size?: number };

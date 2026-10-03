@@ -115,12 +115,14 @@ export function DayCard({
   isToday,
   nextSlotKey,
   onSlotMenu,
+  onTraining,
 }: {
   day: ResolvedDay;
   profileId: ProfileId;
   isToday: boolean;
   nextSlotKey: string | null;
   onSlotMenu: (slot: ResolvedSlot) => void;
+  onTraining: (training: string) => void;
 }) {
   const accent = isAccentDay(day.day);
 
@@ -143,10 +145,15 @@ export function DayCard({
           </span>
         )}
         {day.training && (
-          <span className="ml-auto flex items-center gap-1 rounded-chip border border-line px-2 py-0.5 text-measure font-semibold text-ink">
+          <button
+            type="button"
+            onClick={() => onTraining(day.training!)}
+            aria-label={`Ver la suplementación de ${day.training}`}
+            className="ml-auto flex min-h-tap items-center gap-1 rounded-chip border border-line px-2 text-measure font-semibold text-ink"
+          >
             <Icon name="entreno" size={14} />
             {day.training}
-          </span>
+          </button>
         )}
       </header>
 

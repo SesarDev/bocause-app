@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Checkbox } from '../../components/Checkbox';
 import { Icon } from '../../components/Icon';
+import { ListSkeleton, LoadingAnnounce } from '../../components/Skeleton';
 import { Toast, type ToastState } from '../../components/Toast';
 import { addDays, currentWeekStart, todayIn, type IsoDateString } from '../../domain/dates';
 import { formatQuantity, SECTION_LABEL, type ShoppingList } from '../../domain/shopping';
@@ -202,7 +203,13 @@ export function ShoppingView() {
         </button>
       </div>
 
-      {isLoading && <p className="text-item text-ink-muted">Cargando el plan…</p>}
+      {isLoading && (
+        <>
+          <LoadingAnnounce>Cargando la compra</LoadingAnnounce>
+          <ListSkeleton />
+          <ListSkeleton rows={3} />
+        </>
+      )}
 
       {rows.length === 0 && !isLoading && (
         <p className="rounded-day bg-surface p-6 text-center text-item text-ink-muted">

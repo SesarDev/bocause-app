@@ -196,6 +196,8 @@ export type WeekData = {
   week: ResolvedWeek | null;
   isLoading: boolean;
   error: unknown;
+  /** Se expone para poder reintentar desde el mensaje de error. */
+  planQuery: ReturnType<typeof usePlan>;
 };
 
 /**
@@ -222,6 +224,7 @@ export function useResolvedWeek(
   const ready = plan !== null && profileSlug !== undefined && !isLoading;
 
   return {
+    planQuery,
     plan,
     week: ready
       ? resolveWeek({

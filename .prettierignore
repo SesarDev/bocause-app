@@ -12,3 +12,5 @@ src/domain/schema.ts
 src/styles/tokens.css
 supabase/migrations
 data/plans
+test-results
+playwright-report

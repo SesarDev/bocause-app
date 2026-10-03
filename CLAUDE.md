@@ -85,6 +85,9 @@ Regla: `features/` puede importar de `domain/` y `data/`; `domain/` no importa n
   pinta el texto de marino (invisible sobre la etiqueta). Para el tamaño:
   `text-(length:--text-slot)`. El resto de tamaños (`text-day`, `text-dish`, `text-item`,
   `text-measure`) no chocan con ningún color.
+- **`--color-danger` en oscuro se corrige en `src/styles/app.css`:** `tokens.css` no lo
+  redefine para el tema oscuro y el rojo original daba 2,56:1 sobre la tarjeta, por debajo
+  de AA. Al tocar colores, comprobar el contraste de los dos temas, no solo del claro.
 
 ## No hacer
 
