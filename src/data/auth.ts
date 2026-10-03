@@ -91,6 +91,10 @@ export function useMyProfile(enabled: boolean) {
   return useQuery({
     queryKey: authKeys.myProfile,
     enabled,
+    // Mientras no se sepa qué perfil es, se reintenta solo cada cinco segundos. En el móvil
+    // la radio tarda en despertar al abrir la app, y de esto no se sale pidiéndole a nadie
+    // que pulse un botón: se sale insistiendo.
+    refetchInterval: (query) => (query.state.data === undefined ? 5000 : false),
     queryFn: async (): Promise<Profile | null> => {
       // getSession() lee la sesión del almacenamiento local. Antes esto usaba getUser(),
       // que va a la red: sin cobertura devolvía "no hay usuario", y aquí eso se confundía
