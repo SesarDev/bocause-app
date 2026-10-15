@@ -39,7 +39,7 @@ supabase/        Migraciones de Postgres
 | `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
 | `npm run seed`          | Crea el hogar en Supabase e inserta el plan     |
 
-## Estado: fase 12 completada (desplegada y en uso)
+## Estado: fase 13 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -173,7 +173,38 @@ para varios hogares y para clonar la app por consulta.
 | `src/config/brand.ts` + `docs/CLONAR.md` | Clonar la app para otra consulta es cambiar datos, no buscar cadenas por el código.                                                                       |
 | Montserrat autoalojada                   | Venía de Google Fonts: un tercero veía la IP de cada móvil en cada arranque, en una app de datos de salud. Ahora va en el bundle y precacheada.           |
 
-Dos hallazgos de la fase que conviene recordar:
+**Fase 13** añade el rol de nutricionista y la zona `/admin`.
+
+| Qué                                  | Por qué                                                                                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/tests/rls.test.sql`        | 17 comprobaciones con pgTAP, escritas **antes** de la migración y vistas fallar. Una prueba de seguridad que nunca ha estado en rojo no demuestra nada.    |
+| `0004_staff.sql`                     | `staff_members`, `is_staff()`, y las políticas de lectura y escritura. Cierra además la escritura de `plans`, que cualquier miembro del hogar podía hacer. |
+| `0005_plan_version_autoassign.sql`   | Arregla un fallo de la 0003: el índice único `(household_id, version)` existía pero nadie asignaba la versión, así que publicar la segunda dieta fallaba.  |
+| `npm run staff:add -- correo`        | Ascender a nutricionista. No hay forma de hacerlo desde la app: la tabla no tiene políticas de escritura.                                                  |
+| React Router y `src/features/admin/` | `/admin` con carga diferida. El chunk del cliente **no** incluye ese código.                                                                               |
+| `vercel.json`                        | Reescritura a `index.html`. Sin ella `/admin` daba 404 en producción aunque funcionara en desarrollo.                                                      |
+| `npm run seed:demo`                  | Hogar de demostración con datos ficticios, para enseñar la app sin exponer la dieta de nadie.                                                              |
+
+Tres cosas aprendidas aquí, que están en [CLAUDE.md](CLAUDE.md):
+
+- **RLS deniega los UPDATE en silencio**: no da error, simplemente no encuentra la fila. Una
+  prueba que espere una excepción pasa sin comprobar nada.
+- **Un permiso por columna alcanza también a la nutricionista**, porque también es
+  `authenticated`. Por eso sus escrituras sobre perfiles van por función `security definer`.
+- **Mejor añadir una política que reescribir la que ya funciona**: las permisivas se suman.
+
+### Base de datos en local
+
+```
+npx supabase start      # levanta Supabase con Docker
+npx supabase db reset   # aplica todas las migraciones desde cero
+npx supabase test db    # pgTAP
+```
+
+`db reset` es, de momento, lo único que comprueba que las migraciones se pueden aplicar en
+orden sobre una base vacía.
+
+Dos hallazgos de la fase 12 que conviene recordar:
 
 - **`updated_at` mentía.** Tenía `default now()`, que solo se aplica al INSERTAR, y la app
   nunca escribía esa columna: una fila modificada conservaba la fecha del primer día. Decía

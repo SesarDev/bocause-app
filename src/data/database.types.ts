@@ -35,6 +35,19 @@ export type ProfileRow = {
   theme: 'system' | 'light' | 'dark';
   /** Correo autorizado a ocupar el perfil (0002_claim_profile.sql). */
   claim_email: string | null;
+  /** Cuánto come esta persona respecto a la ración base de la biblioteca (0004_staff.sql). */
+  portion_multiplier: number;
+};
+
+/**
+ * Quién es nutricionista (0004_staff.sql). La tabla no tiene políticas de escritura: solo
+ * se entra con la clave service_role, desde `npm run staff:add`.
+ */
+export type StaffMemberRow = {
+  user_id: string;
+  display_name: string;
+  role: 'nutricionista';
+  created_at: string;
 };
 
 export type PlanRow = {
@@ -46,6 +59,10 @@ export type PlanRow = {
   status: 'draft' | 'active' | 'archived';
   data: Json;
   created_at: string;
+  /** Número de publicación dentro del hogar. Lo pone solo un trigger (0005). */
+  version: number;
+  published_at: string | null;
+  published_by: string | null;
 };
 
 export type BlockRow = {
@@ -147,17 +164,28 @@ export type Database = {
       households: Table<HouseholdRow, Omit<HouseholdRow, 'id' | 'created_at'> & { id?: string }>;
       profiles: Table<
         ProfileRow,
-        Omit<ProfileRow, 'id' | 'theme' | 'claim_email'> & {
+        Omit<ProfileRow, 'id' | 'theme' | 'claim_email' | 'portion_multiplier'> & {
           id?: string;
           theme?: string;
           claim_email?: string | null;
+          portion_multiplier?: number;
         }
+      >;
+      staff_members: Table<
+        StaffMemberRow,
+        Omit<StaffMemberRow, 'role' | 'created_at'> & { role?: string }
       >;
       plans: Table<
         PlanRow,
-        Omit<PlanRow, 'created_at' | 'status' | 'valid_to'> & {
+        // `version` no se envía al insertar: la numera el trigger de la 0005.
+        Omit<
+          PlanRow,
+          'created_at' | 'status' | 'valid_to' | 'version' | 'published_at' | 'published_by'
+        > & {
           status?: string;
           valid_to?: string | null;
+          published_at?: string | null;
+          published_by?: string | null;
         }
       >;
       blocks: Table<
@@ -219,6 +247,30 @@ export type Database = {
       release_my_profile: {
         Args: Record<never, never>;
         Returns: undefined;
+      };
+      /** ¿Quien pregunta es nutricionista? (0004_staff.sql) */
+      is_staff: {
+        Args: Record<never, never>;
+        Returns: boolean;
+      };
+      /**
+       * Altas de staff sobre hogares y perfiles. Van por función y no por política porque
+       * la 0002 limitó la escritura de `profiles` a la columna `theme` con un permiso por
+       * columna, que alcanza también a la nutricionista (ver 0004_staff.sql).
+       */
+      staff_create_household: {
+        Args: { p_name: string };
+        Returns: HouseholdRow;
+      };
+      staff_upsert_profile: {
+        Args: {
+          p_household_id: string;
+          p_slug: string;
+          p_display_name: string;
+          p_claim_email?: string | null;
+          p_portion_multiplier?: number;
+        };
+        Returns: ProfileRow;
       };
     };
     Enums: Record<never, never>;

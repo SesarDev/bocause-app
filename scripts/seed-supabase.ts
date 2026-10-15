@@ -18,6 +18,20 @@ import type { Database } from '../src/data/database.types.ts';
 
 const PLAN_FILE = process.env['SEED_PLAN'] ?? 'data/plans/2026-09.json';
 const HOUSEHOLD_NAME = process.env['SEED_HOUSEHOLD_NAME'] ?? 'Casa';
+
+/**
+ * Id con el que se guarda el plan, que puede no ser el del archivo.
+ *
+ * `plans.id` es clave primaria **global**, no por hogar. Sembrar un segundo hogar con el
+ * mismo archivo haría `upsert` sobre la fila del primero y **le movería el plan de casa**.
+ * Por eso `npm run seed:demo` pasa un id propio.
+ */
+const PLAN_ID = process.env['SEED_PLAN_ID'] ?? null;
+
+/** Nombre visible de un perfil, por si el hogar es de pruebas y no queremos nombres reales. */
+function displayNameOf(profileId: string, fallback: string): string {
+  return process.env[`SEED_NAME_${profileId.toUpperCase()}`] ?? fallback;
+}
 const resetTemplate = process.argv.includes('--reset-template');
 
 const url = process.env['VITE_SUPABASE_URL'];
@@ -49,7 +63,11 @@ function fail(message: string, error: unknown): never {
 }
 
 const plan = Plan.parse(JSON.parse(readFileSync(PLAN_FILE, 'utf8')));
-console.log(`Plan: ${plan.name} (${plan.id}) · ${plan.profiles.length} perfiles`);
+const planId = PLAN_ID ?? plan.id;
+console.log(
+  `Plan: ${plan.name} (${planId}${planId === plan.id ? '' : `, del archivo ${plan.id}`}) · ` +
+    `${plan.profiles.length} perfiles`,
+);
 
 /* ─────────────── Hogar ─────────────── */
 
@@ -87,14 +105,15 @@ const profileIdBySlug = new Map(existingProfiles.data.map((row) => [row.slug, ro
 for (const profile of plan.profiles) {
   // El correo autorizado a ocupar el perfil (ver 0002_claim_profile.sql).
   const email = process.env[`SEED_EMAIL_${profile.profileId.toUpperCase()}`] ?? null;
+  const displayName = displayNameOf(profile.profileId, profile.displayName);
 
   if (profileIdBySlug.has(profile.profileId)) {
     const update = await db
       .from('profiles')
-      .update({ display_name: profile.displayName, ...(email ? { claim_email: email } : {}) })
+      .update({ display_name: displayName, ...(email ? { claim_email: email } : {}) })
       .eq('id', profileIdBySlug.get(profile.profileId)!);
     if (update.error) fail(`No se pudo actualizar el perfil ${profile.profileId}`, update.error);
-    console.log(`Perfil ${profile.displayName}: ya existía${email ? ` (correo ${email})` : ''}.`);
+    console.log(`Perfil ${displayName}: ya existía${email ? ` (correo ${email})` : ''}.`);
     continue;
   }
 
@@ -103,7 +122,7 @@ for (const profile of plan.profiles) {
     .insert({
       household_id: householdId,
       slug: profile.profileId,
-      display_name: profile.displayName,
+      display_name: displayName,
       user_id: null,
       ...(email ? { claim_email: email } : {}),
     })
@@ -112,7 +131,7 @@ for (const profile of plan.profiles) {
   if (created.error) fail(`No se pudo crear el perfil ${profile.profileId}`, created.error);
 
   profileIdBySlug.set(profile.profileId, created.data.id);
-  console.log(`Perfil ${profile.displayName} creado${email ? ` (correo ${email})` : ''}.`);
+  console.log(`Perfil ${displayName} creado${email ? ` (correo ${email})` : ''}.`);
 }
 
 if (!plan.profiles.every((profile) => profileIdBySlug.has(profile.profileId))) {
@@ -122,7 +141,7 @@ if (!plan.profiles.every((profile) => profileIdBySlug.has(profile.profileId))) {
 /* ─────────────── Plan ─────────────── */
 
 const planUpsert = await db.from('plans').upsert({
-  id: plan.id,
+  id: planId,
   household_id: householdId,
   name: plan.name,
   valid_from: plan.validFrom,
@@ -131,7 +150,7 @@ const planUpsert = await db.from('plans').upsert({
   data: plan as unknown as Database['public']['Tables']['plans']['Insert']['data'],
 });
 if (planUpsert.error) fail('No se pudo insertar el plan', planUpsert.error);
-console.log(`Plan ${plan.id} insertado (activo desde ${plan.validFrom}).`);
+console.log(`Plan ${planId} insertado (activo desde ${plan.validFrom}).`);
 
 /* ─────────────── Plantilla viva ─────────────── */
 
@@ -143,7 +162,7 @@ const toDbScope = (scope: string) =>
   scope === 'shared' ? 'shared' : (profileIdBySlug.get(scope) ?? scope);
 
 const cells = plan.template.map((cell) => ({
-  plan_id: plan.id,
+  plan_id: planId,
   day: cell.day,
   slot: cell.slot,
   scope: toDbScope(cell.scope),
