@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Icon, type IconName } from '../../components/Icon';
 import { Sheet } from '../../components/Sheet';
 import { currentWeekStart } from '../../domain/dates';
-import type { Recipe, SupplementProtocol } from '../../domain/schema';
+import { describeChanges, type ChangeGroup } from '../../domain/describeChange';
+import { restoreCell } from '../../domain/edit';
+import { SlotKey, type Recipe, type SupplementProtocol } from '../../domain/schema';
 import { signOut, useMyProfile } from '../../data/auth';
-import { usePlan, useProfiles } from '../../data/queries';
+import { buildBlockTitles, useChangeLog } from '../../data/changelog';
+import { useRestoreCell } from '../../data/mutations';
+import { useEditedBlocks, usePlan, useProfileDirectory, useProfiles } from '../../data/queries';
+import { ChangeLogList } from '../changelog/ChangeLogList';
 import { RecipeSheet } from '../recipes/RecipeSheet';
 import { SupplementList } from '../training/TrainingSheet';
 
@@ -31,6 +36,48 @@ export function MoreView() {
   const myProfile = useMyProfile(true);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [protocols, setProtocols] = useState<SupplementProtocol[] | null>(null);
+  const [verHistorial, setVerHistorial] = useState(false);
+
+  /* ── Historial de cambios ── */
+  const scopes = useProfileDirectory();
+  const blocks = useEditedBlocks(plan?.id, scopes);
+  const changeLog = useChangeLog();
+  const restore = useRestoreCell();
+
+  const grupos = useMemo(
+    () => describeChanges(changeLog.data ?? [], buildBlockTitles(plan ?? null, blocks.data)),
+    [changeLog.data, plan, blocks.data],
+  );
+
+  /**
+   * Restaurar desde el historial deshace la celda entera (plantilla y semana), que es lo
+   * que espera quien mira "qué cambió" y quiere volver atrás.
+   *
+   * El registro guarda el `scope` tal como está en la base de datos (el UUID del perfil) y
+   * el dominio trabaja con slugs, así que hay que cruzar esa frontera aquí.
+   */
+  const restaurar = (group: ChangeGroup) => {
+    if (!plan || !scopes) return;
+
+    for (const cell of group.cells) {
+      if (cell.day === undefined || cell.scope === undefined) continue;
+
+      // El registro guarda la franja como texto, porque es una copia cruda de la fila. Se
+      // valida antes de usarla: si algún día aparece una franja que el dominio no conoce,
+      // mejor no restaurar nada que restaurar mal.
+      const slot = SlotKey.safeParse(cell.slot);
+      if (!slot.success) continue;
+
+      const plan2 = restoreCell(
+        { day: cell.day, slot: slot.data, scope: scopes.toDomainScope(cell.scope) },
+        plan.template,
+        { level: 'template', weekStart },
+      );
+      restore.mutate({ planId: plan.id, weekStart, plan: plan2 });
+    }
+
+    setVerHistorial(false);
+  };
 
   const mine = plan?.profiles.find((profile) => profile.profileId === myProfile.data?.slug);
   const cheatMeals = (plan?.recipes ?? []).filter((item) => item.kind === 'cheat_meal');
@@ -125,6 +172,24 @@ export function MoreView() {
         </section>
       )}
 
+      {/* Historial de cambios */}
+      <section className="rounded-day bg-surface p-4">
+        <h2 className="text-dish font-bold text-ink">Historial de cambios</h2>
+        <p className="mt-1 text-measure text-ink-muted">
+          Quién movió qué y cuándo, en toda la casa.
+        </p>
+        <button
+          type="button"
+          onClick={() => setVerHistorial(true)}
+          className="mt-3 flex min-h-tap w-full items-center gap-3 rounded-block border border-line px-4 py-3 text-left"
+        >
+          <Icon name="semana" size={20} />
+          <span className="flex-1 text-item font-semibold text-ink">
+            {grupos.length === 0 ? 'Ver el historial' : `Ver los últimos ${grupos.length} cambios`}
+          </span>
+        </button>
+      </section>
+
       {/* Cuenta */}
       <section className="rounded-day bg-surface p-4">
         <h2 className="text-dish font-bold text-ink">Cuenta</h2>
@@ -145,6 +210,15 @@ export function MoreView() {
           <span className="flex-1 text-item font-semibold text-ink">Cerrar sesión</span>
         </button>
       </section>
+
+      <Sheet
+        open={verHistorial}
+        onClose={() => setVerHistorial(false)}
+        title="Historial de cambios"
+        tall
+      >
+        <ChangeLogList groups={grupos} isLoading={changeLog.isPending} onRestore={restaurar} />
+      </Sheet>
 
       <RecipeSheet recipe={recipe} onClose={() => setRecipe(null)} />
 

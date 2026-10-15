@@ -39,7 +39,7 @@ supabase/        Migraciones de Postgres
 | `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
 | `npm run seed`          | Crea el hogar en Supabase e inserta el plan     |
 
-## Estado: fase 13 completada (desplegada y en uso)
+## Estado: fase 14 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -185,7 +185,29 @@ para varios hogares y para clonar la app por consulta.
 | `vercel.json`                        | Reescritura a `index.html`. Sin ella `/admin` daba 404 en producción aunque funcionara en desarrollo.                                                      |
 | `npm run seed:demo`                  | Hogar de demostración con datos ficticios, para enseñar la app sin exponer la dieta de nadie.                                                              |
 
-Tres cosas aprendidas aquí, que están en [CLAUDE.md](CLAUDE.md):
+**Fase 14** añade el registro de cambios, en Más → "Historial de cambios": quién movió qué y
+cuándo, en frases legibles («Andrés intercambió la comida del lunes y del martes»), agrupado
+por día, con "Restaurar original".
+
+| Qué                            | Por qué                                                                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0006_change_log.sql`          | Lo escriben **triggers de Postgres**, no la app: así se registra también lo que llega tarde al reanudarse una mutación sin cobertura, y nada escapa. |
+| `tx_id`                        | Un intercambio escribe sus dos celdas en una sentencia. Agrupar por transacción es exacto; por marca de tiempo sería adivinar.                       |
+| RPC `restore_cell`             | Restaurar era varias peticiones sueltas y podía quedarse a medias. Ahora es atómico, y además el registro puede marcarlo como `restaurar`.           |
+| `src/domain/describeChange.ts` | Las frases, puras y con 16 tests. Los títulos entran por un `lookup`, así el dominio no sabe nada de Supabase.                                       |
+| `ChangeLogList`                | Fuera de la vista Más: la ficha del hogar (fase 17) enseñará la misma lista.                                                                         |
+
+Dos cosas que solo se vieron al mirar la pantalla con datos de verdad:
+
+- **La mitad de los intercambios reales no se detectaban.** Si una de las dos celdas no
+  tenía cambio previo, su fila es un `INSERT` y el `before` es nulo, así que ese lado del
+  cruce no se puede comprobar. Ahora basta con que encajen los cruces que **sí** se conocen,
+  y si no se conoce ninguno se dice "cambió 2 comidas", que es menos vistoso y cierto.
+- **Los E2E le inventaban cambios al hogar.** El registro es de solo añadir, así que los
+  intercambios de las pruebas se quedaban en vuestro historial como si hubieran pasado. La
+  suite los borra ahora con la clave de servicio.
+
+Tres cosas aprendidas en la fase 13, que están en [CLAUDE.md](CLAUDE.md):
 
 - **RLS deniega los UPDATE en silencio**: no da error, simplemente no encuentra la fila. Una
   prueba que espere una excepción pasa sin comprobar nada.

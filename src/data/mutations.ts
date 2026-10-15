@@ -244,30 +244,35 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
 
   /* Restaurar original */
   queryClient.setMutationDefaults(mutationKeys.restoreCell, {
+    /**
+     * Restaurar va por RPC y no por varias escrituras sueltas.
+     *
+     * Antes eran un DELETE por cada override y luego un UPSERT, cada uno en su propia
+     * petición: si fallaba a mitad, la celda quedaba medio restaurada. Ahora todo ocurre en
+     * una transacción, y de paso el registro de cambios puede marcarlo como "restaurar",
+     * cosa imposible desde fuera porque PostgREST abre una transacción por petición.
+     *
+     * `src/domain/edit.ts` sigue decidiendo QUÉ hay que deshacer; esto solo lo escribe.
+     */
     mutationFn: async (vars: RestoreCellVars) => {
       const scopes = directoryFrom(queryClient);
 
-      for (const key of vars.plan.deleteOverrides) {
-        const { error } = await supabase
-          .from('week_overrides')
-          .delete()
-          .eq('plan_id', vars.planId)
-          .eq('week_start', key.weekStart)
-          .eq('day', key.day)
-          .eq('slot', key.slot)
-          .eq('scope', scopes.toDbScope(key.scope));
-        if (error) throw error;
-      }
-
-      if (vars.plan.templateCells.length > 0) {
-        const rows = vars.plan.templateCells.map((cell) =>
-          fromTemplateCell(cell, vars.planId, scopes, null),
-        );
-        const { error } = await supabase
-          .from('template_cells')
-          .upsert(rows, { onConflict: 'plan_id,day,slot,scope' });
-        if (error) throw error;
-      }
+      const { error } = await supabase.rpc('restore_cell', {
+        p_plan_id: vars.planId,
+        p_week_start: vars.weekStart,
+        p_deletes: vars.plan.deleteOverrides.map((key) => ({
+          day: key.day,
+          slot: key.slot,
+          scope: scopes.toDbScope(key.scope),
+        })),
+        p_template: vars.plan.templateCells.map((cell) => ({
+          day: cell.day,
+          slot: cell.slot,
+          scope: scopes.toDbScope(cell.scope),
+          block_id: cell.blockId,
+        })),
+      });
+      if (error) throw error;
     },
     onSettled: (_data, _error, vars: RestoreCellVars) => {
       void queryClient.invalidateQueries({ queryKey: keys.templateCells(vars.planId) });

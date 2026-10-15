@@ -50,6 +50,27 @@ export type StaffMemberRow = {
   created_at: string;
 };
 
+/**
+ * Registro de cambios (0006_change_log.sql). Lo escriben triggers de Postgres; desde la app
+ * solo se lee. No tiene políticas de UPDATE ni DELETE: es solo de añadir.
+ */
+export type ChangeLogRow = {
+  id: string;
+  household_id: string;
+  plan_id: string;
+  /** Transacción: las celdas de un mismo intercambio la comparten. */
+  tx_id: number;
+  actor_user_id: string | null;
+  actor_role: 'cliente' | 'nutricionista' | 'sistema';
+  table_name: string;
+  op: 'INSERT' | 'UPDATE' | 'DELETE';
+  cell: Json;
+  before: Json;
+  after: Json;
+  source: string;
+  created_at: string;
+};
+
 export type PlanRow = {
   id: string;
   household_id: string;
@@ -175,6 +196,8 @@ export type Database = {
         StaffMemberRow,
         Omit<StaffMemberRow, 'role' | 'created_at'> & { role?: string }
       >;
+      // Solo lectura desde la app: lo escriben los triggers.
+      change_log: Table<ChangeLogRow, never>;
       plans: Table<
         PlanRow,
         // `version` no se envía al insertar: la numera el trigger de la 0005.
@@ -271,6 +294,19 @@ export type Database = {
           p_portion_multiplier?: number;
         };
         Returns: ProfileRow;
+      };
+      /**
+       * Restaurar en una sola transacción (0006). Antes eran varias peticiones sueltas y
+       * podía quedarse a medias; además así el registro lo marca como 'restaurar'.
+       */
+      restore_cell: {
+        Args: {
+          p_plan_id: string;
+          p_week_start: string;
+          p_deletes?: Json;
+          p_template?: Json;
+        };
+        Returns: undefined;
       };
     };
     Enums: Record<never, never>;
