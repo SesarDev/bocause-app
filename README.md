@@ -1,7 +1,7 @@
 # Bocause Dieta
 
-PWA para seguir los planes nutricionales mensuales de Bocause entre dos personas
-(Cristina y Andrés). Pensada para móvil: cocina, súper y a veces sin cobertura.
+PWA para seguir la dieta que marca la nutricionista. La unidad es el **hogar**: hoy,
+Cristina y Andrés. Pensada para móvil: cocina, súper y a veces sin cobertura.
 
 El contexto completo del proyecto está en [CLAUDE.md](CLAUDE.md) y el plan de trabajo por
 fases en [docs/PLAN.md](docs/PLAN.md).
@@ -10,8 +10,9 @@ fases en [docs/PLAN.md](docs/PLAN.md).
 
 ```
 src/app/         Composición de proveedores (TanStack Query, tema)
+src/config/      brand.ts: lo que cambia al clonar la app (ver docs/CLONAR.md)
 src/domain/      Lógica pura (esquemas Zod, resolución de semana, intercambios, compra)
-src/data/        Cliente de Supabase, queries y caché persistida
+src/data/        Cliente de Supabase, queries, caché persistida, hogar activo y claves
 src/features/    Una carpeta por funcionalidad (shell, theme, week, checklist...)
 src/components/  Primitivas de UI propias
 src/stores/      Estado de interfaz con Zustand (tema, pestaña, perfil activo)
@@ -38,7 +39,7 @@ supabase/        Migraciones de Postgres
 | `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
 | `npm run seed`          | Crea el hogar en Supabase e inserta el plan     |
 
-## Estado: fase 4 completada
+## Estado: fase 12 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -126,10 +127,24 @@ flujos críticos: entrar, marcar un alimento, intercambiar y deshacer, y generar
 npm run test:e2e
 ```
 
-Van **contra el Supabase real**, porque no hay un proyecto de pruebas. Cada test deshace lo
-que toca y el de la compra se salta solo si ya hay una lista, pero no están pensadas para
-correr en cada commit: por eso no entran en `npm test`. Sin `SUPABASE_SERVICE_ROLE_KEY` en
-`.env.local` se saltan solas.
+Van **contra el Supabase real**, porque no hay un proyecto de pruebas. No entran en
+`npm test` por eso. Sin `SUPABASE_SERVICE_ROLE_KEY` en `.env.local` se saltan solas.
+
+**Esto se ha quedado corto y conviene saberlo.** Se escribieron con las tablas vacías, y
+hoy el hogar tiene semanas de uso real. Dos cosas cambiaron en la fase 12:
+
+- Cada prueba **fotografía** la tabla antes de tocarla y la restaura al terminar, también si
+  falla a mitad (`fotografiar` / `restaurar` en `e2e/fixtures.ts`). No vale con borrar lo
+  creado: una prueba que escribe encima de una fila existente la deja cambiada, no creada,
+  y borrarla perdería el dato de verdad.
+- Las comprobaciones son **relativas a esa foto**, no cuentas absolutas. Contar "hay filas
+  en `checks`" dejó de probar nada en cuanto hubo checks reales: se cumplía siempre, aunque
+  la escritura fallara.
+
+Aun así, **la prueba de la compra se salta casi siempre**: generar la lista haría `upsert`
+sobre las líneas reales del hogar y restaurarlas no sería fiable. Mientras la suite apunte
+al Supabase de casa, ese flujo no está cubierto. Lo que toca es un proyecto de Supabase de
+pruebas con su propio hogar sembrado; `docs/CLONAR.md` explica cómo se levanta uno.
 
 **Fase 11** llena la pestaña Más: protocolos de entreno con su pre/ETT/post (también se
 abren tocando el chip de entreno de cada día), las opciones del comodín con sus cantidades,
@@ -141,8 +156,30 @@ viven dentro de `plans.data`, que es inmutable, y no hay tabla donde guardar las
 escribáis vosotros. Haría falta una migración nueva. Ahora mismo las recetas son de solo
 lectura y el plan solo trae una, así que el editor no tendría nada que editar todavía.
 
-Con esto la app ya se puede usar a diario. `docs/PLAN.md` sugiere desplegar aquí (fase 16) y
-seguir iterando con la app en los móviles.
+Con esto la app ya se puede usar a diario, y desde octubre de 2026 está desplegada y en uso
+en los dos móviles.
+
+**Fase 12** abre la v2 (ver el `docs/PLAN.md` nuevo): no cambia nada visible, prepara la base
+para varios hogares y para clonar la app por consulta.
+
+| Qué                                      | Por qué                                                                                                                                                   |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/data/scope.ts` y `src/data/keys.ts` | El hogar activo, y claves de caché que cuelgan de él. Antes las consultas no filtraban por hogar: funcionaba porque RLS solo devuelve el tuyo.            |
+| Filtros explícitos en `queries.ts`       | RLS es la última defensa, no el filtro. Con el rol de nutricionista (fase 13), una consulta sin filtro mezclaría hogares sin dar ningún error.            |
+| `filter` en cada canal de Realtime       | Sin él llegan los cambios de todas las casas: refrescos constantes y actividad ajena a la vista.                                                          |
+| Caché de IndexedDB por usuario           | Sobrevive al cambio de sesión. Sin separar, quien entre después en ese móvil restauraría los datos del anterior.                                          |
+| `crypto.randomUUID()` entero             | Se recortaba a 8 caracteres. `blocks.id` es clave primaria **global** y se escribe con `upsert`: una colisión sobrescribiría el bloque de otro hogar.     |
+| `0003_plan_versions.sql`                 | `version`, `published_at` y `published_by` para la dieta viva. Y un trigger que mantiene `updated_at`, que solo se rellenaba al insertar (ver más abajo). |
+| `src/config/brand.ts` + `docs/CLONAR.md` | Clonar la app para otra consulta es cambiar datos, no buscar cadenas por el código.                                                                       |
+| Montserrat autoalojada                   | Venía de Google Fonts: un tercero veía la IP de cada móvil en cada arranque, en una app de datos de salud. Ahora va en el bundle y precacheada.           |
+
+Dos hallazgos de la fase que conviene recordar:
+
+- **`updated_at` mentía.** Tenía `default now()`, que solo se aplica al INSERTAR, y la app
+  nunca escribía esa columna: una fila modificada conservaba la fecha del primer día. Decía
+  cuándo nació, no cuándo se tocó. La 0003 añade el trigger. Importa ya, porque el registro
+  de cambios de la fase 14 y el "último cambio del cliente" de la 17 se apoyan en esa fecha.
+- **Los E2E habían envejecido mal** con el uso real: ver la sección de pruebas.
 
 ## Puesta en marcha
 

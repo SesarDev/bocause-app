@@ -17,9 +17,11 @@
     "test:coverage": "vitest run --coverage",
     "seed:validate": "node scripts/validate-plan.ts",
     "seed": "node --env-file-if-exists=.env.local scripts/seed-supabase.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "migrate": "node --env-file-if-exists=.env.local scripts/migrate.ts"
   },
   "dependencies": {
+    "@fontsource/montserrat": "^5.3.0",
     "@supabase/supabase-js": "^2.117.2",
     "@tanstack/query-async-storage-persister": "^5.104.0",
     "@tanstack/react-query": "^5.104.0",
@@ -35,6 +37,7 @@
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
@@ -44,6 +47,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.13.0",
+    "pg": "^8.23.1",
     "prettier": "^3.9.9",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",

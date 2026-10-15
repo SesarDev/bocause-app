@@ -22,9 +22,16 @@ export const SECTION_KINDS: { kind: SectionKind; label: string }[] = [
   { kind: 'extra', label: 'Extra' },
 ];
 
-/** Ids nuevos con un prefijo reconocible: ayuda a leer el JSON cuando algo va mal. */
+/**
+ * Ids nuevos con un prefijo reconocible: ayuda a leer el JSON cuando algo va mal.
+ *
+ * El UUID va entero. Antes se recortaba a 8 caracteres, y `blocks.id` es clave primaria
+ * **global**, no por hogar: 32 bits bastan con un hogar, pero con los de una consulta
+ * entera dos bloques pueden coincidir, y como se guardan con `upsert` la colisión
+ * sobrescribiría el bloque de otro cliente sin dar ningún error.
+ */
 export function newId(prefix: string): string {
-  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
+  return `${prefix}-${crypto.randomUUID()}`;
 }
 
 function replaceSection(block: Block, sectionId: string, update: (section: Section) => Section) {

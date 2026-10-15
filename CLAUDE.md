@@ -1,8 +1,23 @@
 # Bocause Dieta — contexto para Claude Code
 
-PWA para dos personas (Cristina y Andrés) que comparten casa y siguen planes nutricionales
-mensuales de Bocause. Se usa sobre todo en Android, de pie en la cocina o en el súper:
-pantallas pequeñas, una mano, a veces sin cobertura.
+PWA para seguir la dieta que marca la nutricionista. La unidad es el **hogar**: una o
+varias personas que comparten casa, comparten comida y cena, y cada una lleva lo suyo.
+Hoy el hogar es Cristina y Andrés; la v2 (ver `docs/PLAN.md`) añade el rol de
+nutricionista, que gestiona varios hogares desde la misma app.
+
+Se usa sobre todo en Android, de pie en la cocina o en el súper: pantallas pequeñas, una
+mano, a veces sin cobertura.
+
+## Decisiones de la v2 (resumen; el detalle está en `docs/PLAN.md`)
+
+- **Una app por consulta.** Cada consulta tiene su despliegue y su Supabase. No hay tabla
+  de organizaciones: lo que cambia entre clones vive en `src/config/brand.ts` y se explica
+  en `docs/CLONAR.md`.
+- **Dieta viva por hogar**, no plan mensual: cada publicación crea una versión nueva en
+  `plans`, con `valid_from` en lunes, y cierra la anterior.
+- **Los cambios del cliente sobreviven a la publicación**, salvo en las celdas que la
+  nutricionista haya tocado.
+- **Roles:** cliente (perfil de un hogar) y nutricionista (`staff_members`), que lo ve todo.
 
 ## Stack (no cambiar sin preguntar)
 
@@ -30,8 +45,10 @@ Antes de dar una tarea por terminada: `typecheck`, `lint`, `test` y `build` en v
 ```
 src/
   app/         Composición de proveedores (QueryClient persistido, ThemeProvider)
+  config/      brand.ts: lo que cambia al clonar la app para otra consulta
   domain/      Lógica pura sin React ni Supabase: esquemas, resolveWeek, swap, compra, adherencia
   data/        Cliente Supabase, queries, mutations, suscripciones Realtime
+               scope.ts (hogar activo) y keys.ts (claves de caché)
   features/    Una carpeta por funcionalidad (week, checklist, swap, editor, shopping, ...)
   components/  Primitivas de UI reutilizables (Sheet, Chip, Checkbox, Toast...)
   stores/      Estado de interfaz con Zustand (tema, pestaña, perfil activo)
@@ -68,6 +85,32 @@ Regla: `features/` puede importar de `domain/` y `data/`; `domain/` no importa n
    por persona; 2 ingestas libres por semana; agua 2-3 L/día.
 10. Las semanas empiezan en lunes. Zona horaria `Europe/Madrid`.
 
+## Reglas de datos (fase 12)
+
+Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con varios.
+
+1. **Toda consulta filtra por hogar de forma explícita. No se confía en RLS.** RLS es la
+   última defensa, no el filtro: en cuanto una nutricionista pueda ver varios hogares, una
+   consulta sin filtro los mezcla sin dar ningún error. `plans`, `profiles` y
+   `shopping_items` por `household_id`; `checks` y `daily_logs` por los `profile_id` del
+   hogar (no tienen columna de hogar); `blocks`, `template_cells` y `week_overrides` por
+   `plan_id`, que ya es más estrecho porque un plan pertenece a un solo hogar.
+2. **Las claves de consulta llevan el hogar en la raíz** (`['bocause', <hogar>, ...]`), vía
+   `keysFor()` en `src/data/keys.ts`. Dentro de React se usa
+   `keysFor(useActiveHousehold())`, para que la consulta se rehaga al cambiar de hogar.
+   Lo comprueba `src/data/keys.test.ts`.
+3. **Las claves de _mutación_ NO llevan el hogar.** Identifican qué función ejecutar, no
+   sobre qué datos, y son lo que permite reanudar una mutación guardada sin cobertura. Si
+   llevaran el hogar, una mutación pendiente dejaría de reconocerse y no se ejecutaría.
+4. **Los ids nuevos usan `crypto.randomUUID()` entero**, nunca recortado. `blocks.id` es
+   clave primaria global y se escribe con `upsert`: una colisión sobrescribiría el bloque
+   de otro hogar sin error.
+5. **La caché de IndexedDB se separa por usuario.** Sobrevive al cambio de sesión, así que
+   sin separar, quien entre después en ese móvil vería los datos del anterior. Al cerrar
+   sesión se borra _antes_ de cerrarla, que es cuando todavía se sabe de quién es.
+6. **Las suscripciones de Realtime llevan `filter`.** Sin él llegan los cambios de todas
+   las casas: refrescos constantes y actividad ajena a la vista.
+
 ## Estilo visual (Bocause)
 
 - Colores de marca: amarillo `#FACC15`, marino `#121E2C`, pizarra `#2F3742`, agua `#E5F2F2`.
@@ -92,6 +135,11 @@ Regla: `features/` puede importar de `domain/` y `data/`; `domain/` no importa n
 ## No hacer
 
 - No usar `localStorage` para datos de dominio (IndexedDB vía TanStack persist).
+- No cargar recursos de terceros (tipografías, scripts, CDN): la Montserrat va autoalojada
+  con `@fontsource` y precacheada. Son datos de salud; nadie más tiene por qué ver quién
+  abre la app ni desde dónde.
+- No escribir el nombre ni los colores de la marca a mano en componentes, HTML o manifest:
+  salen de `src/config/brand.ts`.
 - No añadir librerías de componentes completas (MUI, Chakra...). Primitivas propias.
 - No modificar `data/plans/*.json` salvo que la tarea sea explícitamente de extracción.
 - No inventar alimentos, cantidades ni equivalencias nutricionales: solo lo que dice el plan

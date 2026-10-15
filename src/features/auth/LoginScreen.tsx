@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { brand } from '../../config/brand';
 import { signInWithMagicLink } from '../../data/auth';
 
 /** Entrada por magic link: sin contraseñas que recordar en el móvil. */
@@ -22,7 +23,7 @@ export function LoginScreen() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-screen-sm flex-col justify-center px-6">
       <h1 className="text-center text-lg font-extrabold tracking-[0.1em] text-ink">
-        BOCAUSE
+        {brand.wordmark}
         <span aria-hidden="true" className="ml-0.5 text-accent">
           .
         </span>
