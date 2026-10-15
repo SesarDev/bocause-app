@@ -36,7 +36,10 @@ mano, a veces sin cobertura.
 
 - `npm run dev` · `npm run build` · `npm run lint` · `npm run typecheck` · `npm test`
 - `npm run seed:validate` valida `data/plans/*.json` contra los esquemas Zod
-- `npx supabase db push` aplica migraciones
+- `npm run migrate` aplica las migraciones que falten, cada una en su transacción
+- `npm run staff:add -- correo@ejemplo.com` da de alta a una nutricionista
+- `npm run seed:demo` siembra el "Hogar demo" con datos ficticios
+- `npx supabase start` · `npx supabase db reset` · `npx supabase test db` (Supabase local)
 
 Antes de dar una tarea por terminada: `typecheck`, `lint`, `test` y `build` en verde.
 
@@ -110,6 +113,38 @@ Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con
    sesión se borra _antes_ de cerrarla, que es cuando todavía se sabe de quién es.
 6. **Las suscripciones de Realtime llevan `filter`.** Sin él llegan los cambios de todas
    las casas: refrescos constantes y actividad ajena a la vista.
+
+## Roles y permisos (fase 13)
+
+1. **Dos roles:** _cliente_ (perfil de un hogar) y _nutricionista_ (`staff_members`), que ve
+   y edita todos los hogares. `is_staff()` lo decide la base de datos, no el cliente.
+2. **Nadie se asciende solo.** `staff_members` **no tiene políticas de escritura**: solo se
+   entra con la `service_role`, desde `npm run staff:add`. Al tocar esa tabla, comprobar que
+   sigue sin políticas de INSERT, UPDATE ni DELETE.
+3. **Las escrituras de staff sobre `profiles` y `households` van por RPC `security definer`**
+   (`staff_upsert_profile`, `staff_create_household`), nunca por política. La 0002 limitó la
+   escritura de `profiles` a la columna `theme` con un permiso **por columna**, y ese candado
+   alcanza también a la nutricionista porque también es `authenticated`. Las políticas dicen
+   qué filas, no qué columnas.
+4. **`plans` solo lo escribe staff.** Hasta la 0004 podía hacerlo cualquier miembro del
+   hogar, incluido borrar su propia dieta.
+5. **`/admin` vive fuera del gate de perfil.** La nutricionista no tiene perfil en ningún
+   hogar: pasar por el selector la dejaría encerrada con la lista vacía.
+6. **Al añadir una política, preferir añadir una nueva a reescribir la que ya funciona.** Las
+   permisivas se suman, así que el acceso del cliente queda intacto y es más difícil romperlo
+   sin querer. Solo se reescribe cuando el objetivo es **quitar** permiso.
+7. **RLS deniega los UPDATE en silencio:** no lanza error, simplemente no encuentra la fila y
+   actualiza cero. Una prueba que espere una excepción pasa sin probar nada. Hay que
+   comprobar **que el dato no cambió**. Con INSERT sí hay error (violación de `with check`).
+
+## Pruebas de base de datos
+
+- `npx supabase start` levanta un Supabase local con Docker; `npx supabase db reset` aplica
+  todas las migraciones desde cero (lo único que comprueba que se pueden aplicar en orden).
+- `npx supabase test db` ejecuta `supabase/tests/*.test.sql` con pgTAP.
+- Las pruebas de permisos se escriben **antes** que la migración y se ven fallar. Una prueba
+  de seguridad que nunca ha estado en rojo no demuestra nada.
+- Nada de esto toca el proyecto de producción.
 
 ## Estilo visual (Bocause)
 

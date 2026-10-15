@@ -18,7 +18,9 @@
     "seed:validate": "node scripts/validate-plan.ts",
     "seed": "node --env-file-if-exists=.env.local scripts/seed-supabase.ts",
     "test:e2e": "playwright test",
-    "migrate": "node --env-file-if-exists=.env.local scripts/migrate.ts"
+    "migrate": "node --env-file-if-exists=.env.local scripts/migrate.ts",
+    "staff:add": "node --env-file-if-exists=.env.local scripts/staff-add.ts",
+    "seed:demo": "node --env-file-if-exists=.env.local --env-file=scripts/demo.env scripts/seed-supabase.ts"
   },
   "dependencies": {
     "@fontsource/montserrat": "^5.3.0",
@@ -29,6 +31,7 @@
     "idb-keyval": "^6.3.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.4",
     "zod": "^4.6.5",
     "zustand": "^5.0.15"
   },

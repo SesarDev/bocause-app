@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import { brand } from '../config/brand';
 import { persistOptions, queryClient } from '../data/queryClient';
 import { supabaseConfigured } from '../data/supabase';
-import { useMyProfile, useSession } from '../data/auth';
+import { signOut, useMyProfile, useSession } from '../data/auth';
+import { useIsStaff } from '../data/staff';
 import { setActiveHousehold } from '../data/scope';
 import { ThemeProvider } from '../features/theme/ThemeProvider';
 import { AppShell } from '../features/shell/AppShell';
@@ -11,6 +13,12 @@ import { LoginScreen } from '../features/auth/LoginScreen';
 import { ProfilePicker } from '../features/auth/ProfilePicker';
 import { SetupScreen } from '../features/auth/SetupScreen';
 import { useUiStore, type ProfileId } from '../stores/ui';
+
+/**
+ * La zona de la nutricionista se carga aparte y solo cuando hace falta: así su código no
+ * viaja en el paquete que se descarga el móvil de un cliente (decisión 10 de PLAN.md).
+ */
+const AdminApp = lazy(() => import('../features/admin/AdminApp'));
 
 export function App() {
   return (
@@ -23,9 +31,56 @@ export function App() {
       }}
     >
       <ThemeProvider>
-        <Gate />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/admin/*" element={<AdminGate />} />
+            <Route path="*" element={<Gate />} />
+          </Routes>
+        </BrowserRouter>
       </ThemeProvider>
     </PersistQueryClientProvider>
+  );
+}
+
+/**
+ * Puerta de /admin. Aparte de la del cliente a propósito: la nutricionista **no tiene
+ * perfil en ningún hogar**, así que pasar por el selector de perfil la dejaría encerrada
+ * con la lista vacía.
+ *
+ * Esta comprobación es para saber qué pintar, no para proteger nada: quien abra /admin a la
+ * fuerza no verá datos igualmente, porque lo que manda son las políticas RLS.
+ */
+function AdminGate() {
+  const { session, loading } = useSession();
+  const staff = useIsStaff(session !== null);
+
+  if (!supabaseConfigured) return <SetupScreen />;
+  if (loading) return <Splash />;
+  if (!session) return <LoginScreen />;
+  if (staff.isPending) return <Splash />;
+
+  if (staff.data !== true) {
+    return (
+      <Problem
+        title="No tienes acceso"
+        detail="Esta zona es para la nutricionista. Tu plan está en la app."
+        onRetry={() => void staff.refetch()}
+        extra={
+          <Link
+            to="/"
+            className="mt-3 block min-h-tap rounded-block border border-line px-4 py-3 text-center text-item font-semibold text-ink"
+          >
+            Ir a mi plan
+          </Link>
+        }
+      />
+    );
+  }
+
+  return (
+    <Suspense fallback={<Splash />}>
+      <AdminApp />
+    </Suspense>
   );
 }
 
@@ -38,6 +93,9 @@ function Gate() {
   const { session, loading } = useSession();
   const profileQuery = useMyProfile(session !== null);
   const setActiveProfile = useUiStore((state) => state.setActiveProfile);
+  // Solo se pregunta si resulta que no hay perfil: a un cliente normal, que sí lo tiene,
+  // esta consulta no le cuesta ni una petición.
+  const staff = useIsStaff(session !== null && profileQuery.data === null);
   // Diez segundos, no seis: un móvil que despierta de la pantalla apagada tarda lo suyo en
   // tener red, y asustar a alguien con un aviso mientras todo va bien es peor que esperar.
   const tarda = useTimeout(10_000);
@@ -97,9 +155,40 @@ function Gate() {
     );
   }
 
-  if (!profileQuery.data) return <ProfilePicker />;
+  if (!profileQuery.data) {
+    // Una nutricionista no tiene perfil en ningún hogar: el selector le saldría vacío, sin
+    // nada que elegir ni forma de salir. Se le ofrece su zona en vez de encerrarla.
+    return staff.data === true ? <StaffSinPerfil /> : <ProfilePicker />;
+  }
 
   return <AppShell />;
+}
+
+/** Staff que entra por la puerta del cliente: no tiene perfil, pero sí sitio adonde ir. */
+function StaffSinPerfil() {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-screen-sm flex-col justify-center px-6">
+      <section className="rounded-day bg-surface p-6">
+        <h1 className="text-dish font-bold text-ink">Tu zona es la de administración</h1>
+        <p className="mt-2 text-item text-ink-muted">
+          Esta cuenta es de nutricionista, así que no tiene un plan propio que mostrar.
+        </p>
+        <Link
+          to="/admin"
+          className="mt-6 block min-h-tap rounded-block bg-slot px-4 py-3 text-center text-item font-semibold text-slot-ink"
+        >
+          Ir a administración
+        </Link>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="mt-3 min-h-tap w-full text-measure font-semibold text-ink-muted underline"
+        >
+          Cerrar sesión
+        </button>
+      </section>
+    </main>
+  );
 }
 
 /** Pasa a true cuando han transcurrido `ms` desde el montaje. Para no esperar indefinidamente. */
@@ -119,10 +208,13 @@ function Problem({
   title,
   detail,
   onRetry,
+  extra,
 }: {
   title: string;
   detail: string;
   onRetry: () => void;
+  /** Salida alternativa, para que la pantalla no sea solo un botón de reintentar. */
+  extra?: React.ReactNode;
 }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-screen-sm flex-col justify-center px-6">
@@ -136,6 +228,7 @@ function Problem({
         >
           Reintentar
         </button>
+        {extra}
       </section>
     </main>
   );
