@@ -60,7 +60,7 @@ export async function admin(path: string, init: RequestInit = {}): Promise<Respo
  *
  * (Lo correcto a medio plazo es un proyecto de Supabase de pruebas; esto protege mientras.)
  */
-export type Tabla = 'checks' | 'week_overrides' | 'shopping_items';
+export type Tabla = 'checks' | 'week_overrides' | 'shopping_items' | 'change_log';
 
 type Row = Record<string, unknown>;
 
@@ -68,6 +68,10 @@ const CLAVES: Record<Tabla, string[]> = {
   checks: ['profile_id', 'date', 'slot', 'item_id'],
   week_overrides: ['plan_id', 'week_start', 'day', 'slot', 'scope'],
   shopping_items: ['id'],
+  // El registro de cambios es de solo añadir para la app, pero una prueba que intercambia
+  // comidas deja entradas que el hogar vería en su historial como si hubieran pasado. Se
+  // borran con la clave de servicio, que es la única que puede.
+  change_log: ['id'],
 };
 
 const claveDe = (tabla: Tabla, row: Row) => CLAVES[tabla]!.map((c) => String(row[c])).join('|');

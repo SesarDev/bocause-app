@@ -83,6 +83,9 @@ test('marca un alimento y se guarda', async ({ app }) => {
 
 test('intercambia dos días y lo deshace', async ({ app }) => {
   const foto = await protege('week_overrides');
+  // Los triggers de la 0006 dejan rastro de este intercambio, y ese rastro se ve en el
+  // historial del hogar: una prueba no puede inventarle cambios a nadie.
+  await protege('change_log');
   await openTab(app, 'Semana');
 
   await app

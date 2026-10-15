@@ -133,9 +133,26 @@ Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con
 6. **Al añadir una política, preferir añadir una nueva a reescribir la que ya funciona.** Las
    permisivas se suman, así que el acceso del cliente queda intacto y es más difícil romperlo
    sin querer. Solo se reescribe cuando el objetivo es **quitar** permiso.
-7. **RLS deniega los UPDATE en silencio:** no lanza error, simplemente no encuentra la fila y
-   actualiza cero. Una prueba que espere una excepción pasa sin probar nada. Hay que
-   comprobar **que el dato no cambió**. Con INSERT sí hay error (violación de `with check`).
+7. **RLS deniega los UPDATE y los DELETE en silencio:** no lanza error, simplemente no
+   encuentra filas que tocar. Una prueba que espere una excepción pasa sin probar nada. Hay
+   que comprobar **que el dato no cambió**. Con INSERT sí hay error (violación de
+   `with check`). Esta regla ya estaba escrita y aun así volví a caer al escribir las
+   pruebas del registro: `throws_ok` sobre un UPDATE o un DELETE **siempre** está mal.
+
+## Registro de cambios (fase 14)
+
+1. **Lo escriben triggers de Postgres, no la app.** Así queda registrado también lo que
+   llega tarde, cuando una mutación guardada sin cobertura se reanuda, y no hay forma de
+   tocar la dieta sin dejar rastro.
+2. **Es solo de añadir:** `change_log` no tiene políticas de UPDATE ni DELETE, para nadie.
+3. **Los cambios de una misma transacción se agrupan por `tx_id`.** Un intercambio escribe
+   sus dos celdas en una sola sentencia; agruparlos por marca de tiempo sería adivinar.
+4. **Restaurar va por la RPC `restore_cell`**, no por escrituras sueltas: así es atómico
+   (antes podía quedarse a medias) y el registro puede marcarlo como `restaurar`. PostgREST
+   abre una transacción por petición, así que `app.change_source` no se puede fijar desde
+   fuera. `src/domain/edit.ts` sigue decidiendo _qué_ deshacer; la RPC solo lo escribe.
+5. Las frases las construye `src/domain/describeChange.ts`, puro y con tests. Los títulos de
+   los bloques entran por un `lookup`, para que el dominio no sepa nada de Supabase.
 
 ## Pruebas de base de datos
 
