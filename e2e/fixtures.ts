@@ -47,6 +47,107 @@ export async function admin(path: string, init: RequestInit = {}): Promise<Respo
   });
 }
 
+/* ─────────────────── Proteger los datos reales del hogar ─────────────────── */
+
+/**
+ * Estas pruebas corren contra el Supabase de casa, que ya **no está vacío**: hay comidas
+ * marcadas, intercambios y una lista de la compra de verdad, de gente que usa la app a
+ * diario. Así que una prueba no puede limpiar borrando: tiene que dejar la tabla
+ * exactamente como estaba, incluidas las filas que haya modificado.
+ *
+ * Borrar "lo creado durante la prueba" no basta, porque una prueba que escribe encima de
+ * una fila existente la deja cambiada y no creada: al borrarla se perdería el dato real.
+ *
+ * (Lo correcto a medio plazo es un proyecto de Supabase de pruebas; esto protege mientras.)
+ */
+export type Tabla = 'checks' | 'week_overrides' | 'shopping_items';
+
+type Row = Record<string, unknown>;
+
+const CLAVES: Record<Tabla, string[]> = {
+  checks: ['profile_id', 'date', 'slot', 'item_id'],
+  week_overrides: ['plan_id', 'week_start', 'day', 'slot', 'scope'],
+  shopping_items: ['id'],
+};
+
+const claveDe = (tabla: Tabla, row: Row) => CLAVES[tabla]!.map((c) => String(row[c])).join('|');
+
+/** Contenido comparable: sin las columnas que cambian solas al escribir. */
+function contenido(row: Row): string {
+  const campos = Object.keys(row)
+    .filter((k) => k !== 'updated_at' && k !== 'updated_by')
+    .sort();
+  return JSON.stringify(campos.map((k) => [k, row[k]]));
+}
+
+async function leerTabla(tabla: Tabla): Promise<Row[]> {
+  const response = await admin(`${tabla}?select=*`);
+  if (!response.ok) throw new Error(`No se pudo leer ${tabla}: HTTP ${response.status}`);
+  return (await response.json()) as Row[];
+}
+
+export type Foto = { tabla: Tabla; filas: Map<string, Row> };
+
+export async function fotografiar(tabla: Tabla): Promise<Foto> {
+  const filas = new Map<string, Row>();
+  for (const row of await leerTabla(tabla)) filas.set(claveDe(tabla, row), row);
+  return { tabla, filas };
+}
+
+/** Filas que han cambiado respecto a la foto: añadidas, quitadas o modificadas. */
+export async function cambiosDesde(foto: Foto): Promise<number> {
+  const ahora = await leerTabla(foto.tabla);
+  const vistas = new Set<string>();
+  let cambios = 0;
+
+  for (const row of ahora) {
+    const clave = claveDe(foto.tabla, row);
+    vistas.add(clave);
+    const antes = foto.filas.get(clave);
+    if (!antes || contenido(antes) !== contenido(row)) cambios += 1;
+  }
+
+  for (const clave of foto.filas.keys()) if (!vistas.has(clave)) cambios += 1;
+
+  return cambios;
+}
+
+/** Deja la tabla exactamente como estaba en la foto. */
+export async function restaurar(foto: Foto): Promise<void> {
+  const ahora = await leerTabla(foto.tabla);
+  const vistas = new Set<string>();
+
+  for (const row of ahora) {
+    const clave = claveDe(foto.tabla, row);
+    vistas.add(clave);
+    if (!foto.filas.has(clave)) {
+      const filtro = CLAVES[foto.tabla]!.map((c) => `${c}=eq.${String(row[c])}`).join('&');
+      const response = await admin(`${foto.tabla}?${filtro}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(`No se pudo borrar de ${foto.tabla}`);
+    }
+  }
+
+  // Las que se modificaron (o que la prueba borró) se reponen tal cual estaban.
+  const reponer = [...foto.filas.entries()]
+    .filter(([clave, antes]) => {
+      if (!vistas.has(clave)) return true;
+      const actual = ahora.find((row) => claveDe(foto.tabla, row) === clave);
+      return actual !== undefined && contenido(actual) !== contenido(antes);
+    })
+    .map(([, antes]) => antes);
+
+  if (reponer.length > 0) {
+    const response = await admin(foto.tabla, {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify(reponer),
+    });
+    if (!response.ok) {
+      throw new Error(`No se pudo restaurar ${foto.tabla}: HTTP ${response.status}`);
+    }
+  }
+}
+
 async function anyClaimedEmail(): Promise<string> {
   if (!env) throw new Error('Sin configuración');
   if (env.email) return env.email;

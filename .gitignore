@@ -22,6 +22,7 @@ coverage
 # Supabase CLI
 .supabase
 .supabase/
+supabase/.temp/
 
 # Editor directories and files
 .vscode/*

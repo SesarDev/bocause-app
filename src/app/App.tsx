@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { brand } from '../config/brand';
 import { persistOptions, queryClient } from '../data/queryClient';
 import { supabaseConfigured } from '../data/supabase';
 import { useMyProfile, useSession } from '../data/auth';
+import { setActiveHousehold } from '../data/scope';
 import { ThemeProvider } from '../features/theme/ThemeProvider';
 import { AppShell } from '../features/shell/AppShell';
 import { LoginScreen } from '../features/auth/LoginScreen';
@@ -41,10 +43,17 @@ function Gate() {
   const tarda = useTimeout(10_000);
 
   const slug = profileQuery.data?.slug;
+  const householdId = profileQuery.data?.householdId ?? null;
 
   useEffect(() => {
     if (slug) setActiveProfile(slug as ProfileId);
   }, [slug, setActiveProfile]);
+
+  // El hogar que mira la app. Todas las consultas cuelgan de él, así que se fija aquí,
+  // en el único sitio donde se decide quién ve los datos de quién.
+  useEffect(() => {
+    setActiveHousehold(householdId);
+  }, [householdId]);
 
   if (!supabaseConfigured) return <SetupScreen />;
   if (loading) return <Splash />;
@@ -136,7 +145,7 @@ function Splash() {
   return (
     <main className="grid min-h-dvh place-items-center bg-bg">
       <p className="text-lg font-extrabold tracking-[0.1em] text-ink">
-        BOCAUSE
+        {brand.wordmark}
         <span aria-hidden="true" className="ml-0.5 text-accent">
           .
         </span>

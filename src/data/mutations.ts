@@ -26,17 +26,26 @@ import {
   type Profile,
   type ProfileDirectory,
 } from './mappers';
-import { keys } from './queries';
+import { keys, ROOT } from './keys';
 
+/**
+ * Las claves de mutación NO llevan el hogar, al contrario que las de consulta.
+ *
+ * Identifican *qué función* ejecutar, no sobre qué datos. Se registran una sola vez al
+ * cargar el módulo, y son lo que permite que una mutación guardada sin cobertura encuentre
+ * su función al reabrir la app. Si llevaran el hogar, una mutación pendiente dejaría de
+ * reconocerse en cuanto cambiara el hogar activo y se quedaría sin ejecutar para siempre.
+ * El hogar ya viaja donde tiene que viajar: en las variables de cada mutación.
+ */
 export const mutationKeys = {
-  setCheck: [...keys.all, 'mutation', 'set-check'] as const,
-  updateDailyLog: [...keys.all, 'mutation', 'update-daily-log'] as const,
-  applyCells: [...keys.all, 'mutation', 'apply-cells'] as const,
-  restoreCell: [...keys.all, 'mutation', 'restore-cell'] as const,
-  saveBlock: [...keys.all, 'mutation', 'save-block'] as const,
-  generateShopping: [...keys.all, 'mutation', 'generate-shopping'] as const,
-  setShoppingItem: [...keys.all, 'mutation', 'set-shopping-item'] as const,
-  removeShoppingItem: [...keys.all, 'mutation', 'remove-shopping-item'] as const,
+  setCheck: [ROOT, 'mutation', 'set-check'] as const,
+  updateDailyLog: [ROOT, 'mutation', 'update-daily-log'] as const,
+  applyCells: [ROOT, 'mutation', 'apply-cells'] as const,
+  restoreCell: [ROOT, 'mutation', 'restore-cell'] as const,
+  saveBlock: [ROOT, 'mutation', 'save-block'] as const,
+  generateShopping: [ROOT, 'mutation', 'generate-shopping'] as const,
+  setShoppingItem: [ROOT, 'mutation', 'set-shopping-item'] as const,
+  removeShoppingItem: [ROOT, 'mutation', 'remove-shopping-item'] as const,
 };
 
 /** El directorio sale de la caché, que está persistida: también funciona sin red. */

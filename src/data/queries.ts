@@ -4,6 +4,15 @@
  *
  * La caché se persiste en IndexedDB (ver queryClient.ts), así que al abrir sin cobertura
  * se ve lo último que había en vez de una pantalla vacía.
+ *
+ * **Todas filtran por hogar de forma explícita.** Antes no lo hacían: bastaba con que RLS
+ * devolviera solo el hogar de quien pregunta. Ese atajo deja de valer en cuanto exista el
+ * rol de nutricionista, que ve todos los hogares, porque las mismas consultas empezarían a
+ * mezclarlos sin dar ningún error. Ver `scope.ts`.
+ *
+ * `blocks`, `template_cells` y `week_overrides` se filtran por `plan_id` y no por hogar:
+ * un plan pertenece a un único hogar, así que el filtro por plan ya es explícito y más
+ * estrecho. Lo que hay que asegurar es que el `planId` venga de `usePlan`, que sí filtra.
  */
 import { useQuery } from '@tanstack/react-query';
 import { isoWeekDates, todayIn, type IsoDateString } from '../domain/dates';
@@ -23,34 +32,33 @@ import {
   type Profile,
   type ProfileDirectory,
 } from './mappers';
-
-export const keys = {
-  all: ['bocause'] as const,
-  profiles: () => [...keys.all, 'profiles'] as const,
-  plan: (onDate: string) => [...keys.all, 'plan', onDate] as const,
-  blocks: (planId: string) => [...keys.all, 'blocks', planId] as const,
-  templateCells: (planId: string) => [...keys.all, 'template-cells', planId] as const,
-  weekOverrides: (planId: string, weekStart: string) =>
-    [...keys.all, 'week-overrides', planId, weekStart] as const,
-  checks: (weekStart: string) => [...keys.all, 'checks', weekStart] as const,
-  dailyLogs: (weekStart: string) => [...keys.all, 'daily-logs', weekStart] as const,
-  shoppingItems: (weekStart: string) => [...keys.all, 'shopping-items', weekStart] as const,
-};
+import { keysFor } from './keys';
+import { useActiveHousehold } from './scope';
 
 /* ─────────────────────── Perfiles del hogar ─────────────────────── */
 
 export function useProfiles() {
+  const householdId = useActiveHousehold();
+
   return useQuery({
-    queryKey: keys.profiles(),
+    queryKey: keysFor(householdId).profiles(),
+    enabled: householdId !== null,
     queryFn: async (): Promise<Profile[]> => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, user_id, household_id, slug, display_name')
+        .eq('household_id', householdId!)
         .order('display_name');
       if (error) throw error;
       return (data ?? []).map(toProfile);
     },
   });
+}
+
+/** Los ids de perfil del hogar. `checks` y `daily_logs` cuelgan de ahí, no del hogar. */
+function useHouseholdProfileIds(): string[] {
+  const { data } = useProfiles();
+  return (data ?? []).map((profile) => profile.id);
 }
 
 /** Traductor slug ↔ UUID. Lo necesitan casi todas las demás consultas. */
@@ -63,12 +71,16 @@ export function useProfileDirectory(): ProfileDirectory | undefined {
 
 /** El plan activo en una fecha. Al cambiar de mes, cada semana usa el suyo. */
 export function usePlan(onDate: IsoDateString = todayIn()) {
+  const householdId = useActiveHousehold();
+
   return useQuery({
-    queryKey: keys.plan(onDate),
+    queryKey: keysFor(householdId).plan(onDate),
+    enabled: householdId !== null,
     queryFn: async (): Promise<Plan | null> => {
       const { data, error } = await supabase
         .from('plans')
         .select('*')
+        .eq('household_id', householdId!)
         .eq('status', 'active')
         .lte('valid_from', onDate)
         .or(`valid_to.is.null,valid_to.gte.${onDate}`)
@@ -85,8 +97,10 @@ export function usePlan(onDate: IsoDateString = todayIn()) {
 /* ─────────────────────── Capas editables ─────────────────────── */
 
 export function useEditedBlocks(planId: string | undefined, scopes: ProfileDirectory | undefined) {
+  const householdId = useActiveHousehold();
+
   return useQuery({
-    queryKey: keys.blocks(planId ?? ''),
+    queryKey: keysFor(householdId).blocks(planId ?? ''),
     enabled: Boolean(planId && scopes),
     queryFn: async () => {
       const { data, error } = await supabase.from('blocks').select('*').eq('plan_id', planId!);
@@ -97,8 +111,10 @@ export function useEditedBlocks(planId: string | undefined, scopes: ProfileDirec
 }
 
 export function useTemplateCells(planId: string | undefined, scopes: ProfileDirectory | undefined) {
+  const householdId = useActiveHousehold();
+
   return useQuery({
-    queryKey: keys.templateCells(planId ?? ''),
+    queryKey: keysFor(householdId).templateCells(planId ?? ''),
     enabled: Boolean(planId && scopes),
     queryFn: async () => {
       const { data, error } = await supabase
@@ -116,8 +132,10 @@ export function useWeekOverrides(
   weekStart: IsoDateString,
   scopes: ProfileDirectory | undefined,
 ) {
+  const householdId = useActiveHousehold();
+
   return useQuery({
-    queryKey: keys.weekOverrides(planId ?? '', weekStart),
+    queryKey: keysFor(householdId).weekOverrides(planId ?? '', weekStart),
     enabled: Boolean(planId && scopes),
     queryFn: async () => {
       const { data, error } = await supabase
@@ -141,14 +159,17 @@ function weekRange(weekStart: IsoDateString): { from: string; to: string } {
 /** Checks de toda la semana y de las dos personas: ambas ven lo de la otra. */
 export function useWeekChecks(weekStart: IsoDateString, scopes: ProfileDirectory | undefined) {
   const { from, to } = weekRange(weekStart);
+  const householdId = useActiveHousehold();
+  const profileIds = useHouseholdProfileIds();
 
   return useQuery({
-    queryKey: keys.checks(weekStart),
-    enabled: Boolean(scopes),
+    queryKey: keysFor(householdId).checks(weekStart),
+    enabled: Boolean(scopes) && profileIds.length > 0,
     queryFn: async (): Promise<Check[]> => {
       const { data, error } = await supabase
         .from('checks')
         .select('*')
+        .in('profile_id', profileIds)
         .gte('date', from)
         .lte('date', to);
       if (error) throw error;
@@ -159,14 +180,17 @@ export function useWeekChecks(weekStart: IsoDateString, scopes: ProfileDirectory
 
 export function useWeekDailyLogs(weekStart: IsoDateString, scopes: ProfileDirectory | undefined) {
   const { from, to } = weekRange(weekStart);
+  const householdId = useActiveHousehold();
+  const profileIds = useHouseholdProfileIds();
 
   return useQuery({
-    queryKey: keys.dailyLogs(weekStart),
-    enabled: Boolean(scopes),
+    queryKey: keysFor(householdId).dailyLogs(weekStart),
+    enabled: Boolean(scopes) && profileIds.length > 0,
     queryFn: async (): Promise<DailyLog[]> => {
       const { data, error } = await supabase
         .from('daily_logs')
         .select('*')
+        .in('profile_id', profileIds)
         .gte('date', from)
         .lte('date', to);
       if (error) throw error;
@@ -176,12 +200,16 @@ export function useWeekDailyLogs(weekStart: IsoDateString, scopes: ProfileDirect
 }
 
 export function useShoppingItems(weekStart: IsoDateString) {
+  const householdId = useActiveHousehold();
+
   return useQuery({
-    queryKey: keys.shoppingItems(weekStart),
+    queryKey: keysFor(householdId).shoppingItems(weekStart),
+    enabled: householdId !== null,
     queryFn: async (): Promise<ShoppingItem[]> => {
       const { data, error } = await supabase
         .from('shopping_items')
         .select('*')
+        .eq('household_id', householdId!)
         .eq('week_start', weekStart);
       if (error) throw error;
       return (data ?? []).map(toShoppingItem);
@@ -208,6 +236,7 @@ export function useResolvedWeek(
   profileSlug: string | undefined,
   weekStart: IsoDateString,
 ): WeekData {
+  const householdId = useActiveHousehold();
   const scopes = useProfileDirectory();
   const planQuery = usePlan(weekStart);
   const planId = planQuery.data?.id;
@@ -216,8 +245,14 @@ export function useResolvedWeek(
   const templateCells = useTemplateCells(planId, scopes);
   const overrides = useWeekOverrides(planId, weekStart, scopes);
 
+  // Sin hogar todavía, las consultas están desactivadas: `isLoading` sería false y la
+  // pantalla diría "no hay plan" en vez de esperar. Mientras no se sepa, está cargando.
   const isLoading =
-    planQuery.isLoading || blocks.isLoading || templateCells.isLoading || overrides.isLoading;
+    householdId === null ||
+    planQuery.isLoading ||
+    blocks.isLoading ||
+    templateCells.isLoading ||
+    overrides.isLoading;
   const error = planQuery.error ?? blocks.error ?? templateCells.error ?? overrides.error;
 
   const plan = planQuery.data ?? null;
@@ -247,6 +282,7 @@ export function useHouseholdWeeks(weekStart: IsoDateString): {
   plan: Plan | null;
   isLoading: boolean;
 } {
+  const householdId = useActiveHousehold();
   const scopes = useProfileDirectory();
   const planQuery = usePlan(weekStart);
   const planId = planQuery.data?.id;
@@ -257,7 +293,11 @@ export function useHouseholdWeeks(weekStart: IsoDateString): {
 
   const plan = planQuery.data ?? null;
   const isLoading =
-    planQuery.isLoading || blocks.isLoading || templateCells.isLoading || overrides.isLoading;
+    householdId === null ||
+    planQuery.isLoading ||
+    blocks.isLoading ||
+    templateCells.isLoading ||
+    overrides.isLoading;
 
   const weeks =
     plan === null || isLoading

@@ -1,15 +1,17 @@
 <!doctype html>
-<html lang="es">
+<html lang="%APP_LANG%">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f7fafa" />
-    <meta name="description" content="Vuestro plan nutricional de Bocause, día a día." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <!-- Los %MARCADORES% los rellena el plugin brandHtml de vite.config.ts con los valores
+         de src/config/brand.ts, para que clonar la app no obligue a editar este archivo. -->
+    <meta name="description" content="%APP_DESCRIPTION%" />
+    <link rel="icon" type="image/svg+xml" href="%FAVICON%" />
+    <link rel="apple-touch-icon" href="%APPLE_TOUCH_ICON%" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Bocause" />
-    <title>Bocause</title>
+    <meta name="apple-mobile-web-app-title" content="%APP_NAME%" />
+    <title>%APP_NAME%</title>
 
     <!--
       Antiparpadeo: aplica el tema guardado antes del primer pintado. Tiene que ir aquí, en

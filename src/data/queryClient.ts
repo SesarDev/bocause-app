@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { del, get, set } from 'idb-keyval';
 import { registerMutationDefaults } from './mutations';
+import { storedUserId } from './supabase';
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
@@ -26,15 +27,27 @@ export const queryClient = new QueryClient({
 /**
  * Caché persistida en IndexedDB, no en localStorage: es dato de servidor y puede ser
  * grande. idb-keyval devuelve undefined cuando no hay valor; el persister espera null.
+ *
+ * La clave lleva el id del usuario. En un móvil compartido, o cuando una nutricionista
+ * entre con su cuenta en el mismo navegador, la caché del anterior seguiría en IndexedDB
+ * y se restauraría tal cual: vería la semana, los checks y la compra de otra persona hasta
+ * que la red respondiera. Con la clave separada, cada usuario solo puede restaurar la suya.
+ *
+ * Se calcula en cada operación y no al crear el persister: al volver del enlace mágico, el
+ * módulo se carga antes de que exista el token, y así el primer guardado ya va a su sitio.
  */
+function scopedKey(key: string): string {
+  return `${key}:${storedUserId() ?? 'anon'}`;
+}
+
 export const persister = createAsyncStoragePersister({
   storage: {
-    getItem: async (key) => (await get<string>(key)) ?? null,
+    getItem: async (key) => (await get<string>(scopedKey(key))) ?? null,
     setItem: async (key, value) => {
-      await set(key, value);
+      await set(scopedKey(key), value);
     },
     removeItem: async (key) => {
-      await del(key);
+      await del(scopedKey(key));
     },
   },
   key: 'bocause.query-cache',

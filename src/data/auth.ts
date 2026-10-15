@@ -11,6 +11,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { toProfile, type Profile } from './mappers';
+import { persister, queryClient } from './queryClient';
+import { setActiveHousehold } from './scope';
 
 export const authKeys = {
   profiles: ['auth', 'available-profiles'] as const,
@@ -57,6 +59,13 @@ export async function signInWithMagicLink(email: string): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
+  // El orden importa: se borra la caché persistida ANTES de cerrar la sesión. Al revés, el
+  // token ya no estaría en localStorage, `storedUserId()` devolvería null y borraríamos la
+  // caché equivocada, dejando la del usuario que sale guardada en el móvil.
+  await persister.removeClient();
+  queryClient.clear();
+  setActiveHousehold(null);
+
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

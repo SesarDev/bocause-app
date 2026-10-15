@@ -1,286 +1,416 @@
-# Plan de acción · Bocause Dieta PWA
+# Plan de acción v2 · Bocause Dieta
 
-16 fases en 4 hitos. Cada fase = una conversación de Claude Code en **modo plan**
-(Shift+Tab), revisión del plan, ejecución, `typecheck + lint + test + build`, commit tuyo.
+Este documento sustituye a la versión anterior de `docs/PLAN.md`.
 
-| Hito | Fases | Resultado |
-|---|---|---|
-| A · Cimientos | 0–4 | Proyecto, dominio testeado, datos extraídos, Supabase con RLS |
-| B · MVP usable | 5–10 | Semana, checklist, trackers, intercambio, editor, compra |
-| C · Completo | 11–14 | Entreno, recetas, adherencia, notas, planes mensuales, batch cooking |
-| D · Producción | 15–16 | Notificaciones push, despliegue e instalación |
+## Estado
 
-Al acabar el hito B ya podéis usarla a diario; despliega ahí (fase 16 adelantada) y sigue
-iterando con la app en los móviles.
+**Hecho (fases 0-11):** andamiaje y PWA, dominio con tests, extracción de los PDFs,
+Supabase con RLS y Realtime, vistas Semana/Hoy/Casa, checklist y trackers, intercambio,
+editor de bloques, lista de la compra, pulido, entreno, recetas y recomendaciones.
+
+**Objetivo de la v2:** que la nutricionista pueda crear y mantener dietas desde la app
+con una biblioteca de bloques prehechos, que el cliente pueda editar la suya dejando
+registro, y añadir sustituciones por equivalentes y un chat de dudas.
+
+**Fuera de alcance por ahora:** usuarios reales nuevos. Seguimos con Cristina, Andrés y
+una cuenta de nutricionista de prueba. Todo lo necesario para abrirla a más gente está
+al final, en el hito K, y no se empieza sin revisión legal.
+
+## Cómo trabajar cada fase
+
+1. Conversación nueva en Claude Code, en **modo plan** (Shift+Tab).
+2. Mensaje: *"Lee CLAUDE.md y docs/PLAN.md. Vamos con la fase N. Propón el plan antes de
+   escribir código."*
+3. Revisa el plan, ajusta y aprueba.
+4. Al terminar: `typecheck`, `lint`, `test`, `build` y `test:e2e` en verde.
+5. Pídele que actualice `CLAUDE.md` con las reglas nuevas de esa fase.
+6. Revisa los cambios y haz commit tú.
+
+Si la app todavía no está desplegada en Vercel, hazlo antes de empezar (pasos de la
+antigua fase 16, al final de este documento). Así cada fase se prueba en los móviles.
+
+## Decisiones de diseño de la v2
+
+Claude Code debe leerlas antes de cada fase.
+
+1. **Una app por consulta.** Cada consulta tendrá su propio despliegue y su propio
+   proyecto de Supabase (se clona la app). No hay tabla de organizaciones. Lo que cambia
+   entre clones (nombre, colores, logo, textos legales, funciones activas) vive en un único
+   archivo de configuración de marca.
+2. **Dieta viva por hogar.** Un hogar tiene una dieta vigente que dura hasta que la
+   nutricionista publique cambios; no es un plan mensual. Cada publicación crea una
+   versión nueva en `plans` (instantánea inmutable) con `valid_from` siempre en lunes, y
+   cierra la anterior con `valid_to`.
+3. **Los cambios del cliente sobreviven a la publicación.** Al publicar, cada celda que la
+   nutricionista no ha tocado conserva lo que tenía el cliente: bloques editados,
+   intercambios de plantilla y overrides de semanas futuras. En las celdas que la
+   nutricionista sí ha cambiado gana ella. Si el cliente también las había modificado, se
+   lo muestra antes de publicar y puede decidir celda a celda.
+4. **El constructor edita en su sitio.** La nutricionista rellena cada celda desde la
+   biblioteca o a mano. No hay intercambio entre días en el constructor: solo "Copiar a
+   otros días", que es explícito. El intercambio sigue existiendo en la app del cliente.
+5. **Roles.** Hay *cliente* (perfil en un hogar) y *nutricionista* (tabla `staff_members`).
+   Las nutricionistas ven y editan todo; todas ven a todos los clientes. El cliente edita
+   su dieta como hasta ahora.
+6. **Registro con triggers.** Todo cambio en `template_cells`, `week_overrides` y `blocks`
+   queda en `change_log` desde Postgres, también lo que llega tras estar sin conexión. Es
+   solo de añadir: nadie puede editarlo ni borrarlo.
+7. **Archivar, no borrar.** Las dietas publicadas se archivan; solo los borradores se
+   pueden eliminar.
+8. **Biblioteca con ración base.** Un bloque de biblioteca lleva una ración base por
+   alimento. Al usarlo, se instancia para cada persona aplicando su multiplicador
+   (`portionMultiplier` del perfil, ajustable por celda) y redondeando.
+9. **Equivalencias como datos.** Los grupos de equivalencia los define la nutricionista.
+   La app nunca inventa equivalencias ni cantidades (regla ya presente en CLAUDE.md).
+10. **Zona de administración separada.** Ruta `/admin` cargada de forma diferida (los
+    clientes no descargan ese código), pensada para escritorio (≥1024 px), con los mismos
+    tokens de diseño.
+11. **Chat con documentación cerrada.** Claude Haiku 5.5 vía Edge Function; solo responde
+    con la documentación de la consulta y deriva a la nutricionista si no lo sabe. Al
+    modelo no se envían nombres ni emails.
 
 ---
 
-## Fase 0 · Preparación (manual, 20 min)
+## Hito E · Base técnica
 
-1. `npm create vite@latest bocause-app -- --template react-ts`, `git init`.
-2. Copia a la raíz `CLAUDE.md`, `docs/`, `src/domain/schema.ts`, `src/styles/tokens.css`,
-   `supabase/migrations/0001_init.sql` de este kit. PDFs en `docs/pdfs/`.
-3. Crea el proyecto en Supabase (región `eu-west`), `npx supabase init` y `link`.
-   `.env.local` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (y `.env*` en `.gitignore`).
-4. En Supabase Auth: magic link activado, URL de redirección = localhost y la de Vercel.
+### Fase 12 · Preparación técnica
 
-## Fase 1 · Andamiaje, tema y PWA
+Nada visible para el usuario, pero deja la base lista para el resto.
 
 ```
-Lee CLAUDE.md. Monta el andamiaje del proyecto:
-- Dependencias del stack de CLAUDE.md (Tailwind v4 con @tailwindcss/vite, vite-plugin-pwa
-  en modo injectManifest, TanStack Query + persist IndexedDB, Zustand, Zod, Supabase, Vitest).
-- tsconfig estricto con noUncheckedIndexedAccess, ESLint + Prettier, scripts de CLAUDE.md.
-- Importa src/styles/tokens.css. Crea un ThemeProvider (system/light/dark) que pone
-  data-theme en <html>, actualiza <meta name="theme-color"> y persiste la preferencia.
-- Manifest: nombre "Bocause", display standalone, orientation portrait, theme #121E2C,
-  iconos maskable 192/512 (genera placeholders con el amarillo y marino de marca).
-- Shell de la app: cabecera fija (logo de texto, selector de perfil vacío, botón tema) y
-  barra inferior con 4 pestañas: Semana, Hoy, Compra, Más.
-Criterio de aceptación: Lighthouse PWA instalable, cambio de tema sin parpadeo al recargar.
+Lee CLAUDE.md, docs/PLAN.md (decisiones de diseño) y la fase 12. Objetivo: preparar la
+base para varios hogares y para clonar la app, sin cambiar el comportamiento visible.
+
+1. Identificadores. Los ids de bloque del plan ("desayuno-0-cristina") solo son únicos
+   dentro de un plan, y la tabla blocks tiene un id global. Verifica que forkBlock y
+   cualquier otro bloque nuevo usan crypto.randomUUID(). Los planes nuevos usarán uuid
+   como id (la columna sigue siendo text; "2026-09" sigue siendo válido). Añade a plans,
+   en la migración 0003: version int, published_at, published_by.
+2. Filtros explícitos. Hoy las consultas confían en que RLS solo devuelva un hogar.
+   Cuando una nutricionista lo vea todo, eso mezclaría hogares. Añade filtros explícitos
+   en src/data/queries.ts y src/data/realtime.ts: plans por household_id; checks y
+   daily_logs por los profile_id del hogar; shopping_items por household_id; Realtime
+   con filtro por plan o hogar. Incluye householdId en las query keys.
+3. Caché por usuario. La clave del persister de IndexedDB debe incluir el user_id. Al
+   cerrar sesión: queryClient.clear() y borrar la caché persistida.
+4. Fuente autoalojada. Quita el @import de Google Fonts de tokens.css y usa
+   @fontsource/montserrat (pesos 500-800, subset latin), precacheada por el service
+   worker. Comprueba que en la pestaña de red no queda ninguna petición a Google.
+5. Marca configurable. Crea src/config/brand.ts con appName, shortName, descripción,
+   colores de marca (los de tokens.css), rutas de logo e iconos, URLs legales (vacías) y
+   flags de funciones (chat: false, substitutions: true). El manifest de vite.config.ts,
+   el <title> y la cabecera leen de ahí. Documenta en docs/CLONAR.md qué hay que cambiar
+   para clonar la app.
+6. Actualiza CLAUDE.md: describe la app como "hogares" (no "dos personas"), añade las
+   decisiones de diseño de la v2 y las reglas nuevas.
+
+Criterio de aceptación: la app funciona igual que antes; los tests unitarios y e2e
+pasan; hay un test que comprueba que las query keys incluyen el hogar.
 ```
 
-## Fase 2 · Lógica de dominio pura (con tests)
-
-Es la fase más importante: toda la flexibilidad vive aquí, sin UI.
+### Fase 13 · Rol de nutricionista y zona de administración
 
 ```
-Lee CLAUDE.md y src/domain/schema.ts. Implementa en src/domain/ funciones puras con tests
-Vitest (cobertura >90% en esta carpeta):
-- dates.ts: weekStartOf(date), dayIndexOf(date), isoWeekDates(weekStart) en Europe/Madrid.
-- resolve.ts: resolveWeek(plan, editedBlocks, templateCells, overrides, weekStart, profileId)
-  → por día y franja del perfil: { cell, block|null, isFree, source: 'original'|'template'|'week' }.
-  Para comida/cena usa scope "shared" y filtra los items a los que tienen portions[profileId].
-- swap.ts: swapCells(a, b, level: 'week'|'template') → lista de upserts. Valida misma
-  franja y mismo scope; permite celda vacía (mueve); el bloque viaja entero.
-- edit.ts: forkBlock(block, changes) → copia con originBlockId; restore(cell, level).
-- freeMeals.ts: canMarkFree(week) respetando rules.freeMealsPerWeek.
-- progress.ts: slotProgress(block, checks, profileId), dayProgress, weekAdherence.
-- shopping.ts: buildShoppingList(resolvedWeeks de ambos perfiles, foods, desde fecha)
-  → suma por foodKey y unidad (usa rawG si existe, si no cookedG, ml o units), agrupa por
-  sección y deja aparte los items sin foodKey o con medida no numérica ("al gusto").
-- batch.ts: sugerencias de batch cooking (platos con foods batchable que se repiten o
-  caen en los 3 días siguientes).
-Tests obligatorios: swap compartido afecta a ambos perfiles; swap individual no toca al
-otro; override semanal gana a la plantilla; restaurar vuelve al original; la compra suma
-el pavo de los dos; ingesta libre no se puede marcar una 3ª vez.
+Lee CLAUDE.md y docs/PLAN.md, fase 13.
+
+1. Tests de RLS PRIMERO. Configura pgTAP (supabase test db) en supabase/tests/ con tres
+   usuarios: nutricionista, Cristina y un cliente de un "Hogar demo" con datos
+   ficticios. Escribe los casos antes de la migración: la nutricionista ve y edita todo;
+   Cristina ve su hogar y no ve el demo; el cliente demo no ve el vuestro; nadie salvo
+   staff escribe en plans.
+2. Migración 0004:
+   - staff_members(user_id pk → auth.users, display_name, role 'nutricionista',
+     created_at) y la función is_staff() security definer.
+   - Todas las políticas de lectura pasan a: miembro del hogar OR is_staff().
+   - Escritura en template_cells, week_overrides y blocks: la regla actual OR is_staff().
+   - plans: escritura solo staff (hoy cualquier miembro puede: hay que cerrarlo).
+   - households y profiles: alta y edición por staff (nombre, slug, claim_email,
+     portionMultiplier). Añade profiles.portion_multiplier numeric default 1.
+3. Script npm run staff:add -- <email> (service_role): busca el usuario de Auth por
+   email (debe haber entrado una vez) y lo añade a staff_members.
+4. Router. Añade React Router. La app de cliente actual queda en "/" con sus pestañas
+   (Zustand) intactas. /admin/* se carga con lazy() y solo se monta si is_staff.
+   Un cliente que entra en /admin ve "No tienes acceso" y un enlace a la app.
+5. Shell de admin para escritorio: barra lateral (Hogares, Biblioteca, Alimentos,
+   Equivalencias, Documentación, Registro) y área principal. Pantallas vacías con su
+   estado vacío. Mismos tokens; tema claro y oscuro.
+6. Script de seed del "Hogar demo" con dos perfiles ficticios ("Cliente A", "Cliente B")
+   y una copia del plan actual. Servirá para demos sin datos reales.
+
+Usa una cuenta distinta para la nutricionista de prueba (por ejemplo, un alias de
+correo +nutri). Criterio: pgTAP en verde, el bundle del cliente no incluye /admin
+(compruébalo con el informe de build).
 ```
 
-## Fase 3 · Extracción de los PDFs a JSON
+### Fase 14 · Registro de cambios
 
 ```
-Lee CLAUDE.md, src/domain/schema.ts y los dos PDFs de docs/pdfs/. Genera
-data/plans/2026-09.json con UN plan que contenga los dos perfiles ("cristina", "andres").
-Reglas de extracción:
-- Página de la tabla semanal: cada celda → Block. Comida y cena → scope "shared" con
-  portions por persona; desayuno/snack/snack2/almuerzo → scope del perfil.
-- "[TÍTULO]" → section.title en formato frase. "---" separa dos secciones "plato".
-- Filas PAN y POSTRE → secciones kind "pan"/"postre" DENTRO del bloque de comida o cena
-  de esa columna, solo en portions de quien las tenga.
-- "80 GR CR/160 GR CC" → rawG 80, cookedG 160. El texto entre paréntesis → measure.
-- Alternativas con "/" (PAVO/POLLO, BONIATO/PATATA) se mantienen en el label.
-- Domingo: sin bloques (celdas null). Regla de 2 ingestas libres en rules.
-- Comodín proteico, entrenos por día, suplementación por tipo de entreno, AOVE,
-  recomendaciones y la receta del cheat meal (tortitas de plátano y canela).
-- Crea el catálogo foods con key, sección del súper y batchable.
-No corrijas nada en silencio: crea docs/extraccion-informe.md con una tabla de cada
-anomalía y la decisión tomada. Crea scripts/validate-plan.ts (npm run seed:validate).
+Lee CLAUDE.md y docs/PLAN.md, fase 14.
+
+1. Migración 0005: change_log(id, household_id, plan_id, actor_user_id, actor_role
+   ('cliente'|'nutricionista'|'sistema'), table_name, op, cell jsonb {day, slot, scope,
+   weekStart?}, before jsonb, after jsonb, source text, created_at). Índice
+   (household_id, created_at desc).
+2. Trigger AFTER INSERT/UPDATE/DELETE en template_cells, week_overrides y blocks con
+   una función security definer que rellena actor desde auth.uid(). El campo source sale
+   de current_setting('app.change_source', true) (valores: app, publicacion, restaurar),
+   con 'app' por defecto.
+3. RLS: lectura para miembros del hogar y staff; sin políticas de update ni delete.
+   pgTAP: el trigger escribe; un cliente no puede borrar ni editar registros.
+4. domain/describeChange.ts (puro, con tests): convierte una entrada en una frase
+   legible, por ejemplo "Andrés cambió la cena del martes (solo esta semana): huevos
+   rotos → pasta con boloñesa". Agrupa los cambios de un mismo intercambio.
+5. UI cliente: Más → "Historial de cambios" del hogar, por días, con "Restaurar" en los
+   que admiten restauración (usa domain/edit restore y source 'restaurar').
+6. Componente reutilizable ChangeLogList para usarlo después en la ficha del hogar.
 ```
 
-**Diferencias que ya he detectado y que el JSON debe reflejar** (úsalo para revisar):
+---
 
-- Cena del lunes (huevos rotos): jamón 60 g / 6-8 lonchas Cristina, 30 g / 3-4 lonchas Andrés.
-  El resto de comidas y cenas coinciden en plato y cantidades.
-- Pan en la cena: solo Andrés, martes, miércoles y jueves (40 g barra integral).
-  Pan en la comida: solo Cristina, jueves (40 g barra integral).
-- Postre de comida. Cristina: M plátano, X melocotón, J plátano. Andrés: L melocotón,
-  M plátano + manzana, X melocotón + mandarina/naranja, J plátano + manzana.
-- Postre de cena. Cristina: M pera + chocolate 70-90%, X manzana, J pera + chocolate.
-  Andrés: L kéfir + kiwi, M pera + chocolate, X manzana, J pera + chocolate, V kéfir + kiwi.
-- Andrés L, X, V desayuno: "40 PAN DE MOLDE INTEGRAL (2 rebanada pequeña)" sin unidad;
-  asumir 40 g y anotarlo en el informe.
-- Entreno. Cristina: lunes gimnasio. Andrés: lunes gimnasio, miércoles running, sábado caminar.
-- Suplementación. Cristina gimnasio: pre-workout sin cafeína (45 min antes), ETT 5-10 g
-  MAP/aminoácidos, post 30 g whey + plátano + 7 g creatina. Andrés gimnasio: igual pero post
-  con 200 ml de zumo en vez de plátano; running: solo post (whey + plátano + creatina).
-- Comodín: Andrés tiene el doble que Cristina en todas las opciones salvo la whey (20 g ambos).
-- Fecha del plan: 27/09/2026. `validFrom` propuesto: lunes 28/09/2026 (confírmalo).
+## Hito F · Herramientas de la nutricionista
 
-## Fase 4 · Supabase: datos, auth y hogar
+### Fase 15 · Catálogo, biblioteca y equivalencias
 
 ```
-Aplica supabase/migrations/0001_init.sql. Crea:
-- scripts/seed-supabase.ts: crea el hogar, los dos perfiles (slug cristina/andres), inserta
-  data/plans/2026-09.json en plans.data e inicializa template_cells desde plan.template.
-- Pantalla de login con magic link y pantalla "¿Quién eres?" que vincula user_id al perfil
-  (solo si está libre).
-- src/data/: cliente tipado (supabase gen types), queries y mutations con TanStack Query,
-  mutaciones optimistas, persistencia IndexedDB y reanudación offline.
-- Suscripción Realtime a template_cells, week_overrides, blocks, checks, daily_logs y
-  shopping_items que invalida/actualiza la caché.
-Prueba con dos navegadores (dos usuarios) que las RLS permiten y bloquean lo esperado:
-Andrés no puede editar el desayuno de Cristina, pero sí verlo y ver sus checks.
+Lee CLAUDE.md y docs/PLAN.md, fase 15.
+
+1. Migración 0006:
+   - foods(key pk, name, section, unit, batchable, keeps_days, archived). Sembrado
+     desde plan.foods.
+   - library_blocks(id uuid, name, slots text[], tags text[], content jsonb, notes,
+     archived, created_by, updated_at).
+   - equivalence_groups(id uuid, name, description, members jsonb, archived,
+     updated_at).
+   - RLS: lectura para cualquier miembro autenticado (el cliente las necesita para
+     sustituir y para el chat); escritura solo staff.
+2. Zod en src/domain/schema.ts: LibraryItem (como FoodItem pero con base: Portion en
+   lugar de portions), LibrarySection, LibraryBlock, EquivalenceMember {foodKey,
+   factor (positivo, por defecto 1), note?} y EquivalenceGroup.
+3. Dominio puro con tests:
+   - instantiate(libraryBlock, people: {profileId, multiplier}[]) → Section[] con
+     portions por persona. Redondeo: gramos y ml a múltiplos de 5, unidades a 0,5; la
+     medida casera se conserva tal cual y se marca como "revisar" si el multiplicador
+     no es 1.
+   - equivalentsFor(foodKey, portion, groups) → opciones con su cantidad calculada.
+   - toLibraryBlock(block, profileId) para guardar un bloque existente en la biblioteca.
+4. Script npm run library:seed: crea bloques de biblioteca a partir de los bloques
+   distintos del plan actual (sin duplicados por contenido), con la ración de Cristina
+   como base y nombre sacado del título de la sección. Genera un informe de lo creado.
+   NO crees grupos de equivalencia: los rellena la nutricionista.
+5. Admin:
+   - Biblioteca: lista con búsqueda y filtros (franja, etiqueta); editor reutilizando
+     BlockEditor/ItemEditor en modo "ración base"; duplicar; archivar.
+   - Alimentos: tabla editable del catálogo (nombre, sección, unidad, batchable).
+   - Equivalencias: editor de grupos con alimentos del catálogo, factor y nota, y una
+     vista previa ("140 g de lentejas → 140 g de garbanzos").
 ```
 
-## Fase 5 · Vista Semana y vista Hoy
+### Fase 16 · Constructor de dietas y publicación
+
+Es la fase más grande. Si se alarga, divídela en 16a (borrador y cuadrícula) y 16b
+(publicación y arrastre de cambios).
 
 ```
-Implementa features/week:
-- Barra de días sticky (L M X J V S D) con progreso del día en anillo; tocar = scroll al día.
-- Scroll vertical de 7 tarjetas de día. Martes, jueves y sábado con bg-surface-alt y borde
-  izquierdo amarillo (ritmo del PDF). Cabecera: nombre del día en mayúsculas, fecha y chip
-  de entreno.
-- En cada día, franjas del perfil: etiqueta marina con icono a la izquierda (como el PDF),
-  bloque con secciones: título de plato, alimentos (label + cantidad formateada + measure en
-  ink-muted), pan y postre como subsecciones discretas.
-- Bloques compartidos con fondo bg-shared y un icono de "compartido".
-- Al abrir: scroll automático al día de hoy y resaltado de la siguiente comida por hora
-  (horas por defecto configurables en Más).
-- Selector de perfil: Cristina / Andrés / Casa. "Casa" muestra solo comida y cena, con las
-  dos raciones lado a lado y la suma para cocinar ("400 g total").
-- Pestaña Hoy = el mismo componente con un solo día y los trackers de la fase 6.
-- Domingo: tarjeta especial "2 ingestas libres" con contador de las usadas esta semana.
-Usa datos reales de la fase 4. Revisa en 360x780 y en modo oscuro.
+Lee CLAUDE.md y docs/PLAN.md (decisiones 2, 3, 4 y 7) y la fase 16.
+
+1. Migración 0007:
+   - diet_drafts(household_id pk, base_plan_id, data jsonb con forma de Plan,
+     updated_by, updated_at). Solo staff.
+   - RPC publish_plan(p_household uuid, p_plan jsonb, p_valid_from date,
+     p_carry jsonb), security definer, en una única transacción: comprueba is_staff y
+     que valid_from es lunes, cierra el plan vigente (valid_to = valid_from - 1),
+     inserta el plan nuevo con version + 1, inserta template_cells y lo arrastrado
+     (blocks, cells, overrides), fija app.change_source = 'publicacion' y borra el
+     borrador.
+2. domain/carryOver.ts (puro; es la pieza crítica, con muchos tests):
+   carryOver({prevPlan, prevEditedBlocks, prevTemplateCells, prevOverrides,
+   nextPlan, validFrom}) → {blocks, cells, overrides, conflicts}.
+   - Celda cuyo original no cambia entre versiones (usa diff.ts) → se conserva el
+     estado del cliente; los bloques editados se copian con uuid nuevo y se remapean.
+   - Celda que cambió la nutricionista → gana la nutricionista; si el cliente la
+     había modificado, se añade a conflicts.
+   - Overrides de semanas >= validFrom: misma regla. Las semanas anteriores siguen
+     resolviéndose con el plan antiguo.
+   - El constructor conserva los ids de bloque de las celdas que no se tocan, para
+     que la comparación sea fiable.
+3. Constructor en /admin/hogares/:id/dieta:
+   - Empezar: "Partir de la dieta actual" (por defecto), "En blanco" o "Duplicar de
+     otro hogar" (con un selector de qué persona corresponde a quién).
+   - Cuadrícula: columnas lunes a domingo. Filas de franjas individuales por persona
+     (Desayuno · Cristina, Desayuno · Andrés...) y filas compartidas (Comida, Cena)
+     con las raciones de cada persona dentro de la celda.
+   - Celda: resumen compacto. Al pulsarla, un panel lateral con el editor (reutiliza
+     BlockEditor) y las acciones "Elegir de la biblioteca" (búsqueda, filtro por franja,
+     vista previa y multiplicador por persona: ×0,75, ×1, ×1,25, ×1,5 o libre, por
+     defecto el portion_multiplier del perfil), "Guardar en la biblioteca", "Vaciar" y
+     "Copiar a otros días" (casillas de días). Nunca intercambia.
+   - Pestaña Configuración: franjas de cada persona, entreno por día, suplementación,
+     comodín, reglas (AOVE, ingestas libres, agua), recomendaciones y recetas.
+   - Autoguardado del borrador (con debounce), validación Zod e indicador
+     "Guardado"/"Sin guardar".
+   - "Ver como Cristina": vista previa con los componentes de la app del cliente.
+4. Publicar: elegir lunes de inicio (por defecto el próximo), resumen de celdas
+   cambiadas, lista de conflictos con "Gana la nutricionista" por defecto y la opción
+   "Mantener el cambio del cliente" en cada uno, confirmar, llamar a la RPC y mostrar el
+   toast "Dieta publicada".
+5. Archivar dieta: status archived. La app del cliente sin dieta vigente muestra "Tu
+   nutricionista está preparando tu dieta".
+6. App del cliente: la primera vez que se abre tras una publicación, aviso "Tu dieta se
+   actualizó el …" con un enlace a "Ver cambios" (usa el registro).
+
+Pruébalo con el Hogar demo, nunca con vuestro hogar hasta que funcione.
 ```
 
-## Fase 6 · Checklist y trackers diarios
+### Fase 17 · Panel de hogares
 
 ```
-Implementa:
-- Checkbox por alimento (44 px, marino con tic amarillo; en oscuro, al revés). Al marcar el
-  último de la franja, la etiqueta muestra "Hecho" y la franja se atenúa. Mantener pulsado
-  la etiqueta = marcar/desmarcar toda la franja.
-- En vista Casa, avatar pequeño de quién ya lo ha marcado.
-- Comodín proteico: tarjeta en Hoy con las opciones del perfil como chips; elegir + check.
-  Aviso suave a partir de las 20:00 si no está hecho.
-- AOVE: contador +/- en Hoy con barra semanal hacia 14 cucharadas.
-- Agua: +250 ml con un toque, objetivo 2-3 L, mantener pulsado para corregir.
-- Ingesta libre: menú de bloque → "Marcar como ingesta libre" (máx. 2/semana).
-Checks fechados: cambiar de semana no pierde el historial.
+Lee CLAUDE.md y docs/PLAN.md, fase 17.
+
+- /admin/hogares: tabla con hogar, personas, dieta vigente (desde), último cambio del
+  cliente, adherencia de la semana (progress.ts) y búsqueda.
+- Crear hogar y crear perfil (nombre, slug, claim_email, franjas y portion_multiplier).
+  El perfil queda reservado a ese correo; no se envía ninguna invitación (eso es el
+  hito K).
+- Ficha del hogar con pestañas: Dieta (abre el constructor y muestra las versiones
+  anteriores en solo lectura), Historial (ChangeLogList con filtros y "Restaurar") y
+  Seguimiento (checks y trackers de la semana, solo lectura).
+- "Ver como cliente": abre la app de cliente con ese perfil en modo solo lectura (flag
+  en el store de UI que desactiva todas las mutaciones y muestra una banda "Vista de
+  Cristina · solo lectura").
+- Aviso fijo en "Crear hogar": "Usa solo datos de prueba hasta completar la revisión
+  legal". Se retirará en el hito K.
 ```
 
-## Fase 7 · Intercambio de bloques
+---
+
+## Hito G · Mejoras para el cliente
+
+### Fase 18 · Sustituciones
 
 ```
-Implementa features/swap. Flujo:
-1. Menú del bloque → "Intercambiar con otro día" (o mantener pulsado el bloque).
-2. Se abre una hoja inferior con un carrusel horizontal (scroll-snap) de la MISMA franja
-   en los 7 días, día actual centrado, mostrando un resumen de cada bloque y las celdas
-   vacías (domingo) como destino válido.
-3. Tocar destino → selector "Solo esta semana" / "Todo el plan" (por defecto, esta semana).
-4. Animación corta de intercambio (respeta reduced motion) + toast "Intercambiado" con
-   "Deshacer" durante 6 s.
-Alternativa en la vista Semana: modo intercambio con @dnd-kit, arrastrar el bloque sobre
-otro de la misma franja; las franjas no compatibles se atenúan.
-Los compartidos avisan "Cambia también para Andrés/Cristina". Indicador "Modificado" en
-bloques que no vienen del original, con acción "Restaurar original".
+Lee CLAUDE.md y docs/PLAN.md, fase 18. Solo si brand.features.substitutions.
+
+1. "Sustituir por…" en el menú de cada alimento con foodKey que esté en algún grupo:
+   hoja con las opciones del grupo y su cantidad calculada (equivalentsFor), nota del
+   grupo y "Solo esta semana" / "Todo el plan" (el patrón actual).
+   - Bloque individual: se sustituye el alimento.
+   - Bloque compartido: "Para los dos" (por defecto) o "Solo para mí" (separa mi
+     ración en un alimento nuevo y deja la del otro intacta).
+   - El alimento muestra "En lugar de lentejas" y se puede restaurar.
+2. "Cambiar por otro de la biblioteca" en el menú del bloque: bloques de la misma
+   franja, instanciados con el portion_multiplier de cada persona.
+3. Funciona sin conexión: biblioteca y grupos se persisten en la caché.
+4. Todo pasa por forkBlock; el registro lo recoge el trigger.
+5. Tests: la lista de la compra refleja la sustitución; "Solo para mí" no altera la
+   ración del otro; restaurar devuelve el original.
 ```
 
-## Fase 8 · Editor de bloques
+### Fase 19 · Chat de dudas con IA
 
 ```
-Implementa features/editor en una hoja inferior a pantalla completa:
-- Editar título de sección, añadir/quitar/reordenar secciones (plato, pan, postre, extra)
-  y alimentos (drag handle).
-- Alimento: label con autocompletado del catálogo foods (o texto libre), y para cada
-  persona del scope: crudo, cocido, ml, unidades y medida casera. En compartidos, columnas
-  por persona con "copiar de Cristina".
-- Guardar = forkBlock (copy-on-write) aplicado a "esta semana" o "todo el plan".
-- Comparar con el original (diferencias resaltadas) y "Restaurar original".
-- Crear bloque nuevo en celda vacía.
-Validación con Zod; no se puede guardar un bloque sin ningún alimento.
+Lee CLAUDE.md y docs/PLAN.md (decisión 11) y la fase 19. Detrás del flag
+brand.features.chat.
+
+1. Migración 0008:
+   - knowledge_docs(id, title, body markdown, archived, updated_by, updated_at): lee
+     cualquier miembro, escribe staff.
+   - chat_messages(id, profile_id, question, answer, answered_from_docs bool, model,
+     input_tokens, cache_read_tokens, output_tokens, created_at): inserta solo la Edge
+     Function; lee el propio cliente y staff.
+   - chat_settings (una fila): enabled, daily_limit (por defecto 15).
+2. domain/chatContext.ts (puro, con tests): construye el prompt en este orden:
+   (a) instrucciones fijas, (b) documentación + grupos de equivalencia + reglas, en
+   orden determinista — este prefijo es igual para todos y lleva el punto de caché —, y
+   (c) la semana resuelta del cliente sin nombres ("Persona") y la pregunta. Un test
+   comprueba que el prefijo es idéntico byte a byte entre clientes.
+3. Edge Function "ask" (Deno): verifica el JWT, comprueba enabled y el límite diario,
+   llama a la API de Anthropic con el modelo claude-haiku-5-5, max_tokens ~400,
+   cache_control en el último bloque del prefijo, y guarda el uso. Clave en
+   `supabase secrets set ANTHROPIC_API_KEY`; nunca en el cliente.
+   Instrucciones al modelo: responder en español, breve, SOLO con el material dado,
+   citando el título del documento; si no está, responder "No lo tengo en la
+   documentación: pregúntaselo a tu nutricionista" y marcar answered_from_docs=false;
+   nunca consejo médico ni cambios fuera de las equivalencias.
+4. Cliente: Más → "Preguntas". Sugerencias de ejemplo, contador de preguntas restantes,
+   aviso fijo "Respuestas generadas por IA a partir de la documentación de tu
+   nutricionista; no sustituyen su consejo", desactivado sin conexión. Si la respuesta
+   menciona una equivalencia, enlace a "Sustituir por…".
+5. Admin: editor de Documentación (markdown con vista previa) y registro del chat con
+   filtro "Sin respuesta en la documentación", para saber qué documentar.
+6. Verificación: dos preguntas seguidas → la segunda debe tener cache_read_tokens > 0.
+   Consulta en la documentación de la API el mínimo de tokens cacheable para Haiku; si
+   la documentación es más corta, la caché no se activa, pero el coste es igualmente
+   bajo. Configura un límite de gasto mensual en la consola de Anthropic.
 ```
 
-## Fase 9 · Lista de la compra
+---
+
+## Hito H · Pendientes de la v1
+
+### Fase 20 · Notas, adherencia y resumen
 
 ```
-Implementa features/shopping:
-- Rango: "Semana actual" / "Lo que queda de semana" / "Próxima semana".
-- Generación con domain/shopping.ts para AMBOS perfiles, upsert en shopping_items
-  (source auto) conservando checks e in_pantry al regenerar.
-- Agrupada por sección del súper en orden de recorrido configurable.
-- Cada línea: nombre, cantidad total, desglose por persona al expandir, de qué días viene.
-- "Ya lo tengo" (despensa) separado de "comprado".
-- Añadir items manuales. Compartir como texto (Web Share API).
-- Realtime: lo que marca uno lo ve el otro al instante, también offline (cola).
-```
-
-## Fase 10 · Pulido del MVP
-
-```
-Recorre la app en 360x780, claro y oscuro: estados vacíos con acción clara, skeletons de
-carga, errores de red con reintento, indicador offline, accesibilidad (roles, labels,
-foco en hojas inferiores, contraste AA). Playwright: login, marcar checks, intercambiar
-y deshacer, generar compra.
-```
-→ **Despliega aquí** (fase 16) y usadla unos días antes de seguir.
-
-## Fase 11 · Entreno, suplementación, recetas y recomendaciones
-
-```
-- Chip de entreno del día → hoja con el protocolo pre / intra (ETT) / post del perfil.
-- Recetas: sección enlazable desde el título del plato; editor sencillo de ingredientes y
-  pasos; sección "Cheat meal" con la receta de tortitas del PDF.
-- Pestaña Más: recomendaciones del plan (agua, aceite, sueño, alcohol, tecnología...)
-  como tarjetas con iconos propios en línea, sin imágenes externas.
-```
-
-## Fase 12 · Adherencia, notas y exportación
-
-```
-- Notas por franja: hambre 1-5 y texto corto.
+- Notas por franja: hambre 1-5 y texto corto (tabla meal_notes ya existe).
 - Pantalla Progreso: adherencia semanal por franja y día, racha de días completos,
-  comodín cumplido, AOVE y agua medios, comparativa semanas del plan.
-- Exportar resumen para el nutricionista: página imprimible (CSS print) → "Guardar PDF"
-  del navegador, y opción de compartir.
+  comodín cumplido, AOVE y agua medios.
+- Resumen imprimible (CSS print → "Guardar como PDF") y compartir.
+- En la ficha del hogar (admin), la misma vista de Progreso.
 ```
 
-## Fase 13 · Planes mensuales versionados
+### Fase 21 · Batch cooking
 
 ```
-- Pantalla Planes: listar, activar, archivar; el plan activo se elige por fecha.
-- Importar: subir un JSON generado con el mismo proceso de la fase 3 → validación Zod →
-  vista previa con diferencias respecto al plan anterior → confirmar.
-- (Opcional) Edge Function que recibe el PDF y llama a la API de Claude para generar el
-  borrador de JSON; siempre pasa por la vista previa antes de guardarse.
-- Al cambiar de plan, la compra y los overrides se calculan contra el plan vigente de
-  cada semana.
+domain/batch.ts ya existe. Tarjeta en Hoy (domingos y cuando se detecte oportunidad):
+"Puedes adelantar", con los platos aptos de los próximos 3 días, la cantidad total para
+el hogar y los días de conservación (foods.keeps_days).
 ```
 
-## Fase 14 · Batch cooking
+### Fase 22 · Notificaciones push
 
 ```
-Tarjeta en Hoy (domingos y cuando se detecte oportunidad): "Puedes adelantar" con los
-platos aptos de los próximos 3 días, cantidad total para los dos y días de conservación.
-```
-
-## Fase 15 · Notificaciones push
-
-```
-- Claves VAPID, suscripción desde Más (pedir permiso solo tras gesto explícito).
-- Service worker: manejar push y notificationclick (abre Hoy en la franja).
-- Edge Function "send-reminders" + pg_cron cada 15 min: recordatorios por franja según
+- Claves VAPID; suscripción desde Más, pidiendo permiso solo tras un gesto explícito.
+- Service worker: push y notificationclick (abre Hoy en la franja).
+- Edge Function send-reminders + pg_cron cada 15 min: recordatorios por franja según
   reminder_settings, comodín pendiente a las 20:00 y agua opcional.
-Nota: en Android funciona con la PWA instalada; probad en ambos móviles con ahorro de
-batería desactivado para Chrome.
+- Aviso al cliente cuando la nutricionista publica una dieta nueva.
+Probad en Android con la PWA instalada y sin ahorro de batería para Chrome.
 ```
-
-## Fase 16 · Despliegue e instalación
-
-1. Vercel: importar el repo, variables de entorno, dominio.
-2. Añadir la URL a las redirecciones de Supabase Auth.
-3. En cada móvil: abrir en Chrome → menú → "Instalar aplicación" → login con magic link.
-4. QA en los dispositivos: modo avión (checks y compra se sincronizan al volver),
-   intercambio compartido visto en el otro móvil en <2 s, tema oscuro del sistema.
 
 ---
 
-## Consejos para trabajar con Claude Code
+## Hito K · Apertura a más usuarios
 
-- Empieza cada fase con: *"Lee CLAUDE.md y docs/PLAN.md, fase N. Propón el plan antes de
-  escribir código."* Ajusta el plan y luego aprueba.
-- Si una fase se alarga, `/compact` o conversación nueva; CLAUDE.md mantiene el contexto.
-- Cuando descubras una regla nueva ("los kiwis se compran por unidades"), añádela a
-  CLAUDE.md para que no se repita el error.
-- Pide capturas o revisión en el navegador integrado tras cada cambio de UI.
-- Commit por fase con mensaje descriptivo; rama por hito si quieres PRs revisables.
+**No empezar sin la revisión legal.** Queda aquí como lista para cuando llegue el momento:
+
+- Despliegue en cuentas de la consulta (Supabase en región UE, Vercel), creadas por ella;
+  transferencia de proyectos desde las tuyas.
+- Invitaciones por email desde la ficha del hogar; registro con email y contraseña además
+  del enlace mágico.
+- Aceptación versionada de la política de privacidad y términos (qué versión y cuándo);
+  consentimiento aparte, opcional y revocable, para el chat.
+- Doble factor (TOTP de Supabase Auth) obligatorio para nutricionistas.
+- Registro de accesos de staff a fichas de clientes (no solo de cambios).
+- Exportar mis datos y solicitar baja (bloqueo y borrado según el plazo que indique el
+  asesor).
+- Textos legales enlazados desde brand.ts; retirar el aviso de "solo datos de prueba".
+- Demo para otras consultas con el Hogar demo (datos ficticios).
+
+---
+
+## Anexo · Despliegue (si aún no está hecho)
+
+1. Vercel: importar el repo, variables de entorno y dominio.
+2. Añadir la URL a las redirecciones de Supabase Auth.
+3. En cada móvil: Chrome → menú → "Instalar aplicación" → entrar con el enlace mágico.
+4. QA en los dispositivos: modo avión (checks y compra se sincronizan al volver),
+   intercambio compartido visto en el otro móvil en menos de 2 s, tema oscuro del
+   sistema.
+
+## Consejos
+
+- La fase 16 es la de más riesgo: pide a Claude Code que empiece por `carryOver.ts` y sus
+  tests, y no pases a la interfaz hasta que estén en verde.
+- Antes de cada migración, `npx supabase db dump` como copia; prueba primero en una rama
+  de Supabase o en un proyecto de pruebas.
+- Cuando descubras una regla nueva, añádela a CLAUDE.md para que no se repita el error.
+- Commit por fase; una rama por hito si quieres revisar con PR.
