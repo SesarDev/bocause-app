@@ -18,7 +18,7 @@ import {
   usePlan,
   useProfileDirectory,
   useTemplateCells,
-  useWeekOverrides,
+  useOverridesFrom,
 } from '../../data/queries';
 
 function tituloDe(plan: Plan | null | undefined, blockId: string | null): string {
@@ -46,7 +46,9 @@ export function PublishPanel({
   const planVigente = usePlan();
   const bloques = useEditedBlocks(planVigente.data?.id, scopes);
   const celdas = useTemplateCells(planVigente.data?.id, scopes);
-  const overrides = useWeekOverrides(planVigente.data?.id, validFrom, scopes);
+  // Desde validFrom EN ADELANTE, no solo esa semana: el cliente puede tener ajustes en
+  // semanas posteriores y pasarle solo una los perdía en silencio al publicar.
+  const overrides = useOverridesFrom(planVigente.data?.id, validFrom, scopes);
   const publish = usePublishPlan();
 
   const resultado = useMemo(() => {
