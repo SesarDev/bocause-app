@@ -71,6 +71,52 @@ export function useHouseholds() {
   });
 }
 
+/**
+ * Crear hogares y personas va por RPC, no por escritura directa.
+ *
+ * La 0002 limitó la escritura de `profiles` a la columna `theme` con un permiso **por
+ * columna**, y ese candado alcanza también a la nutricionista porque también es
+ * `authenticated`. Ninguna política RLS puede devolvérselo: las políticas dicen qué filas,
+ * no qué columnas. Ver 0004_staff.sql.
+ */
+export function useCreateHousehold() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase.rpc('staff_create_household', { p_name: name });
+      if (error) throw error;
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: [...consultaKeys.all, 'households'] }),
+  });
+}
+
+export function useUpsertProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (vars: {
+      householdId: string;
+      slug: string;
+      displayName: string;
+      claimEmail: string | null;
+      portionMultiplier: number;
+    }) => {
+      const { error } = await supabase.rpc('staff_upsert_profile', {
+        p_household_id: vars.householdId,
+        p_slug: vars.slug,
+        p_display_name: vars.displayName,
+        p_claim_email: vars.claimEmail,
+        p_portion_multiplier: vars.portionMultiplier,
+      });
+      if (error) throw error;
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: [...consultaKeys.all, 'households'] }),
+  });
+}
+
 /* ─────────────────────── Borrador ─────────────────────── */
 
 export function draftKey(householdId: string) {

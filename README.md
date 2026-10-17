@@ -42,7 +42,7 @@ supabase/        Migraciones de Postgres
 | `npm run library:seed`  | Siembra el catálogo y la biblioteca de bloques  |
 | `npm run staff:add`     | Da de alta a una nutricionista                  |
 
-## Estado: fase 16 completada (desplegada y en uso)
+## Estado: fase 17 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -199,6 +199,28 @@ por día, con "Restaurar original".
 | RPC `restore_cell`             | Restaurar era varias peticiones sueltas y podía quedarse a medias. Ahora es atómico, y además el registro puede marcarlo como `restaurar`.           |
 | `src/domain/describeChange.ts` | Las frases, puras y con 16 tests. Los títulos entran por un `lookup`, así el dominio no sabe nada de Supabase.                                       |
 | `ChangeLogList`                | Fuera de la vista Más: la ficha del hogar (fase 17) enseñará la misma lista.                                                                         |
+
+**Fase 17** es el panel de hogares. `/admin/hogares` lista los hogares con sus personas (y su
+multiplicador de ración), la dieta vigente y un buscador; desde ahí se crean hogares y
+personas, y se entra en la ficha de cada uno, con tres pestañas: **Dieta** (versión vigente y
+enlace al constructor), **Historial** (el registro de cambios de la fase 14) y **Seguimiento**
+(adherencia de la semana por persona, calculada con `progress.ts`).
+
+Dos cosas deliberadas:
+
+- **El seguimiento es de solo lectura.** Marcar comidas es del cliente: si la nutricionista
+  pudiera hacerlo por él, el seguimiento dejaría de significar nada.
+- **Crear hogares y personas va por RPC**, no por escritura directa, por el permiso **por
+  columna** que la 0002 puso sobre `profiles` y que alcanza también a la nutricionista.
+
+Y un aviso fijo que no es decorativo: _"Usa solo datos de prueba hasta completar la revisión
+legal"_. Aquí se guardan datos de salud y todavía no hay política de privacidad ni
+consentimiento; eso es el hito K.
+
+**Pendiente de la fase 17:** "Ver como cliente" (abrir la app del cliente en modo solo
+lectura) y consultar las versiones anteriores de una dieta. Lo primero necesita una bandera
+de solo lectura que recorra todas las mutaciones, y prefiero hacerlo con calma antes que a
+medias: una vista "de solo lectura" que deje escribir sin querer sería peor que no tenerla.
 
 **Fase 16** es el constructor de dietas y la publicación, la parte de más riesgo del
 proyecto. En `/admin/hogares` se elige un hogar y se abre su dieta: una cuadrícula de lunes a
