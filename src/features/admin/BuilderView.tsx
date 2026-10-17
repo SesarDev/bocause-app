@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { DAY_NAMES } from '../../domain/dates';
+import { pruneUnusedBlocks } from '../../domain/draft';
 import { instantiate } from '../../domain/library';
 import { isSharedSlot } from '../../domain/resolve';
 import type { Block, LibraryBlock, Plan, SlotKey, TemplateCell } from '../../domain/schema';
@@ -94,7 +95,11 @@ export function BuilderView() {
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const tocar = useCallback(
-    (siguiente: Plan) => {
+    (sucio: Plan) => {
+      // Se limpian los bloques que ya no usa ninguna celda: el constructor crea uno nuevo
+      // cada vez que se rellena, y sin esto el borrador acumula los descartes y acaban
+      // publicados dentro del plan.
+      const siguiente = pruneUnusedBlocks(sucio);
       setEditado(siguiente);
       setGuardado('sin-guardar');
 

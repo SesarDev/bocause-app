@@ -310,6 +310,28 @@ describe('carryOver · overrides de semana', () => {
     expect(resultado.overrides).toEqual([]);
   });
 
+  it('arrastra VARIAS semanas futuras, no solo la primera', () => {
+    /*
+     * El contrato que el panel de publicar incumplía: le pasaba a `carryOver` los overrides
+     * de una sola semana (`week_start = validFrom`) y los de las siguientes se perdían al
+     * publicar, sin aviso. El dominio siempre estuvo bien; el fallo era de quien le daba
+     * los datos. Queda escrito aquí para que no vuelva a colarse.
+     */
+    const resultado = base({
+      prevOverrides: [
+        override('2026-10-19', 0, 'v-pollo'),
+        override('2026-10-26', 1, 'v-pollo'),
+        override('2026-11-02', 2, 'v-pollo'),
+      ],
+    });
+
+    expect(resultado.overrides.map((o) => o.weekStart)).toEqual([
+      '2026-10-19',
+      '2026-10-26',
+      '2026-11-02',
+    ]);
+  });
+
   it('incluye la propia semana de validFrom', () => {
     const resultado = base({ prevOverrides: [override('2026-10-19', 0, 'v-pollo')] });
     expect(resultado.overrides).toHaveLength(1);

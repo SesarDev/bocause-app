@@ -149,6 +149,35 @@ export function useWeekOverrides(
   });
 }
 
+/**
+ * Todos los overrides desde una semana en adelante, no solo los de una.
+ *
+ * Lo necesita la publicación: `carryOver` arrastra los ajustes del cliente de **todas** las
+ * semanas futuras, y dándole solo los de una se perdían los demás sin que nadie lo viera.
+ * `useWeekOverrides` sigue existiendo para la app del cliente, que mira una semana cada vez.
+ */
+export function useOverridesFrom(
+  planId: string | undefined,
+  fromWeek: IsoDateString,
+  scopes: ProfileDirectory | undefined,
+) {
+  const householdId = useActiveHousehold();
+
+  return useQuery({
+    queryKey: [...keysFor(householdId).all, 'overrides-from', planId ?? '', fromWeek] as const,
+    enabled: Boolean(planId && scopes),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('week_overrides')
+        .select('*')
+        .eq('plan_id', planId!)
+        .gte('week_start', fromWeek);
+      if (error) throw error;
+      return (data ?? []).map((row) => toWeekOverride(row, scopes!));
+    },
+  });
+}
+
 /* ─────────────────────── Registro diario ─────────────────────── */
 
 function weekRange(weekStart: IsoDateString): { from: string; to: string } {
