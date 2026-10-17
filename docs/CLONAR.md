@@ -20,10 +20,20 @@ Casi todo vive en [`src/config/brand.ts`](../src/config/brand.ts):
 | `colors`      | Colores de marca, como cadenas, para el manifest y el arranque.     |
 | `icons`       | Rutas de los iconos dentro de `public/`.                            |
 | `legal`       | Enlaces a privacidad y términos. Vacíos = no se enlazan.            |
-| `features`    | Qué funciones se activan en este clon.                              |
+| `features`    | Qué funciones se activan en este clon (ver abajo).                  |
 
 No hace falta tocar `index.html` ni `vite.config.ts`: el título, la descripción y el
 manifest se rellenan desde ahí.
+
+### Las dos funciones que se pueden apagar
+
+| Flag            | Con `false`                                                                                                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `chat`          | Desaparecen "Tu nutricionista" (pestaña Más), "Preguntar sobre esto" del menú de una franja y la sección Mensajes del panel.       |
+| `substitutions` | El cliente no puede cambiar un alimento por un equivalente.                                                                       |
+
+Apagar un flag solo esconde la pantalla: las tablas siguen ahí y lo que ya se escribió no
+se borra.
 
 ## 2. Los colores, también en el CSS
 

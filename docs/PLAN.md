@@ -8,9 +8,16 @@ Este documento sustituye a la versión anterior de `docs/PLAN.md`.
 Supabase con RLS y Realtime, vistas Semana/Hoy/Casa, checklist y trackers, intercambio,
 editor de bloques, lista de la compra, pulido, entreno, recetas y recomendaciones.
 
+**Hecho (fases 12-19):** base para varios hogares, rol de nutricionista y zona `/admin`,
+registro de cambios con triggers, catálogo + biblioteca + equivalencias, constructor de
+dietas con publicación y arrastre, panel de hogares, sustituciones y chat interno.
+Quedan sueltos los pendientes marcados dentro de cada fase (arrastrar con `@dnd-kit`,
+contenido de los bloques de biblioteca, "Ver como cliente", cambiar un bloque por otro
+de la biblioteca).
+
 **Objetivo de la v2:** que la nutricionista pueda crear y mantener dietas desde la app
 con una biblioteca de bloques prehechos, que el cliente pueda editar la suya dejando
-registro, y añadir sustituciones por equivalentes y un chat de dudas.
+registro, y añadir sustituciones por equivalentes y un chat con la nutricionista.
 
 **Fuera de alcance por ahora:** usuarios reales nuevos. Seguimos con Cristina, Andrés y
 una cuenta de nutricionista de prueba. Todo lo necesario para abrirla a más gente está
@@ -65,9 +72,9 @@ Claude Code debe leerlas antes de cada fase.
 10. **Zona de administración separada.** Ruta `/admin` cargada de forma diferida (los
     clientes no descargan ese código), pensada para escritorio (≥1024 px), con los mismos
     tokens de diseño.
-11. **Chat con documentación cerrada.** Claude Haiku 5.5 vía Edge Function; solo responde
-    con la documentación de la consulta y deriva a la nutricionista si no lo sabe. Al
-    modelo no se envían nombres ni emails.
+11. **Chat interno, sin IA.** Las dudas las contesta la nutricionista, no un modelo: un
+    hilo privado por persona, solo de añadir (nadie puede editar ni borrar lo enviado) y
+    anclable a una comida concreta. Nada sale de Supabase.
 
 ---
 
@@ -305,42 +312,34 @@ Lee CLAUDE.md y docs/PLAN.md, fase 18. Solo si brand.features.substitutions.
    ración del otro; restaurar devuelve el original.
 ```
 
-### Fase 19 · Chat de dudas con IA
+### Fase 19 · Chat interno cliente ↔ nutricionista
+
+Sustituye al chat de dudas con IA que había aquí antes. La duda de un cliente casi
+siempre es sobre *su* dieta, y quien debe contestarla es quien la ha hecho: un modelo
+respondiendo con documentación general habría sido una capa de más entre los dos.
 
 ```
-Lee CLAUDE.md y docs/PLAN.md (decisión 11) y la fase 19. Detrás del flag
-brand.features.chat.
+Lee CLAUDE.md y docs/PLAN.md (decisión 11) y la fase 19.
 
-1. Migración 0008:
-   - knowledge_docs(id, title, body markdown, archived, updated_by, updated_at): lee
-     cualquier miembro, escribe staff.
-   - chat_messages(id, profile_id, question, answer, answered_from_docs bool, model,
-     input_tokens, cache_read_tokens, output_tokens, created_at): inserta solo la Edge
-     Function; lee el propio cliente y staff.
-   - chat_settings (una fila): enabled, daily_limit (por defecto 15).
-2. domain/chatContext.ts (puro, con tests): construye el prompt en este orden:
-   (a) instrucciones fijas, (b) documentación + grupos de equivalencia + reglas, en
-   orden determinista — este prefijo es igual para todos y lleva el punto de caché —, y
-   (c) la semana resuelta del cliente sin nombres ("Persona") y la pregunta. Un test
-   comprueba que el prefijo es idéntico byte a byte entre clientes.
-3. Edge Function "ask" (Deno): verifica el JWT, comprueba enabled y el límite diario,
-   llama a la API de Anthropic con el modelo claude-haiku-5-5, max_tokens ~400,
-   cache_control en el último bloque del prefijo, y guarda el uso. Clave en
-   `supabase secrets set ANTHROPIC_API_KEY`; nunca en el cliente.
-   Instrucciones al modelo: responder en español, breve, SOLO con el material dado,
-   citando el título del documento; si no está, responder "No lo tengo en la
-   documentación: pregúntaselo a tu nutricionista" y marcar answered_from_docs=false;
-   nunca consejo médico ni cambios fuera de las equivalencias.
-4. Cliente: Más → "Preguntas". Sugerencias de ejemplo, contador de preguntas restantes,
-   aviso fijo "Respuestas generadas por IA a partir de la documentación de tu
-   nutricionista; no sustituyen su consejo", desactivado sin conexión. Si la respuesta
-   menciona una equivalencia, enlace a "Sustituir por…".
-5. Admin: editor de Documentación (markdown con vista previa) y registro del chat con
-   filtro "Sin respuesta en la documentación", para saber qué documentar.
-6. Verificación: dos preguntas seguidas → la segunda debe tener cache_read_tokens > 0.
-   Consulta en la documentación de la API el mínimo de tokens cacheable para Haiku; si
-   la documentación es más corta, la caché no se activa, pero el coste es igualmente
-   bajo. Configura un límite de gasto mensual en la consola de Anthropic.
+1. Migración 0009:
+   - chat_messages(id, household_id, profile_id, author_user_id, author_role
+     ('cliente'|'nutricionista'), body, cell jsonb, created_at). Solo de añadir: un
+     trigger firma el autor y su rol desde auth.uid() e is_staff(); no hay política de
+     UPDATE ni de DELETE, así que un consejo no se puede reescribir después.
+   - chat_reads(profile_id, role, last_read_at): hasta dónde ha leído cada parte.
+   - RLS: el cliente solo su propio hilo (ni el de quien vive con él), staff todos.
+   - Las dos tablas, en supabase_realtime.
+2. domain/chat.ts (puro, con tests): anchorLabel, anchorFor, unreadCount (solo cuentan
+   los mensajes de la otra parte), groupByDay y lastMessage.
+3. data/chat.ts: useThread, useSendMessage, useMarkRead y useChatRealtime, con el filtro
+   profile_id=eq.<id> en la suscripción.
+4. Cliente: Más → "Tu nutricionista", con el número de mensajes sin leer, y
+   "Preguntar sobre esto" en el menú de una franja, que abre el chat con la comida
+   enganchada (día, franja y título).
+5. Admin: sección Mensajes, una fila por persona con lo sin leer y un adelanto del
+   último mensaje.
+6. Decisiones: un hilo por persona (no por hogar: comparten cena, no sus dudas); aviso
+   solo dentro de la app; texto, sin adjuntos.
 ```
 
 ---
@@ -386,8 +385,9 @@ Probad en Android con la PWA instalada y sin ahorro de batería para Chrome.
   transferencia de proyectos desde las tuyas.
 - Invitaciones por email desde la ficha del hogar; registro con email y contraseña además
   del enlace mágico.
-- Aceptación versionada de la política de privacidad y términos (qué versión y cuándo);
-  consentimiento aparte, opcional y revocable, para el chat.
+- Aceptación versionada de la política de privacidad y términos (qué versión y cuándo).
+  El chat es entre cliente y nutricionista, así que no necesita un consentimiento aparte,
+  pero sí decir en la política cuánto se guarda y quién lo lee.
 - Doble factor (TOTP de Supabase Auth) obligatorio para nutricionistas.
 - Registro de accesos de staff a fichas de clientes (no solo de cambios).
 - Exportar mis datos y solicitar baja (bloqueo y borrado según el plazo que indique el
