@@ -154,6 +154,24 @@ Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con
 5. Las frases las construye `src/domain/describeChange.ts`, puro y con tests. Los títulos de
    los bloques entran por un `lookup`, para que el dominio no sepa nada de Supabase.
 
+## Constructor y publicación (fase 16)
+
+1. **El constructor edita en su sitio: no hay intercambio entre días** (decisión 4 de
+   PLAN.md). Mover comidas es cosa del cliente; para repetir un plato está "Copiar a otros
+   días", que es explícito.
+2. **Todo pasa por un borrador** (`diet_drafts`, uno por hogar, solo staff). Hasta publicar,
+   el cliente no ve nada.
+3. **Los cambios del cliente sobreviven a la publicación**, salvo donde ella haya tocado. Lo
+   decide `src/domain/carryOver.ts`, que compara por **contenido y no por id**: entre dos
+   versiones de un plan los ids cambian, y comparar identidad diría que todo cambió siempre.
+4. **Un cambio del cliente que no se puede arrastrar SIEMPRE se avisa**, aunque ella no haya
+   tocado esa celda. Perderlo en silencio es el peor fallo posible de esta pieza.
+5. **Una celda vacía es una decisión, no una fila ausente.** Leerla con `??` las confunde, y
+   entonces la publicación vuelve a llenar una celda que alguien había vaciado a propósito.
+6. **Publicar va en una transacción** (`publish_plan`, 0008): toca cinco tablas, y a medias
+   dejaría el hogar con dos dietas vigentes o con una dieta sin plantilla. Exige lunes.
+7. La traducción slug ↔ UUID **no baja a SQL**: sigue en `mappers.ts`, su único sitio.
+
 ## Biblioteca y equivalencias (fase 15)
 
 1. **La biblioteca guarda UNA ración base por alimento**, no una por persona. Al colocar un
