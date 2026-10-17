@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { equivalentsFor, instantiate, scalePortion, toLibraryBlock } from './library';
+import {
+  BASE_EATER,
+  equivalentsFor,
+  fromEditableBlock,
+  instantiate,
+  scalePortion,
+  toEditableBlock,
+  toLibraryBlock,
+} from './library';
 import type { Block, EquivalenceGroup, LibraryBlock } from './schema';
 
 const bloqueBiblioteca: LibraryBlock = {
@@ -24,6 +32,11 @@ const bloqueBiblioteca: LibraryBlock = {
 describe('scalePortion', () => {
   it('no toca nada con multiplicador 1', () => {
     expect(scalePortion({ rawG: 100 }, 1).portion).toEqual({ rawG: 100 });
+  });
+
+  it('con multiplicador 1 respeta una cantidad que no es múltiplo de 5', () => {
+    // Si ella escribe 142 g, son 142 g. Redondear sin escalar sería cambiarle la cantidad.
+    expect(scalePortion({ rawG: 142, units: 1.2 }, 1).portion).toEqual({ rawG: 142, units: 1.2 });
   });
 
   it('redondea los gramos a múltiplos de 5, que es lo que se puede pesar', () => {
@@ -113,6 +126,69 @@ describe('instantiate', () => {
       { profileId: 'b', multiplier: 0.75 },
     ]);
     expect(needsReview).toEqual(['x']);
+  });
+});
+
+describe('editar un bloque de biblioteca', () => {
+  it('ida y vuelta sin tocar nada no cambia ni un gramo', () => {
+    // El fallo que esto vigila: pasar por `instantiate` redondearía a múltiplos de 5, así
+    // que abrir un bloque de 42 g y cerrarlo lo dejaría en 40 g sin que nadie lo pidiera.
+    const raro: LibraryBlock = {
+      ...bloqueBiblioteca,
+      sections: [
+        {
+          id: 'sec-1',
+          kind: 'plato',
+          items: [
+            { id: 'i1', label: 'Avena', base: { rawG: 42 } },
+            { id: 'i2', label: 'Nueces', base: { units: 3, measure: '3 unidades' } },
+          ],
+        },
+      ],
+    };
+
+    expect(fromEditableBlock(toEditableBlock(raro), raro)).toEqual(raro);
+  });
+
+  it('la ración base es la del comensal ficticio', () => {
+    const editable = toEditableBlock(bloqueBiblioteca);
+    expect(editable.sections[0]!.items[0]!.portions[BASE_EATER]).toEqual({ rawG: 100 });
+    expect(editable.scope).toBe(BASE_EATER);
+  });
+
+  it('se queda con la primera franja del bloque, para que el editor tenga una', () => {
+    expect(toEditableBlock({ ...bloqueBiblioteca, slots: ['cena', 'comida'] }).slot).toBe('cena');
+  });
+
+  it('recoge lo que se añadió en el editor', () => {
+    const editable = toEditableBlock(bloqueBiblioteca);
+    const conPostre = {
+      ...editable,
+      sections: [
+        ...editable.sections,
+        {
+          id: 's-postre',
+          kind: 'postre' as const,
+          items: [{ id: 'i-pera', label: 'Pera', portions: { [BASE_EATER]: { units: 1 } } }],
+        },
+      ],
+    };
+
+    const vuelta = fromEditableBlock(conPostre, bloqueBiblioteca);
+    expect(vuelta.sections).toHaveLength(2);
+    expect(vuelta.sections[1]!.items[0]!.base).toEqual({ units: 1 });
+  });
+
+  it('conserva nombre, franjas, etiquetas y archivado: eso se edita en su formulario', () => {
+    const vuelta = fromEditableBlock(toEditableBlock(bloqueBiblioteca), {
+      ...bloqueBiblioteca,
+      name: 'Otro nombre',
+      tags: ['rápido'],
+    });
+    expect(vuelta.name).toBe('Otro nombre');
+    expect(vuelta.tags).toEqual(['rápido']);
+    expect(vuelta.slots).toEqual(['comida']);
+    expect(vuelta.id).toBe('lib-1');
   });
 });
 

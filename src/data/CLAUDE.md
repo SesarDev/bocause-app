@@ -13,5 +13,6 @@ Una consulta sin filtro mezcla hogares y no da ningún error.
 - **Caché de IndexedDB:** se separa por usuario. Al cerrar sesión se borra _antes_ de cerrarla, que es cuando todavía se sabe de quién es.
 - **Realtime:** las suscripciones siempre llevan `filter`.
 - **Slug ↔ UUID:** la traducción solo vive en `mappers.ts`. No baja a SQL.
+- **El id del plan es el de la fila, no el del JSON.** `plans.data` lleva dentro su propio id y puede no coincidir (el hogar demo es `demo-2026-09`). `toPlan` se queda con el de la fila y `saveBlock` escribe `plan_id` con el del hogar que se está editando. Con el de dentro, RLS devuelve un 403 y no se puede editar nada en ese hogar.
 - **Chat:** el hilo cuelga del hogar activo, pero se pide por `profile_id`. El autor y su rol no se mandan: los firma un trigger.
 - **Restaurar:** va por la RPC `restore_cell` (atómica). `domain/edit.ts` decide qué deshacer; la RPC solo lo escribe.

@@ -50,6 +50,11 @@ export type Escalado = {
 export function scalePortion(base: Portion, multiplier: number): Escalado {
   if (multiplier <= 0) throw new Error('El multiplicador tiene que ser positivo');
 
+  // Sin escalar no hay nada que hacer pesable: la cantidad ya es la que escribió la
+  // nutricionista. Redondear aquí sería cambiarle un 142 g por un 140 g que no ha pedido
+  // nadie, que es justo lo que CLAUDE.md prohíbe.
+  if (multiplier === 1) return { portion: { ...base }, needsReview: false };
+
   const portion: Portion = {};
   if (base.rawG !== undefined) portion.rawG = redondeaPeso(base.rawG * multiplier);
   if (base.cookedG !== undefined) portion.cookedG = redondeaPeso(base.cookedG * multiplier);
@@ -107,6 +112,58 @@ export function instantiate(block: LibraryBlock, people: readonly Comensal[]): I
   })) satisfies Section[];
 
   return { sections, needsReview };
+}
+
+/* ───────────────────────── Editar un bloque de biblioteca ───────────────────────── */
+
+/**
+ * El "comensal" ficticio con el que se edita un bloque de biblioteca: la ración base.
+ *
+ * Un bloque de biblioteca es, de hecho, un bloque de dieta con una sola persona. Verlo así
+ * permite editarlo con el mismo editor que usa el cliente, en vez de tener dos.
+ */
+export const BASE_EATER: ProfileId = 'base';
+
+/**
+ * Pasa un bloque de biblioteca a la forma que entiende el editor.
+ *
+ * **No usa `instantiate` a propósito.** Instanciar redondea a múltiplos de 5, que es lo
+ * correcto cuando la ración se reparte entre personas, pero aquí sería destruir el dato:
+ * abrir un bloque de 42 g y guardarlo sin tocar nada lo dejaría en 40 g.
+ */
+export function toEditableBlock(block: LibraryBlock): Block {
+  return {
+    id: block.id,
+    // La biblioteca no pertenece a ningún plan; el editor solo usa esto para rellenar
+    // el bloque nuevo, y al volver se descarta.
+    planId: 'biblioteca',
+    slot: block.slots[0] ?? 'comida',
+    scope: BASE_EATER,
+    isOriginal: true,
+    sections: block.sections.map((section) => ({
+      id: section.id,
+      kind: section.kind,
+      ...(section.title !== undefined ? { title: section.title } : {}),
+      items: section.items.map((item) => ({
+        id: item.id,
+        ...(item.foodKey !== undefined ? { foodKey: item.foodKey } : {}),
+        label: item.label,
+        portions: { [BASE_EATER]: item.base },
+        ...(item.note !== undefined ? { note: item.note } : {}),
+      })),
+    })),
+  };
+}
+
+/**
+ * La vuelta: lo editado otra vez como bloque de biblioteca.
+ *
+ * Solo viaja el contenido. El nombre, las franjas, las etiquetas y las notas se editan en
+ * su propio formulario, así que se conservan los del bloque de partida.
+ */
+export function fromEditableBlock(edited: Block, original: LibraryBlock): LibraryBlock {
+  const { sections } = toLibraryBlock(edited, BASE_EATER, original.name, () => original.id);
+  return { ...original, sections };
 }
 
 /* ───────────────────────── Guardar en la biblioteca ───────────────────────── */

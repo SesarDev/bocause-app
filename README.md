@@ -102,8 +102,9 @@ afecta también a la otra persona. Después aparece un aviso "Intercambiado · D
 durante seis segundos, y las celdas que ya no vienen del plan original llevan el distintivo
 "Modificado", con "Restaurar original" en su menú.
 
-**Pendiente de la fase 7:** el modo de arrastrar con `@dnd-kit` en la vista Semana, que
-`docs/PLAN.md` describe como alternativa al carrusel. El flujo principal está completo.
+El plan original preveía además un modo de arrastrar con `@dnd-kit` como alternativa al
+carrusel. **Se ha descartado:** el carrusel funciona mejor con una mano, no hay que acertar
+un objetivo mientras se arrastra y la app se ahorra una librería.
 
 **Fase 8** es el editor de bloques, en hoja a pantalla casi completa: títulos de plato,
 añadir, quitar y reordenar secciones y alimentos, autocompletado contra el catálogo de

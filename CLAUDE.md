@@ -7,7 +7,8 @@ Hay una app y un Supabase por consulta. Lo que cambia entre clones está en `src
 
 ## Stack (no cambiar sin preguntar)
 
-Vite · React 19 · TS (`strict`, `noUncheckedIndexedAccess`) · Tailwind v4 (tokens en `src/styles/tokens.css`) · vite-plugin-pwa `injectManifest` (`src/sw.ts`, Web Push) · TanStack Query persistido en IndexedDB (offline-first, mutaciones optimistas reanudables) · Zustand solo para UI · Supabase · Zod (todo dato entrante pasa por `src/domain/schema.ts`) · Vitest (`src/domain`) + Playwright · `@dnd-kit` solo en el modo intercambio.
+Vite · React 19 · TS (`strict`, `noUncheckedIndexedAccess`) · Tailwind v4 (tokens en `src/styles/tokens.css`) · vite-plugin-pwa `injectManifest` (`src/sw.ts`, Web Push) · TanStack Query persistido en IndexedDB (offline-first, mutaciones optimistas reanudables) · Zustand solo para UI · Supabase · Zod (todo dato entrante pasa por `src/domain/schema.ts`) · Vitest (`src/domain`) + Playwright.
+Sin librería de arrastre: el intercambio va con un carrusel de scroll-snap, que con una mano funciona mejor.
 
 ## Comandos
 

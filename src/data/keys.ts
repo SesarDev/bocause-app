@@ -22,7 +22,10 @@ export const NO_HOUSEHOLD = 'sin-hogar';
 export const consultaKeys = {
   all: [ROOT, 'consulta'] as const,
   foods: () => [ROOT, 'consulta', 'foods'] as const,
-  libraryBlocks: () => [ROOT, 'consulta', 'library-blocks'] as const,
+  /** La rama entera de la biblioteca, para invalidar sus dos listas de una vez. */
+  library: () => [ROOT, 'consulta', 'library-blocks'] as const,
+  libraryBlocks: (archivados = false) =>
+    [ROOT, 'consulta', 'library-blocks', archivados ? 'con-archivados' : 'activos'] as const,
   equivalences: () => [ROOT, 'consulta', 'equivalences'] as const,
 };
 

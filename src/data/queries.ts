@@ -46,7 +46,7 @@ export function useProfiles() {
     queryFn: async (): Promise<Profile[]> => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, household_id, slug, display_name')
+        .select('id, user_id, household_id, slug, display_name, portion_multiplier')
         .eq('household_id', householdId!)
         .order('display_name');
       if (error) throw error;

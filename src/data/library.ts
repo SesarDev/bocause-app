@@ -85,15 +85,18 @@ export function useArchiveFood() {
 
 /* ─────────────────────── Biblioteca ─────────────────────── */
 
-export function useLibraryBlocks() {
+/**
+ * Los bloques de la biblioteca. Por defecto solo los vivos.
+ *
+ * `incluirArchivados` es para la pantalla de la biblioteca: archivar no borra, así que
+ * tiene que haber alguna forma de volver a ver lo archivado y recuperarlo.
+ */
+export function useLibraryBlocks(incluirArchivados = false) {
   return useQuery({
-    queryKey: consultaKeys.libraryBlocks(),
+    queryKey: consultaKeys.libraryBlocks(incluirArchivados),
     queryFn: async (): Promise<LibraryBlock[]> => {
-      const { data, error } = await supabase
-        .from('library_blocks')
-        .select('*')
-        .eq('archived', false)
-        .order('name');
+      const consulta = supabase.from('library_blocks').select('*').order('name');
+      const { data, error } = await (incluirArchivados ? consulta : consulta.eq('archived', false));
       if (error) throw error;
 
       return (data ?? []).map((row) => {
@@ -129,7 +132,9 @@ export function useSaveLibraryBlock() {
       });
       if (error) throw error;
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: consultaKeys.libraryBlocks() }),
+    // Por la rama entera: la lista con archivados y la de solo vivos son dos consultas
+    // distintas, y archivar o desarchivar cambia las dos.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: consultaKeys.library() }),
   });
 }
 
