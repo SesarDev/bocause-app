@@ -53,6 +53,8 @@ export const FoodItem = z.object({
   /** Una entrada por persona que lo come. Ausente = esa persona no lo toma. */
   portions: z.record(ProfileId, Portion),
   note: z.string().optional(),               // "batir todo junto", "bolsa o al gusto"
+  /** De qué se cambió, si viene de una sustitución (fase 18). Permite "En lugar de…". */
+  replaces: z.object({ foodKey: z.string().optional(), label: z.string() }).optional(),
 });
 export type FoodItem = z.infer<typeof FoodItem>;
 

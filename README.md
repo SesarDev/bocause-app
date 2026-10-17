@@ -42,7 +42,7 @@ supabase/        Migraciones de Postgres
 | `npm run library:seed`  | Siembra el catálogo y la biblioteca de bloques  |
 | `npm run staff:add`     | Da de alta a una nutricionista                  |
 
-## Estado: fase 17 completada (desplegada y en uso)
+## Estado: fase 18 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -199,6 +199,31 @@ por día, con "Restaurar original".
 | RPC `restore_cell`             | Restaurar era varias peticiones sueltas y podía quedarse a medias. Ahora es atómico, y además el registro puede marcarlo como `restaurar`.           |
 | `src/domain/describeChange.ts` | Las frases, puras y con 16 tests. Los títulos entran por un `lookup`, así el dominio no sabe nada de Supabase.                                       |
 | `ChangeLogList`                | Fuera de la vista Más: la ficha del hogar (fase 17) enseñará la misma lista.                                                                         |
+
+**Fase 18** añade las sustituciones. En el plan, el nombre de un alimento se vuelve pulsable
+cuando la nutricionista ha definido equivalentes para él; al tocarlo se abre una hoja con las
+opciones **y su cantidad ya convertida**, la nota del grupo, y dos decisiones: **Para los dos
+/ Solo para mí** en los platos compartidos, y **Solo esta semana / Todo el plan**. Después, el
+alimento lleva un "En lugar de…".
+
+Lo que importa de `src/domain/substitute.ts` (15 tests):
+
+- **Cada persona convierte su ración.** En un plato compartido no comen lo mismo, así que la
+  conversión entra como función y no como cantidad ya calculada.
+- **"Solo para mí" parte el alimento en dos**: el original se queda con la ración del otro,
+  intacta. Hay un test que comprueba exactamente eso.
+- **La lista de la compra se entera**: compra garbanzos y deja de comprar lentejas.
+
+Tres fallos que solo aparecieron al probarlo de verdad contra la base:
+
+- **La sustitución se guardaba con el id del bloque original** y sin marcarla como copia,
+  saltándose el copy-on-write. "Restaurar original" se quedaba sin destino y el plato de la
+  nutricionista era irrecuperable.
+- Un equivalente que no estuviera en el catálogo se enseñaba con su **clave cruda**
+  (`pasta-integral`) a alguien que está decidiendo qué cena.
+- Volver al alimento de partida dejaba un **"Arroz integral en lugar de arroz integral"**.
+
+**Pendiente de la fase 18:** "Cambiar por otro de la biblioteca" en el menú del bloque.
 
 **Fase 17** es el panel de hogares. `/admin/hogares` lista los hogares con sus personas (y su
 multiplicador de ración), la dieta vigente y un buscador; desde ahí se crean hogares y

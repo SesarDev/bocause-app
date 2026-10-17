@@ -154,6 +154,20 @@ Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con
 5. Las frases las construye `src/domain/describeChange.ts`, puro y con tests. Los títulos de
    los bloques entran por un `lookup`, para que el dominio no sepa nada de Supabase.
 
+## Sustituciones (fase 18)
+
+1. **La app no inventa equivalencias ni cantidades.** Solo existen los grupos que define la
+   nutricionista; si un alimento no está en ninguno, no se ofrece cambiarlo.
+2. **Cada persona convierte SU ración.** En un plato compartido no comen lo mismo, así que
+   `substituteItem` recibe una función de conversión, no una cantidad ya calculada.
+3. **"Solo para mí" parte el alimento en dos**: el original se queda con la ración de los
+   demás y nace uno nuevo con la mía. Cambiar lo mío nunca toca el plato del otro.
+4. **Toda sustitución pasa por `forkBlock`** (copy-on-write). Guardarla con el id del bloque
+   original dejaría "Restaurar original" sin destino, y el plato de la nutricionista sería
+   irrecuperable.
+5. **`replaces` recuerda el alimento del plan, no el paso intermedio**, y desaparece si se
+   vuelve al de partida: un "arroz en lugar de arroz" no dice nada.
+
 ## Constructor y publicación (fase 16)
 
 1. **El constructor edita en su sitio: no hay intercambio entre días** (decisión 4 de
