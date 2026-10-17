@@ -21,6 +21,7 @@ import { FoodsView } from './FoodsView';
 import { HouseholdDetail } from './HouseholdDetail';
 import { HouseholdsView } from './HouseholdsView';
 import { LibraryView } from './LibraryView';
+import { MessagesView } from './MessagesView';
 
 type Seccion = {
   ruta: string;
@@ -32,7 +33,7 @@ type Seccion = {
   pendiente: string;
 };
 
-const SECCIONES: Seccion[] = [
+const TODAS: Seccion[] = [
   {
     ruta: 'hogares',
     titulo: 'Hogares',
@@ -62,10 +63,11 @@ const SECCIONES: Seccion[] = [
     pendiente: '',
   },
   {
-    ruta: 'documentacion',
-    titulo: 'Documentación',
-    icono: 'hoy',
-    pendiente: 'Los textos con los que responderá el chat de dudas. Fase 19.',
+    ruta: 'mensajes',
+    titulo: 'Mensajes',
+    icono: 'mensaje',
+    vista: <MessagesView />,
+    pendiente: '',
   },
   {
     ruta: 'registro',
@@ -74,6 +76,9 @@ const SECCIONES: Seccion[] = [
     pendiente: 'Quién cambió qué y cuándo, en cada hogar. Fase 14.',
   },
 ];
+
+/** Si la consulta atiende las dudas por otro canal, Mensajes no pinta nada aquí. */
+const SECCIONES = TODAS.filter((seccion) => seccion.ruta !== 'mensajes' || brand.features.chat);
 
 function Hueco({ seccion }: { seccion: Seccion }) {
   return (
@@ -111,7 +116,10 @@ export default function AdminApp() {
           {SECCIONES.map((seccion) => (
             <NavLink
               key={seccion.ruta}
-              to={seccion.ruta}
+              // Absoluta a propósito: dentro de una ruta con comodín (`/admin/*`), una
+              // relativa se resuelve contra la URL actual y va encadenando trozos
+              // ("/admin/hogares/biblioteca/mensajes/…").
+              to={`/admin/${seccion.ruta}`}
               className={({ isActive }) =>
                 `flex min-h-tap items-center gap-3 rounded-block px-3 text-item font-semibold ${
                   isActive ? 'bg-slot text-slot-ink' : 'text-ink hover:bg-bg'
@@ -144,7 +152,7 @@ export default function AdminApp() {
 
         <main className="flex-1 p-6">
           <Routes>
-            <Route index element={<Navigate to="hogares" replace />} />
+            <Route index element={<Navigate to="/admin/hogares" replace />} />
             {SECCIONES.map((seccion) => (
               <Route
                 key={seccion.ruta}
@@ -155,7 +163,7 @@ export default function AdminApp() {
             {/* El constructor va aparte: no es una sección de la barra, se entra desde un hogar. */}
             <Route path="hogares/:householdId/dieta" element={<BuilderView />} />
             <Route path="hogares/:householdId" element={<HouseholdDetail />} />
-            <Route path="*" element={<Navigate to="hogares" replace />} />
+            <Route path="*" element={<Navigate to="/admin/hogares" replace />} />
           </Routes>
         </main>
       </div>

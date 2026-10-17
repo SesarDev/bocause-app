@@ -23,6 +23,7 @@ export type IconName =
   | 'alcohol'
   | 'tecnologia'
   | 'receta'
+  | 'mensaje'
   | 'salir';
 
 /** Iconos propios en línea: sin librerías ni imágenes externas (CLAUDE.md). */
@@ -151,6 +152,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M6 3h11a2 2 0 0 1 2 2v16l-3-2-3 2-3-2-3 2V5a2 2 0 0 1 2-2z" />
       <path d="M9 8h7M9 12h7" />
+    </>
+  ),
+  mensaje: (
+    <>
+      <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-5 4V6z" />
+      <path d="M8 8h8M8 12h5" />
     </>
   ),
   salir: (

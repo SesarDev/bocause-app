@@ -44,6 +44,11 @@ export type BrandConfig = {
     terms: string;
   };
   features: {
+    /**
+     * Chat interno entre cliente y nutricionista (fase 19). Si una consulta prefiere
+     * atender las dudas por otro canal, se apaga aquí y desaparecen la sección "Tu
+     * nutricionista", el "Preguntar sobre esto" de la franja y los Mensajes del panel.
+     */
     chat: boolean;
     substitutions: boolean;
   };
@@ -75,7 +80,7 @@ export const brand: BrandConfig = {
     terms: '',
   },
   features: {
-    chat: false,
+    chat: true,
     substitutions: true,
   },
 };

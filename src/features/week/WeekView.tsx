@@ -8,6 +8,7 @@ import { forkBlock, restoreCell } from '../../domain/edit';
 import { canMarkFree, countFreeMeals } from '../../domain/freeMeals';
 import { minutesNow, nextSlot } from '../../domain/mealTimes';
 import { CheckIndex, dayProgress, type Progress } from '../../domain/progress';
+import { anchorFor, type ChatAnchor } from '../../domain/chat';
 import { cellId, isSharedSlot, type ResolvedSlot } from '../../domain/resolve';
 import { swapCells, type SwapCell, type SwapLevel } from '../../domain/swap';
 import type { Block, FoodItem, SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
@@ -27,6 +28,7 @@ import {
 } from '../../data/queries';
 import { useRealtimeSync } from '../../data/realtime';
 import { useUiStore } from '../../stores/ui';
+import { ChatSheet } from '../chat/ChatSheet';
 import { BlockEditor } from '../editor/BlockEditor';
 import { emptyBlock, newId } from '../editor/draft';
 import { SwapSheet } from '../swap/SwapSheet';
@@ -54,6 +56,9 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const [editorSlot, setEditorSlot] = useState<ResolvedSlot | null>(null);
   const [training, setTraining] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
+  /** Chat con la nutricionista. Con ancla si se abrió desde el menú de una franja. */
+  const [chatAnchor, setChatAnchor] = useState<ChatAnchor | null>(null);
+  const [verChat, setVerChat] = useState(false);
 
   const isHouse = activeProfile === 'casa';
   const profileSlug = isHouse ? undefined : (activeProfile ?? undefined);
@@ -502,6 +507,19 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
                 }}
               />
 
+              {brand.features.chat && (
+                <MenuAction
+                  icon="mensaje"
+                  label="Preguntar sobre esto"
+                  hint="Le llega a tu nutricionista con la comida enganchada"
+                  onClick={() => {
+                    setChatAnchor(anchorFor(menuSlot.cell, menuSlot.block, menuSlot.date));
+                    setVerChat(true);
+                    setMenuSlot(null);
+                  }}
+                />
+              )}
+
               <MenuAction
                 icon="libre"
                 label={menuSlot.isFree ? 'Quitar la ingesta libre' : 'Marcar como ingesta libre'}
@@ -583,6 +601,20 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
           onApply={doSubstitute}
         />
 
+        {/* Montada solo al abrirla: si no, la pantalla principal cargaría el hilo y abriría
+            un canal de Realtime que casi nadie va a mirar. */}
+        {verChat && (
+          <ChatSheet
+            open
+            anchor={chatAnchor}
+            onClearAnchor={() => setChatAnchor(null)}
+            onClose={() => {
+              setVerChat(false);
+              setChatAnchor(null);
+            }}
+          />
+        )}
+
         <Toast toast={toast} onClose={() => setToast(null)} />
       </SubstituteContext.Provider>
     </CheckContext.Provider>
@@ -596,7 +628,7 @@ function MenuAction({
   disabled = false,
   onClick,
 }: {
-  icon: 'semana' | 'libre' | 'hoy' | 'mas';
+  icon: 'semana' | 'libre' | 'hoy' | 'mas' | 'mensaje';
   label: string;
   hint?: string | undefined;
   disabled?: boolean;

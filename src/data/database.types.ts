@@ -90,6 +90,28 @@ export type EquivalenceGroupRow = {
   updated_at: string;
 };
 
+/**
+ * Chat entre una persona y su nutricionista (0009_chat.sql). Un hilo por perfil, privado:
+ * quien comparte casa no lo lee. Solo de añadir: sin UPDATE ni DELETE para nadie.
+ */
+export type ChatMessageRow = {
+  id: string;
+  /** El hilo, que es el de una persona. No es quién escribió. */
+  profile_id: string;
+  author_user_id: string | null;
+  author_role: 'cliente' | 'nutricionista';
+  body: string;
+  /** La comida de la que se habla, si se abrió desde el menú de una franja. */
+  cell: Json;
+  created_at: string;
+};
+
+export type ChatReadRow = {
+  profile_id: string;
+  role: 'cliente' | 'nutricionista';
+  last_read_at: string;
+};
+
 /** Borrador de dieta (0008_publish.sql). Uno por hogar; solo lo ve staff. */
 export type DietDraftRow = {
   household_id: string;
@@ -245,6 +267,10 @@ export type Database = {
         StaffMemberRow,
         Omit<StaffMemberRow, 'role' | 'created_at'> & { role?: string }
       >;
+      // El autor y su rol los pone un trigger: si vinieran del navegador, cualquiera
+      // podría firmar un mensaje como si fuera su nutricionista.
+      chat_messages: Table<ChatMessageRow, { profile_id: string; body: string; cell?: Json }>;
+      chat_reads: Table<ChatReadRow, ChatReadRow>;
       diet_drafts: Table<
         DietDraftRow,
         Omit<DietDraftRow, 'updated_at' | 'base_plan_id' | 'updated_by'> & {

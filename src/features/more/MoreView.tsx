@@ -5,8 +5,10 @@ import { currentWeekStart } from '../../domain/dates';
 import { describeChanges, type ChangeGroup } from '../../domain/describeChange';
 import { restoreCell } from '../../domain/edit';
 import { SlotKey, type Recipe, type SupplementProtocol } from '../../domain/schema';
+import { brand } from '../../config/brand';
 import { signOut, useMyProfile } from '../../data/auth';
 import { buildBlockTitles, useChangeLog } from '../../data/changelog';
+import { NutritionistCard } from '../chat/NutritionistCard';
 import { useRestoreCell } from '../../data/mutations';
 import { useEditedBlocks, usePlan, useProfileDirectory, useProfiles } from '../../data/queries';
 import { ChangeLogList } from '../changelog/ChangeLogList';
@@ -171,6 +173,9 @@ export function MoreView() {
           </ul>
         </section>
       )}
+
+      {/* Chat con la nutricionista */}
+      {brand.features.chat && <NutritionistCard />}
 
       {/* Historial de cambios */}
       <section className="rounded-day bg-surface p-4">
