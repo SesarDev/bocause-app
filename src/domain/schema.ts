@@ -206,3 +206,60 @@ export const ShoppingItem = z.object({
   inPantry: z.boolean().default(false),      // "ya lo tengo"
 });
 export type ShoppingItem = z.infer<typeof ShoppingItem>;
+
+/* ─────────────────────── Biblioteca y equivalencias (fase 15) ─────────────────────── */
+
+/**
+ * Un alimento tal como vive en la biblioteca: con UNA ración base, no una por persona.
+ * Al usar el bloque se instancia para cada comensal multiplicando esa base (ver
+ * `src/domain/library.ts`). Es la diferencia con `FoodItem`, que ya está repartido.
+ */
+export const LibraryItem = z.object({
+  id: z.string(),
+  foodKey: z.string().optional(),
+  label: z.string(),
+  base: Portion,                             // ración de referencia (multiplicador 1)
+  note: z.string().optional(),
+});
+export type LibraryItem = z.infer<typeof LibraryItem>;
+
+export const LibrarySection = z.object({
+  id: z.string(),
+  kind: SectionKind,
+  title: z.string().optional(),
+  items: z.array(LibraryItem),
+});
+export type LibrarySection = z.infer<typeof LibrarySection>;
+
+/** Bloque prehecho. `slots` dice en qué franjas tiene sentido ofrecerlo. */
+export const LibraryBlock = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  slots: z.array(SlotKey),
+  tags: z.array(z.string()).default([]),
+  sections: z.array(LibrarySection).min(1),
+  notes: z.string().optional(),
+  archived: z.boolean().default(false),
+});
+export type LibraryBlock = z.infer<typeof LibraryBlock>;
+
+/**
+ * Un alimento dentro de un grupo de equivalencia, con cuánto cunde respecto al grupo.
+ * `factor` 1 = misma cantidad; 0,5 = hace falta la mitad. Lo decide la nutricionista:
+ * la app no inventa equivalencias (regla de CLAUDE.md).
+ */
+export const EquivalenceMember = z.object({
+  foodKey: z.string(),
+  factor: z.number().positive().default(1),
+  note: z.string().optional(),
+});
+export type EquivalenceMember = z.infer<typeof EquivalenceMember>;
+
+export const EquivalenceGroup = z.object({
+  id: z.string(),
+  name: z.string().min(1),                   // "Legumbres", "Cereales de desayuno"
+  description: z.string().optional(),
+  members: z.array(EquivalenceMember),
+  archived: z.boolean().default(false),
+});
+export type EquivalenceGroup = z.infer<typeof EquivalenceGroup>;

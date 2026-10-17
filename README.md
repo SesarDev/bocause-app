@@ -38,8 +38,11 @@ supabase/        Migraciones de Postgres
 | `npm run test:coverage` | Vitest con cobertura (mínimo 90% en `domain/`)  |
 | `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
 | `npm run seed`          | Crea el hogar en Supabase e inserta el plan     |
+| `npm run migrate`       | Aplica las migraciones que falten               |
+| `npm run library:seed`  | Siembra el catálogo y la biblioteca de bloques  |
+| `npm run staff:add`     | Da de alta a una nutricionista                  |
 
-## Estado: fase 14 completada (desplegada y en uso)
+## Estado: fase 15 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -197,7 +200,40 @@ por día, con "Restaurar original".
 | `src/domain/describeChange.ts` | Las frases, puras y con 16 tests. Los títulos entran por un `lookup`, así el dominio no sabe nada de Supabase.                                       |
 | `ChangeLogList`                | Fuera de la vista Más: la ficha del hogar (fase 17) enseñará la misma lista.                                                                         |
 
-Dos cosas que solo se vieron al mirar la pantalla con datos de verdad:
+**Fase 15** llena tres de las seis secciones de administración: **Alimentos** (el catálogo,
+editable), **Biblioteca** (bloques prehechos con su ración base y vista previa del escalado)
+y **Equivalencias** (grupos de intercambio con su factor y vista previa).
+
+| Qué                     | Por qué                                                                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0007_library.sql`      | `foods`, `library_blocks` y `equivalence_groups`. Son de la consulta, no de un hogar: hay un Supabase por consulta.                                   |
+| `src/domain/library.ts` | `instantiate`, `scalePortion`, `toLibraryBlock` y `equivalentsFor`, con 24 tests.                                                                     |
+| `npm run library:seed`  | Catálogo y biblioteca a partir del plan: 71 alimentos y 32 bloques distintos (de 42). **No** crea equivalencias: eso es criterio de la nutricionista. |
+
+Tres decisiones del escalado que importan en la cocina:
+
+- **Se redondea a lo que se puede pesar**: gramos y mililitros a múltiplos de 5, unidades a
+  medias. 85 g × 1,25 son 106,25 g, y eso en una báscula no existe.
+- **Nunca a cero**: una ración pequeña escalada hacia abajo sigue siendo algo.
+- **La medida casera no se multiplica.** «2 rebanadas» o «1/3 de bandeja» se conservan tal
+  cual y se marcan para repasar. Multiplicarlas sería inventar cantidades.
+
+Y dos cosas que el plan daba por hechas y no lo eran:
+
+- **27 de los 42 bloques no tienen ningún título** (los desayunos y snacks del PDF son una
+  lista de alimentos sin encabezado), así que el nombre de biblioteca no podía salir del
+  título: para esos se usan los primeros alimentos.
+- **Deduplicar por el bloque entero no servía.** La biblioteca guarda una sola ración base,
+  así que dos bloques que solo se diferencian en la ración de la _otra_ persona son la misma
+  entrada; deduplicar antes de reducir dejaba pares con el mismo nombre y rompía la
+  repetibilidad del script.
+
+**Pendiente de la fase 15:** editar el contenido de un bloque de biblioteca (añadir o quitar
+alimentos). `BlockEditor` trabaja con una ración por persona y necesita un modo "ración
+base"; se hace en la fase 16, donde el constructor lo reutiliza de todos modos, en vez de
+construirlo dos veces. Duplicar y archivar sí funcionan.
+
+Dos cosas de la fase 14 que solo se vieron al mirar la pantalla con datos de verdad:
 
 - **La mitad de los intercambios reales no se detectaban.** Si una de las dos celdas no
   tenía cambio previo, su fila es un `INSERT` y el `before` es nulo, así que ese lado del
