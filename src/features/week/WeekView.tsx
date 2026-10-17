@@ -14,7 +14,7 @@ import { swapCells, type SwapCell, type SwapLevel } from '../../domain/swap';
 import type { Block, FoodItem, SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
 import { brand } from '../../config/brand';
 import { useMyProfile } from '../../data/auth';
-import { useEquivalenceGroups, useFoods } from '../../data/library';
+import { useEquivalenceGroups, useFoods, useLibraryBlocks } from '../../data/library';
 import { useApplyCells, useRestoreCell, useSaveBlock, useSetCheck } from '../../data/mutations';
 import {
   useEditedBlocks,
@@ -38,6 +38,7 @@ import { CheckContext, type CheckApi } from './checkContext';
 import { SubstituteContext, type SubstituteApi } from './substituteContext';
 import { SubstituteSheet } from './SubstituteSheet';
 import { DayBar } from './DayBar';
+import { LibrarySheet, type Comensales } from './LibrarySheet';
 import { DayCard } from './DayCard';
 import { HouseDayCard } from './HouseDayCard';
 import { SLOT_LABEL } from './slots';
@@ -59,6 +60,8 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   /** Chat con la nutricionista. Con ancla si se abrió desde el menú de una franja. */
   const [chatAnchor, setChatAnchor] = useState<ChatAnchor | null>(null);
   const [verChat, setVerChat] = useState(false);
+  /** La celda que se va a cambiar por un bloque de la biblioteca. */
+  const [libraryFor, setLibraryFor] = useState<ResolvedSlot | null>(null);
 
   const isHouse = activeProfile === 'casa';
   const profileSlug = isHouse ? undefined : (activeProfile ?? undefined);
@@ -78,6 +81,7 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const restore = useRestoreCell();
   const grupos = useEquivalenceGroups();
   const catalogo = useFoods();
+  const biblioteca = useLibraryBlocks();
   const [sustituyendo, setSustituyendo] = useState<{
     block: Block;
     item: FoodItem;
@@ -434,6 +438,50 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
     });
   };
 
+  /** Quién come de esta celda y cuánto, para repartir la ración base de la biblioteca. */
+  const comensalesDe = (slot: ResolvedSlot): Comensales =>
+    peopleFor(slot).map((person) => ({
+      ...person,
+      multiplier: directory?.bySlug(person.profileId)?.portionMultiplier ?? 1,
+    }));
+
+  /**
+   * Cambiar la celda entera por un bloque de la biblioteca.
+   *
+   * Copy-on-write como en el editor y en las sustituciones: nace un bloque nuevo que apunta
+   * al original, para que "Restaurar original" tenga a dónde volver. Si la celda estaba
+   * vacía no hay original: es un bloque nuevo y punto.
+   */
+  const doLibrarySwap = (sections: Block['sections'], level: SwapLevel) => {
+    if (!libraryFor) return;
+    const { day, slot: slotKey, scope } = libraryFor.cell;
+
+    const previo = libraryFor.blockId ? blockById.get(libraryFor.blockId) : undefined;
+    const block: Block = previo
+      ? forkBlock(previo, { sections }, newId('bloque'))
+      : { id: newId('bloque'), planId: plan.id, slot: slotKey, scope, sections, isOriginal: false };
+
+    saveBlock.mutate({
+      planId: plan.id,
+      weekStart,
+      block,
+      upserts:
+        level === 'week'
+          ? [
+              {
+                level: 'week',
+                row: { weekStart, day, slot: slotKey, scope, blockId: block.id, isFree: false },
+              },
+            ]
+          : [{ level: 'template', row: { day, slot: slotKey, scope, blockId: block.id } }],
+    });
+
+    setLibraryFor(null);
+    setToast({
+      message: level === 'week' ? 'Cambiado esta semana' : 'Cambiado en todo el plan',
+    });
+  };
+
   return (
     <CheckContext.Provider value={checkApi}>
       <SubstituteContext.Provider value={substituteApi}>
@@ -492,6 +540,18 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
                 }
                 onClick={() => setSwapOrigin(menuSlot)}
               />
+
+              {brand.features.substitutions && (
+                <MenuAction
+                  icon="receta"
+                  label="Cambiar por otro de la biblioteca"
+                  hint="Platos que ha preparado tu nutricionista"
+                  onClick={() => {
+                    setLibraryFor(menuSlot);
+                    setMenuSlot(null);
+                  }}
+                />
+              )}
 
               <MenuAction
                 icon="mas"
@@ -589,6 +649,18 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
           onClose={() => setTraining(null)}
         />
 
+        <LibrarySheet
+          key={libraryFor ? cellId(libraryFor.cell) : 'sin-celda'}
+          open={libraryFor !== null}
+          slot={libraryFor}
+          people={libraryFor ? comensalesDe(libraryFor) : []}
+          blocks={biblioteca.data ?? []}
+          isLoading={biblioteca.isPending}
+          otherName={otherName}
+          onClose={() => setLibraryFor(null)}
+          onApply={doLibrarySwap}
+        />
+
         <SubstituteSheet
           open={sustituyendo !== null}
           block={sustituyendo?.block ?? null}
@@ -628,7 +700,7 @@ function MenuAction({
   disabled = false,
   onClick,
 }: {
-  icon: 'semana' | 'libre' | 'hoy' | 'mas' | 'mensaje';
+  icon: 'semana' | 'libre' | 'hoy' | 'mas' | 'mensaje' | 'receta';
   label: string;
   hint?: string | undefined;
   disabled?: boolean;

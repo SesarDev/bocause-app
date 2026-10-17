@@ -292,9 +292,18 @@ export function registerMutationDefaults(queryClient: QueryClient): void {
         .getQueryData<Profile[]>(keys.profiles())
         ?.find((profile) => profile.userId === sessionData.session?.user.id);
 
+      /*
+       * El plan manda el de la pantalla, no el que trae el bloque.
+       *
+       * Los bloques de un plan sembrado llevan dentro el `planId` del JSON de origen, que
+       * no tiene por qué ser el id de la fila de `plans` (el hogar demo usa
+       * "demo-2026-09"). Al copiar uno para editarlo, ese id viajaba tal cual y RLS
+       * rechazaba la escritura con un 403: `can_edit_scope` busca el hogar por el plan y
+       * no encontraba ninguno.
+       */
       const { error } = await supabase
         .from('blocks')
-        .upsert(fromBlock(vars.block, scopes, me?.id ?? null));
+        .upsert({ ...fromBlock(vars.block, scopes, me?.id ?? null), plan_id: vars.planId });
       if (error) throw error;
 
       await writeCellUpserts(queryClient, vars.planId, vars.upserts);

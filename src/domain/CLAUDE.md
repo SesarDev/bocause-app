@@ -5,7 +5,8 @@ Lógica pura con tests en Vitest. Sin React ni Supabase: lo externo entra por pa
 ## Biblioteca (`library.ts`)
 
 - Una sola ración base por alimento. `instantiate` la reparte con el `portion_multiplier` de cada comensal.
-- **Redondeo:** g y ml a múltiplos de 5, unidades a medias. Nunca a cero.
+- **Redondeo:** g y ml a múltiplos de 5, unidades a medias. Nunca a cero. **Con multiplicador 1 no se redondea**: la cantidad ya es la que escribió ella, y cambiar un 142 g por un 140 g es inventar.
+- **Editar un bloque de biblioteca** va por `toEditableBlock` / `fromEditableBlock`: un bloque de biblioteca es un bloque con un solo comensal (`BASE_EATER`), así que lo edita el mismo `BlockEditor`. Esa ida y vuelta **no pasa por `instantiate`**: abrir y guardar sin tocar nada no puede cambiar ni un gramo.
 - **Medida casera** ("1/3 de bandeja", "2 rebanadas"): no se multiplica. Se marca para repasar si el multiplicador no es 1.
 - Archivar, no borrar: lo que está en una dieta publicada no puede desaparecer.
 

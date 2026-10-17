@@ -35,8 +35,17 @@ export type ScopeTranslator = {
 };
 
 /** El plan original vive entero en plans.data y nunca se modifica. */
+/**
+ * El id manda el de la **fila**, no el del JSON.
+ *
+ * `plans.data` es una copia del archivo del plan y lleva dentro su propio id. Cuando la
+ * fila se creó con otro (el hogar demo usa "demo-2026-09", y `npm run seed:demo` lo hace a
+ * propósito para no pisar el plan de casa), la app se quedaba con el de dentro y escribía
+ * las celdas y los bloques contra un plan que no existe: RLS lo rechazaba con un 403 y en
+ * ese hogar no se podía editar nada.
+ */
 export function toPlan(row: PlanRow): Plan {
-  return Plan.parse(row.data);
+  return Plan.parse({ ...(row.data as Record<string, unknown>), id: row.id });
 }
 
 /**
@@ -172,6 +181,8 @@ export type Profile = {
   /** "cristina" | "andres": enlaza con los profileId del plan. */
   slug: string;
   displayName: string;
+  /** Cuánto come respecto a la ración base de la biblioteca. 1 si no se ha tocado. */
+  portionMultiplier: number;
 };
 
 export function toProfile(row: {
@@ -180,6 +191,7 @@ export function toProfile(row: {
   household_id: string;
   slug: string;
   display_name: string;
+  portion_multiplier?: number;
 }): Profile {
   return {
     id: row.id,
@@ -187,6 +199,7 @@ export function toProfile(row: {
     householdId: row.household_id,
     slug: row.slug,
     displayName: row.display_name,
+    portionMultiplier: row.portion_multiplier ?? 1,
   };
 }
 

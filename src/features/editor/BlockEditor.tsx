@@ -24,9 +24,14 @@ import { ItemEditor } from './ItemEditor';
 /**
  * Editor de un bloque, en hoja a pantalla casi completa.
  *
- * Nunca modifica el bloque que recibe: trabaja sobre una copia y al guardar crea un bloque
- * nuevo con `forkBlock`, que apunta al original. Por eso "Restaurar original" siempre puede
- * volver atrás (CLAUDE.md, regla 6).
+ * Tiene dos modos:
+ *
+ * - **`plan`** (el del cliente): nunca modifica el bloque que recibe. Trabaja sobre una
+ *   copia y al guardar crea un bloque nuevo con `forkBlock`, que apunta al original. Por
+ *   eso "Restaurar original" siempre puede volver atrás (CLAUDE.md, regla 6).
+ * - **`biblioteca`** (el de la nutricionista): edita **una sola ración**, la base, y guarda
+ *   sobre el mismo bloque. Ahí no hay copy-on-write ni semana que elegir: la biblioteca es
+ *   una plantilla, no la comida de nadie.
  */
 export function BlockEditor({
   open,
@@ -36,6 +41,8 @@ export function BlockEditor({
   people,
   foods,
   onSave,
+  mode = 'plan',
+  title = 'Editar',
 }: {
   open: boolean;
   onClose: () => void;
@@ -45,8 +52,12 @@ export function BlockEditor({
   original: Block | null;
   people: { profileId: ProfileId; displayName: string }[];
   foods: readonly Food[];
+  /** En modo `biblioteca`, `level` llega siempre como 'template' y no significa nada. */
   onSave: (block: Block, level: SwapLevel) => void;
+  mode?: 'plan' | 'biblioteca';
+  title?: string;
 }) {
+  const esBiblioteca = mode === 'biblioteca';
   const [draft, setDraft] = useState<Block>(() => structuredClone(source));
   const [level, setLevel] = useState<SwapLevel>('week');
   const [error, setError] = useState<string | null>(null);
@@ -77,13 +88,20 @@ export function BlockEditor({
       return;
     }
 
+    // La biblioteca se guarda sobre sí misma: no hay original al que volver ni plan que
+    // proteger, y un bloque nuevo por cada retoque llenaría la lista de duplicados.
+    if (esBiblioteca) {
+      onSave(parsed.data, 'template');
+      return;
+    }
+
     // Copy-on-write: al guardar nace un bloque nuevo que apunta al original.
     const fork = forkBlock(parsed.data, { sections: parsed.data.sections }, newId('bloque'));
     onSave({ ...fork, originBlockId: original ? originOf(source) : undefined }, level);
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Editar" tall>
+    <Sheet open={open} onClose={onClose} title={title} tall>
       {/* Catálogo para el autocompletado de todos los campos de alimento. */}
       <datalist id="catalogo-alimentos">
         {foods.map((food) => (
@@ -93,8 +111,9 @@ export function BlockEditor({
 
       {diff.hasChanges && (
         <p className="mb-3 rounded-block bg-free/40 p-2 text-measure text-ink">
-          Lo que cambies se resalta. Al guardar se crea una copia y el plan original se queda como
-          está.
+          {esBiblioteca
+            ? 'Lo que cambies se resalta. Afecta a las próximas veces que uses el bloque; las dietas ya publicadas se quedan como están.'
+            : 'Lo que cambies se resalta. Al guardar se crea una copia y el plan original se queda como está.'}
         </p>
       )}
 
@@ -207,22 +226,28 @@ export function BlockEditor({
       </div>
 
       <div className="sticky bottom-0 -mx-4 mt-4 border-t border-line bg-surface px-4 pt-3">
-        <p className="text-item font-semibold text-ink">¿Para cuándo?</p>
-        <div className="mt-2 flex gap-2">
-          {(['week', 'template'] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setLevel(option)}
-              aria-pressed={level === option}
-              className={`min-h-tap flex-1 rounded-chip border px-3 text-item font-semibold ${
-                level === option ? 'border-accent bg-accent/15 text-ink' : 'border-line text-ink'
-              }`}
-            >
-              {option === 'week' ? 'Solo esta semana' : 'Todo el plan'}
-            </button>
-          ))}
-        </div>
+        {!esBiblioteca && (
+          <>
+            <p className="text-item font-semibold text-ink">¿Para cuándo?</p>
+            <div className="mt-2 flex gap-2">
+              {(['week', 'template'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setLevel(option)}
+                  aria-pressed={level === option}
+                  className={`min-h-tap flex-1 rounded-chip border px-3 text-item font-semibold ${
+                    level === option
+                      ? 'border-accent bg-accent/15 text-ink'
+                      : 'border-line text-ink'
+                  }`}
+                >
+                  {option === 'week' ? 'Solo esta semana' : 'Todo el plan'}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {error && (
           <p role="alert" className="mt-2 text-measure text-danger">
@@ -237,7 +262,11 @@ export function BlockEditor({
           className="mt-3 mb-3 flex min-h-tap w-full items-center justify-center gap-2 rounded-chip bg-accent px-4 font-bold text-accent-ink disabled:opacity-50"
         >
           <Icon name="hoy" size={18} />
-          {diff.hasChanges ? 'Guardar cambios' : 'Sin cambios que guardar'}
+          {!diff.hasChanges
+            ? 'Sin cambios que guardar'
+            : esBiblioteca
+              ? 'Guardar en la biblioteca'
+              : 'Guardar cambios'}
         </button>
       </div>
     </Sheet>
