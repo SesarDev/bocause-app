@@ -50,6 +50,46 @@ export type StaffMemberRow = {
   created_at: string;
 };
 
+/* ─────────── Catálogo, biblioteca y equivalencias (0007_library.sql) ───────────
+ *
+ * Son de la consulta, no de un hogar: una app por consulta (decisión 1 de PLAN.md), así
+ * que no llevan `household_id`. Las lee cualquiera que haya entrado; las escribe staff.
+ */
+
+export type FoodRow = {
+  key: string;
+  name: string;
+  section: string;
+  unit: 'g' | 'ml' | 'ud';
+  batchable: boolean;
+  keeps_days: number | null;
+  archived: boolean;
+  updated_at: string;
+};
+
+export type LibraryBlockRow = {
+  id: string;
+  name: string;
+  slots: string[];
+  tags: string[];
+  /** { sections: LibrarySection[] } con UNA ración base por alimento. */
+  content: Json;
+  notes: string | null;
+  archived: boolean;
+  created_by: string | null;
+  updated_at: string;
+};
+
+export type EquivalenceGroupRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  /** EquivalenceMember[]: las decide la nutricionista, la app no las inventa. */
+  members: Json;
+  archived: boolean;
+  updated_at: string;
+};
+
 /**
  * Registro de cambios (0006_change_log.sql). Lo escriben triggers de Postgres; desde la app
  * solo se lee. No tiene políticas de UPDATE ni DELETE: es solo de añadir.
@@ -198,6 +238,32 @@ export type Database = {
       >;
       // Solo lectura desde la app: lo escriben los triggers.
       change_log: Table<ChangeLogRow, never>;
+      foods: Table<
+        FoodRow,
+        Omit<
+          FoodRow,
+          'section' | 'unit' | 'batchable' | 'keeps_days' | 'archived' | 'updated_at'
+        > & {
+          section?: string;
+          unit?: string;
+          batchable?: boolean;
+          keeps_days?: number | null;
+          archived?: boolean;
+        }
+      >;
+      library_blocks: Table<
+        LibraryBlockRow,
+        Omit<LibraryBlockRow, 'id' | 'updated_at'> & { id?: string }
+      >;
+      equivalence_groups: Table<
+        EquivalenceGroupRow,
+        Omit<EquivalenceGroupRow, 'id' | 'members' | 'archived' | 'updated_at' | 'description'> & {
+          id?: string;
+          description?: string | null;
+          members?: Json;
+          archived?: boolean;
+        }
+      >;
       plans: Table<
         PlanRow,
         // `version` no se envía al insertar: la numera el trigger de la 0005.

@@ -14,6 +14,18 @@ export const ROOT = 'bocause';
 /** Rama para cuando todavía no se sabe el hogar. Esas consultas están `enabled: false`. */
 export const NO_HOUSEHOLD = 'sin-hogar';
 
+/**
+ * Claves de lo que es de la consulta entera y no de un hogar: catálogo, biblioteca y
+ * equivalencias (0007). No cuelgan de ningún hogar porque hay un Supabase por consulta
+ * (decisión 1 de PLAN.md), y la caché ya está separada por usuario.
+ */
+export const consultaKeys = {
+  all: [ROOT, 'consulta'] as const,
+  foods: () => [ROOT, 'consulta', 'foods'] as const,
+  libraryBlocks: () => [ROOT, 'consulta', 'library-blocks'] as const,
+  equivalences: () => [ROOT, 'consulta', 'equivalences'] as const,
+};
+
 export function keysFor(householdId: string | null) {
   const all = [ROOT, householdId ?? NO_HOUSEHOLD] as const;
 

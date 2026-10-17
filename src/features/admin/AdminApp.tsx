@@ -6,17 +6,25 @@
  * Está pensada para escritorio (≥1024 px), al revés que la app del cliente. Usa los mismos
  * tokens de color y tipografía, así que hereda los dos temas sin nada extra.
  *
- * De momento son los huecos con su estado vacío: el contenido llega en las fases 15 a 17.
+ * Biblioteca, Alimentos y Equivalencias ya tienen contenido (fase 15). Las demás siguen
+ * siendo huecos con su estado vacío, que dice qué irá allí y en qué fase: un hueco mudo
+ * parece un error.
  */
+import type { ReactNode } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { brand } from '../../config/brand';
 import { Icon, type IconName } from '../../components/Icon';
 import { signOut } from '../../data/auth';
+import { EquivalencesView } from './EquivalencesView';
+import { FoodsView } from './FoodsView';
+import { LibraryView } from './LibraryView';
 
 type Seccion = {
   ruta: string;
   titulo: string;
   icono: IconName;
+  /** La pantalla, cuando ya existe. */
+  vista?: ReactNode;
   /** Qué irá aquí y en qué fase, para que el hueco no parezca un error. */
   pendiente: string;
 };
@@ -33,21 +41,22 @@ const SECCIONES: Seccion[] = [
     ruta: 'biblioteca',
     titulo: 'Biblioteca',
     icono: 'receta',
-    pendiente:
-      'Los bloques prehechos con su ración base, para montar dietas sin escribirlo todo. Fase 15.',
+    vista: <LibraryView />,
+    pendiente: '',
   },
   {
     ruta: 'alimentos',
     titulo: 'Alimentos',
     icono: 'compra',
-    pendiente: 'El catálogo: nombre, sección del súper, unidad y si admite batch cooking. Fase 15.',
+    vista: <FoodsView />,
+    pendiente: '',
   },
   {
     ruta: 'equivalencias',
     titulo: 'Equivalencias',
     icono: 'libre',
-    pendiente:
-      'Los grupos de intercambio y su factor, que es lo que permite sustituir un alimento por otro. Fase 15.',
+    vista: <EquivalencesView />,
+    pendiente: '',
   },
   {
     ruta: 'documentacion',
@@ -134,7 +143,11 @@ export default function AdminApp() {
           <Routes>
             <Route index element={<Navigate to="hogares" replace />} />
             {SECCIONES.map((seccion) => (
-              <Route key={seccion.ruta} path={seccion.ruta} element={<Hueco seccion={seccion} />} />
+              <Route
+                key={seccion.ruta}
+                path={seccion.ruta}
+                element={seccion.vista ?? <Hueco seccion={seccion} />}
+              />
             ))}
             <Route path="*" element={<Navigate to="hogares" replace />} />
           </Routes>

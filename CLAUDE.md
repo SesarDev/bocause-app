@@ -154,6 +154,25 @@ Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con
 5. Las frases las construye `src/domain/describeChange.ts`, puro y con tests. Los títulos de
    los bloques entran por un `lookup`, para que el dominio no sepa nada de Supabase.
 
+## Biblioteca y equivalencias (fase 15)
+
+1. **La biblioteca guarda UNA ración base por alimento**, no una por persona. Al colocar un
+   bloque se reparte con el `portion_multiplier` de cada comensal (`instantiate` en
+   `src/domain/library.ts`).
+2. **Se redondea a cantidades que se pueden pesar**: gramos y mililitros a múltiplos de 5,
+   unidades a medias. Y nunca a cero: una ración pequeña escalada hacia abajo sigue siendo
+   algo, no "no comas".
+3. **La medida casera no se multiplica.** "1/3 de bandeja" o "2 rebanadas" se conservan tal
+   cual y se marcan para repasar si el multiplicador no es 1. Multiplicarlas sería inventar
+   cantidades.
+4. **Las equivalencias las define la nutricionista.** La app nunca las deduce; el seed no
+   crea ninguna a propósito. El factor dice cuánto cunde cada alimento dentro del grupo.
+5. **Catálogo, biblioteca y equivalencias son de la consulta, no de un hogar**: hay un
+   Supabase por consulta, así que esas tablas no llevan `household_id`. Sus claves de caché
+   son `consultaKeys` en `src/data/keys.ts`.
+6. **Archivar, no borrar** (decisión 7 de PLAN.md): lo que está dentro de una dieta ya
+   publicada no puede desaparecer sin dejar raciones sin referencia.
+
 ## Pruebas de base de datos
 
 - `npx supabase start` levanta un Supabase local con Docker; `npx supabase db reset` aplica
@@ -162,6 +181,11 @@ Son las que evitan que lo que hoy funciona con un hogar se rompa en silencio con
 - Las pruebas de permisos se escriben **antes** que la migración y se ven fallar. Una prueba
   de seguridad que nunca ha estado en rojo no demuestra nada.
 - Nada de esto toca el proyecto de producción.
+- **Nunca asertar cuentas absolutas de una tabla.** Ni en pgTAP ni en los E2E: ambos corren
+  contra una base que ya tiene datos (local sembrada, o el hogar de verdad). Hay que contar
+  solo lo que la prueba crea, filtrando por sus claves, o comparar contra una foto previa.
+  Este error ha aparecido ya tres veces y siempre igual: la prueba pasa el día que se
+  escribe, con la base vacía, y falla —o peor, deja de probar nada— cuando hay datos.
 
 ## Estilo visual (Bocause)
 
