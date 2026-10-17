@@ -4,14 +4,16 @@ import { Sheet } from '../../components/Sheet';
 import { DaySkeleton, LoadingAnnounce } from '../../components/Skeleton';
 import { Toast, type ToastState } from '../../components/Toast';
 import { currentWeekStart, dayIndexOf, todayIn } from '../../domain/dates';
-import { restoreCell } from '../../domain/edit';
+import { forkBlock, restoreCell } from '../../domain/edit';
 import { canMarkFree, countFreeMeals } from '../../domain/freeMeals';
 import { minutesNow, nextSlot } from '../../domain/mealTimes';
 import { CheckIndex, dayProgress, type Progress } from '../../domain/progress';
 import { cellId, isSharedSlot, type ResolvedSlot } from '../../domain/resolve';
 import { swapCells, type SwapCell, type SwapLevel } from '../../domain/swap';
-import type { Block, SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
+import type { Block, FoodItem, SlotKey, TemplateCell, WeekOverride } from '../../domain/schema';
+import { brand } from '../../config/brand';
 import { useMyProfile } from '../../data/auth';
+import { useEquivalenceGroups, useFoods } from '../../data/library';
 import { useApplyCells, useRestoreCell, useSaveBlock, useSetCheck } from '../../data/mutations';
 import {
   useEditedBlocks,
@@ -26,11 +28,13 @@ import {
 import { useRealtimeSync } from '../../data/realtime';
 import { useUiStore } from '../../stores/ui';
 import { BlockEditor } from '../editor/BlockEditor';
-import { emptyBlock } from '../editor/draft';
+import { emptyBlock, newId } from '../editor/draft';
 import { SwapSheet } from '../swap/SwapSheet';
 import { TrainingSheet } from '../training/TrainingSheet';
 import { TodayTrackers } from '../trackers/Trackers';
 import { CheckContext, type CheckApi } from './checkContext';
+import { SubstituteContext, type SubstituteApi } from './substituteContext';
+import { SubstituteSheet } from './SubstituteSheet';
 import { DayBar } from './DayBar';
 import { DayCard } from './DayCard';
 import { HouseDayCard } from './HouseDayCard';
@@ -67,6 +71,13 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const setCheck = useSetCheck();
   const applyCells = useApplyCells();
   const restore = useRestoreCell();
+  const grupos = useEquivalenceGroups();
+  const catalogo = useFoods();
+  const [sustituyendo, setSustituyendo] = useState<{
+    block: Block;
+    item: FoodItem;
+    date: string;
+  } | null>(null);
   const saveBlock = useSaveBlock();
 
   useRealtimeSync(plan?.id, weekStart);
@@ -112,6 +123,29 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
           .map((profile) => profile.displayName),
     };
   }, [week, checkIndexes, editable, toggle, plan]);
+
+  /* ── Sustituir un alimento por un equivalente (fase 18) ── */
+
+  const substituteApi = useMemo(
+    (): SubstituteApi => ({
+      // Solo se ofrece cuando de verdad hay opciones: con foodKey, en algún grupo vivo, y
+      // mirando tu propio plan. Enseñar un botón que luego dice "no hay equivalentes" es
+      // peor que no enseñarlo.
+      canSubstitute: (item) =>
+        // La función se puede apagar entera al clonar la app para otra consulta.
+        brand.features.substitutions &&
+        editable &&
+        item.foodKey !== undefined &&
+        (grupos.data ?? []).some(
+          (group) =>
+            !group.archived &&
+            group.members.some((member) => member.foodKey === item.foodKey) &&
+            group.members.length > 1,
+        ),
+      open: (block, item, date) => setSustituyendo({ block, item, date }),
+    }),
+    [editable, grupos.data],
+  );
 
   const progress = useMemo((): Progress[] => {
     if (!week) return Array.from({ length: 7 }, () => EMPTY_PROGRESS);
@@ -357,148 +391,200 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
     ? canMarkFree(week, plan.rules, menuSlot.cell) || menuSlot.isFree
     : false;
 
+  const doSubstitute = (cambiado: Block, level: SwapLevel) => {
+    if (sustituyendo === null) return;
+
+    /*
+     * Copy-on-write, como en el editor (regla 6 de CLAUDE.md): nace un bloque NUEVO que
+     * apunta al original. Sin esto se guardaba con el id del plato del plan y marcado como
+     * original, así que "Restaurar original" se quedaba sin destino y el plato de la
+     * nutricionista era irrecuperable.
+     */
+    const block = forkBlock(cambiado, { sections: cambiado.sections }, newId('bloque'));
+
+    // La celda sale de la fecha y del propio bloque: el día de la fecha, y la franja y el
+    // scope de quien lo come.
+    const day = dayIndexOf(sustituyendo.date);
+    const scope = sustituyendo.block.scope;
+    const slotKey = sustituyendo.block.slot;
+
+    saveBlock.mutate({
+      planId: plan.id,
+      weekStart,
+      block,
+      upserts:
+        level === 'week'
+          ? [
+              {
+                level: 'week',
+                row: { weekStart, day, slot: slotKey, scope, blockId: block.id, isFree: false },
+              },
+            ]
+          : [{ level: 'template', row: { day, slot: slotKey, scope, blockId: block.id } }],
+    });
+
+    setSustituyendo(null);
+    setToast({
+      message: level === 'week' ? 'Cambiado esta semana' : 'Cambiado en todo el plan',
+    });
+  };
+
   return (
     <CheckContext.Provider value={checkApi}>
-      {!onlyToday && <DayBar progress={progress} todayIndex={todayIndex} onPick={goToDay} />}
+      <SubstituteContext.Provider value={substituteApi}>
+        {!onlyToday && <DayBar progress={progress} todayIndex={todayIndex} onPick={goToDay} />}
 
-      <div className="mt-3 flex flex-col gap-3">
-        {days.map((day) =>
-          day.slots.every((slot) => slot.block === null && !slot.isFree) ? (
-            <SundayCard
-              key={day.day}
-              day={day}
-              used={freeUsed}
-              allowance={plan.rules.freeMealsPerWeek}
-              isToday={day.day === todayIndex}
-            />
-          ) : (
-            <DayCard
-              key={day.day}
-              day={day}
-              profileId={week.profileId}
-              isToday={day.day === todayIndex}
-              nextSlotKey={nextSlotKey}
-              onSlotMenu={setMenuSlot}
-              onTraining={setTraining}
-            />
-          ),
-        )}
-      </div>
-
-      {onlyToday && (
-        <TodayTrackers
-          plan={plan}
-          profileSlug={week.profileId}
-          weekStart={weekStart}
-          date={todayIn()}
-          logs={logs.data ?? []}
-          editable={editable}
-        />
-      )}
-
-      {/* Menú de la franja */}
-      <Sheet
-        open={menuSlot !== null && swapOrigin === null}
-        onClose={() => setMenuSlot(null)}
-        title={menuSlot ? SLOT_LABEL[menuSlot.cell.slot] : ''}
-      >
-        {menuSlot && (
-          <div className="flex flex-col gap-2 pb-2">
-            <MenuAction
-              icon="semana"
-              label="Intercambiar con otro día"
-              hint={
-                isSharedSlot(menuSlot.cell.slot) && otherName
-                  ? `Cambia también para ${otherName}`
-                  : undefined
-              }
-              onClick={() => setSwapOrigin(menuSlot)}
-            />
-
-            <MenuAction
-              icon="mas"
-              label={menuSlot.blockId === null ? 'Crear comida aquí' : 'Editar'}
-              hint={
-                menuSlot.blockId === null
-                  ? 'La celda está vacía'
-                  : 'Crea una copia; el plan original no se toca'
-              }
-              onClick={() => {
-                setEditorSlot(menuSlot);
-                setMenuSlot(null);
-              }}
-            />
-
-            <MenuAction
-              icon="libre"
-              label={menuSlot.isFree ? 'Quitar la ingesta libre' : 'Marcar como ingesta libre'}
-              hint={
-                menuSlot.isFree
-                  ? 'Volverá a contar como una comida del plan'
-                  : canFree
-                    ? `Has usado ${freeUsed} de ${plan.rules.freeMealsPerWeek} esta semana`
-                    : `Ya has usado las ${plan.rules.freeMealsPerWeek} de esta semana`
-              }
-              disabled={!canFree}
-              onClick={() => markFree(menuSlot, !menuSlot.isFree)}
-            />
-
-            {menuSlot.source !== 'original' && (
-              <MenuAction
-                icon="hoy"
-                label="Restaurar original"
-                hint={
-                  menuSlot.source === 'week'
-                    ? 'Deshace el cambio de esta semana'
-                    : 'Deshace el cambio en todo el plan'
-                }
-                onClick={() => doRestore(menuSlot)}
+        <div className="mt-3 flex flex-col gap-3">
+          {days.map((day) =>
+            day.slots.every((slot) => slot.block === null && !slot.isFree) ? (
+              <SundayCard
+                key={day.day}
+                day={day}
+                used={freeUsed}
+                allowance={plan.rules.freeMealsPerWeek}
+                isToday={day.day === todayIndex}
               />
-            )}
-          </div>
+            ) : (
+              <DayCard
+                key={day.day}
+                day={day}
+                profileId={week.profileId}
+                isToday={day.day === todayIndex}
+                nextSlotKey={nextSlotKey}
+                onSlotMenu={setMenuSlot}
+                onTraining={setTraining}
+              />
+            ),
+          )}
+        </div>
+
+        {onlyToday && (
+          <TodayTrackers
+            plan={plan}
+            profileSlug={week.profileId}
+            weekStart={weekStart}
+            date={todayIn()}
+            logs={logs.data ?? []}
+            editable={editable}
+          />
         )}
-      </Sheet>
 
-      <SwapSheet
-        key={swapOrigin ? cellId(swapOrigin.cell) : 'sin-origen'}
-        open={swapOrigin !== null}
-        onClose={() => setSwapOrigin(null)}
-        origin={swapOrigin}
-        week={week}
-        otherName={otherName}
-        onConfirm={(target, level) => swapOrigin && doSwap(swapOrigin, target, level)}
-      />
+        {/* Menú de la franja */}
+        <Sheet
+          open={menuSlot !== null && swapOrigin === null}
+          onClose={() => setMenuSlot(null)}
+          title={menuSlot ? SLOT_LABEL[menuSlot.cell.slot] : ''}
+        >
+          {menuSlot && (
+            <div className="flex flex-col gap-2 pb-2">
+              <MenuAction
+                icon="semana"
+                label="Intercambiar con otro día"
+                hint={
+                  isSharedSlot(menuSlot.cell.slot) && otherName
+                    ? `Cambia también para ${otherName}`
+                    : undefined
+                }
+                onClick={() => setSwapOrigin(menuSlot)}
+              />
 
-      {editorSlot && (
-        <BlockEditor
-          key={cellId(editorSlot.cell)}
-          open
-          onClose={() => setEditorSlot(null)}
-          source={
-            (editorSlot.blockId ? blockById.get(editorSlot.blockId) : undefined) ??
-            emptyBlock(
-              plan.id,
-              editorSlot.cell.slot,
-              editorSlot.cell.scope,
-              peopleFor(editorSlot).map((person) => person.profileId),
-            )
-          }
-          original={originalBlockFor(editorSlot)}
-          people={peopleFor(editorSlot)}
-          foods={plan.foods}
-          onSave={doSaveBlock}
+              <MenuAction
+                icon="mas"
+                label={menuSlot.blockId === null ? 'Crear comida aquí' : 'Editar'}
+                hint={
+                  menuSlot.blockId === null
+                    ? 'La celda está vacía'
+                    : 'Crea una copia; el plan original no se toca'
+                }
+                onClick={() => {
+                  setEditorSlot(menuSlot);
+                  setMenuSlot(null);
+                }}
+              />
+
+              <MenuAction
+                icon="libre"
+                label={menuSlot.isFree ? 'Quitar la ingesta libre' : 'Marcar como ingesta libre'}
+                hint={
+                  menuSlot.isFree
+                    ? 'Volverá a contar como una comida del plan'
+                    : canFree
+                      ? `Has usado ${freeUsed} de ${plan.rules.freeMealsPerWeek} esta semana`
+                      : `Ya has usado las ${plan.rules.freeMealsPerWeek} de esta semana`
+                }
+                disabled={!canFree}
+                onClick={() => markFree(menuSlot, !menuSlot.isFree)}
+              />
+
+              {menuSlot.source !== 'original' && (
+                <MenuAction
+                  icon="hoy"
+                  label="Restaurar original"
+                  hint={
+                    menuSlot.source === 'week'
+                      ? 'Deshace el cambio de esta semana'
+                      : 'Deshace el cambio en todo el plan'
+                  }
+                  onClick={() => doRestore(menuSlot)}
+                />
+              )}
+            </div>
+          )}
+        </Sheet>
+
+        <SwapSheet
+          key={swapOrigin ? cellId(swapOrigin.cell) : 'sin-origen'}
+          open={swapOrigin !== null}
+          onClose={() => setSwapOrigin(null)}
+          origin={swapOrigin}
+          week={week}
+          otherName={otherName}
+          onConfirm={(target, level) => swapOrigin && doSwap(swapOrigin, target, level)}
         />
-      )}
 
-      <TrainingSheet
-        training={training}
-        protocols={
-          plan.profiles.find((profile) => profile.profileId === week.profileId)?.supplements ?? []
-        }
-        onClose={() => setTraining(null)}
-      />
+        {editorSlot && (
+          <BlockEditor
+            key={cellId(editorSlot.cell)}
+            open
+            onClose={() => setEditorSlot(null)}
+            source={
+              (editorSlot.blockId ? blockById.get(editorSlot.blockId) : undefined) ??
+              emptyBlock(
+                plan.id,
+                editorSlot.cell.slot,
+                editorSlot.cell.scope,
+                peopleFor(editorSlot).map((person) => person.profileId),
+              )
+            }
+            original={originalBlockFor(editorSlot)}
+            people={peopleFor(editorSlot)}
+            foods={plan.foods}
+            onSave={doSaveBlock}
+          />
+        )}
 
-      <Toast toast={toast} onClose={() => setToast(null)} />
+        <TrainingSheet
+          training={training}
+          protocols={
+            plan.profiles.find((profile) => profile.profileId === week.profileId)?.supplements ?? []
+          }
+          onClose={() => setTraining(null)}
+        />
+
+        <SubstituteSheet
+          open={sustituyendo !== null}
+          block={sustituyendo?.block ?? null}
+          item={sustituyendo?.item ?? null}
+          profileId={week.profileId}
+          shared={sustituyendo?.block.scope === 'shared'}
+          groups={grupos.data ?? []}
+          foods={catalogo.data ?? []}
+          onClose={() => setSustituyendo(null)}
+          onApply={doSubstitute}
+        />
+
+        <Toast toast={toast} onClose={() => setToast(null)} />
+      </SubstituteContext.Provider>
     </CheckContext.Provider>
   );
 }

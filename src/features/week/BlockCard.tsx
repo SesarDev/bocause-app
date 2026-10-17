@@ -2,23 +2,30 @@ import { Checkbox } from '../../components/Checkbox';
 import { Icon } from '../../components/Icon';
 import { formatPortion } from '../../domain/format';
 import type { Block, FoodItem, ProfileId, Section, SlotKey } from '../../domain/schema';
+import { replacedLabel } from '../../domain/substitute';
 import { useCheckApi } from './checkContext';
+import { useSubstituteApi } from './substituteContext';
 import { SECTION_LABEL } from './slots';
 
 /** Un alimento: su check, el nombre, la cantidad y la medida de casa en gris. */
 function ItemLine({
   item,
+  block,
   profileId,
   date,
   slot,
 }: {
   item: FoodItem;
+  block: Block;
   profileId: ProfileId;
   date: string;
   slot: SlotKey;
 }) {
   const portion = item.portions[profileId];
   const checks = useCheckApi();
+  const sustituir = useSubstituteApi();
+  const sePuedeCambiar = sustituir?.canSubstitute(item) ?? false;
+  const enLugarDe = replacedLabel(item);
   if (!portion) return null;
 
   const { amount, measure } = formatPortion(portion);
@@ -41,12 +48,31 @@ function ItemLine({
           checked ? 'opacity-55' : ''
         }`}
       >
-        <span className={`text-item font-medium text-ink ${checked ? 'line-through' : ''}`}>
-          {item.label}
-        </span>
+        {/* El nombre se vuelve pulsable solo cuando de verdad hay por qué cambiarlo: con
+            foodKey, en algún grupo de equivalencia y mirando tu propio plan. Un subrayado
+            de puntos lo insinúa sin convertir la lista en un campo de botones. */}
+        {sePuedeCambiar ? (
+          <button
+            type="button"
+            onClick={() => sustituir?.open(block, item, date)}
+            aria-label={`Cambiar ${item.label} por un equivalente`}
+            className={`text-left text-item font-medium text-ink underline decoration-line decoration-dotted underline-offset-4 ${
+              checked ? 'line-through' : ''
+            }`}
+          >
+            {item.label}
+          </button>
+        ) : (
+          <span className={`text-item font-medium text-ink ${checked ? 'line-through' : ''}`}>
+            {item.label}
+          </span>
+        )}
         {amount && <span className="text-item font-semibold text-ink">{amount}</span>}
         {measure && <span className="text-measure text-ink-muted">({measure})</span>}
         {item.note && <span className="w-full text-measure text-ink-muted">{item.note}</span>}
+        {enLugarDe !== null && (
+          <span className="w-full text-measure text-ink-muted italic">{enLugarDe}</span>
+        )}
         {others.length > 0 && (
           <span
             className="flex items-center gap-1"
@@ -70,11 +96,14 @@ function ItemLine({
 
 function SectionBlock({
   section,
+  block,
   profileId,
   date,
   slot,
 }: {
   section: Section;
+  /** El bloque al que pertenece: hace falta para poder sustituir un alimento. */
+  block: Block;
   profileId: ProfileId;
   date: string;
   slot: SlotKey;
@@ -92,7 +121,14 @@ function SectionBlock({
       )}
       <ul>
         {section.items.map((item) => (
-          <ItemLine key={item.id} item={item} profileId={profileId} date={date} slot={slot} />
+          <ItemLine
+            key={item.id}
+            item={item}
+            block={block}
+            profileId={profileId}
+            date={date}
+            slot={slot}
+          />
         ))}
       </ul>
     </div>
@@ -128,6 +164,7 @@ export function BlockCard({
         <SectionBlock
           key={section.id}
           section={section}
+          block={block}
           profileId={profileId}
           date={date}
           slot={slot}
