@@ -18,6 +18,7 @@ import { signOut } from '../../data/auth';
 import { BuilderView } from './BuilderView';
 import { EquivalencesView } from './EquivalencesView';
 import { FoodsView } from './FoodsView';
+import { HouseholdDetail } from './HouseholdDetail';
 import { HouseholdsView } from './HouseholdsView';
 import { LibraryView } from './LibraryView';
 
@@ -153,6 +154,7 @@ export default function AdminApp() {
             ))}
             {/* El constructor va aparte: no es una sección de la barra, se entra desde un hogar. */}
             <Route path="hogares/:householdId/dieta" element={<BuilderView />} />
+            <Route path="hogares/:householdId" element={<HouseholdDetail />} />
             <Route path="*" element={<Navigate to="hogares" replace />} />
           </Routes>
         </main>
