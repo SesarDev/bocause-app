@@ -42,7 +42,7 @@ supabase/        Migraciones de Postgres
 | `npm run library:seed`  | Siembra el catálogo y la biblioteca de bloques  |
 | `npm run staff:add`     | Da de alta a una nutricionista                  |
 
-## Estado: fase 15 completada (desplegada y en uso)
+## Estado: fase 16 completada (desplegada y en uso)
 
 **Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
 persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
@@ -199,6 +199,36 @@ por día, con "Restaurar original".
 | RPC `restore_cell`             | Restaurar era varias peticiones sueltas y podía quedarse a medias. Ahora es atómico, y además el registro puede marcarlo como `restaurar`.           |
 | `src/domain/describeChange.ts` | Las frases, puras y con 16 tests. Los títulos entran por un `lookup`, así el dominio no sabe nada de Supabase.                                       |
 | `ChangeLogList`                | Fuera de la vista Más: la ficha del hogar (fase 17) enseñará la misma lista.                                                                         |
+
+**Fase 16** es el constructor de dietas y la publicación, la parte de más riesgo del
+proyecto. En `/admin/hogares` se elige un hogar y se abre su dieta: una cuadrícula de lunes a
+domingo, una fila por franja de cada persona y una por las compartidas. Cada celda se rellena
+desde la biblioteca, se vacía o se copia a otros días. **No hay intercambio entre días**:
+mover comidas es cosa del cliente. Todo ocurre sobre un borrador que se guarda solo y que el
+cliente no ve hasta que se publica.
+
+| Qué                            | Por qué                                                                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/domain/carryOver.ts`      | Qué pasa con los cambios del cliente al publicar. 22 tests. Compara por **contenido y no por id**: entre versiones los ids cambian. |
+| `0008_publish.sql`             | `diet_drafts` y las RPC `publish_plan` y `archive_plan`. Publicar toca cinco tablas: va en una transacción y exige lunes.           |
+| `BuilderView` / `PublishPanel` | La cuadrícula y el panel que **enseña los conflictos antes de confirmar**, celda a celda.                                           |
+
+Lo que de verdad define esta fase son dos bugs que encontraron las pruebas, los dos del tipo
+"se pierde en silencio lo que alguien llevaba semanas ajustando":
+
+- **Un plato que ya no existe en la dieta nueva desaparecía sin avisar**, si la nutricionista
+  no había tocado esa celda. Ahora un cambio que no se puede arrastrar siempre sale como
+  conflicto.
+- **Leer la celda del cliente con `??` confundía un `blockId` nulo** —una celda que él vació
+  a propósito— con una fila ausente, así que la publicación se la volvía a llenar.
+
+Por defecto gana la nutricionista, pero nunca en silencio: el panel dice «el cliente tenía
+Huevos rotos airfryer; tú pones Carne a la plancha con verduras» y deja marcar "Mantener el
+suyo" en cada celda.
+
+**Pendiente de la fase 16:** empezar una dieta en blanco o duplicando la de otro hogar, la
+pestaña de configuración (franjas, entreno, suplementación, reglas) y "Ver como Cristina".
+El flujo principal —partir de la dieta actual, editar, publicar con arrastre— está completo.
 
 **Fase 15** llena tres de las seis secciones de administración: **Alimentos** (el catálogo,
 editable), **Biblioteca** (bloques prehechos con su ración base y vista previa del escalado)

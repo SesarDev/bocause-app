@@ -15,8 +15,10 @@ import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { brand } from '../../config/brand';
 import { Icon, type IconName } from '../../components/Icon';
 import { signOut } from '../../data/auth';
+import { BuilderView } from './BuilderView';
 import { EquivalencesView } from './EquivalencesView';
 import { FoodsView } from './FoodsView';
+import { HouseholdsView } from './HouseholdsView';
 import { LibraryView } from './LibraryView';
 
 type Seccion = {
@@ -34,8 +36,8 @@ const SECCIONES: Seccion[] = [
     ruta: 'hogares',
     titulo: 'Hogares',
     icono: 'perfil',
-    pendiente:
-      'La lista de hogares con sus personas, la dieta vigente y la adherencia de la semana. Fase 17.',
+    vista: <HouseholdsView />,
+    pendiente: '',
   },
   {
     ruta: 'biblioteca',
@@ -149,6 +151,8 @@ export default function AdminApp() {
                 element={seccion.vista ?? <Hueco seccion={seccion} />}
               />
             ))}
+            {/* El constructor va aparte: no es una sección de la barra, se entra desde un hogar. */}
+            <Route path="hogares/:householdId/dieta" element={<BuilderView />} />
             <Route path="*" element={<Navigate to="hogares" replace />} />
           </Routes>
         </main>

@@ -90,6 +90,15 @@ export type EquivalenceGroupRow = {
   updated_at: string;
 };
 
+/** Borrador de dieta (0008_publish.sql). Uno por hogar; solo lo ve staff. */
+export type DietDraftRow = {
+  household_id: string;
+  base_plan_id: string | null;
+  data: Json;
+  updated_by: string | null;
+  updated_at: string;
+};
+
 /**
  * Registro de cambios (0006_change_log.sql). Lo escriben triggers de Postgres; desde la app
  * solo se lee. No tiene políticas de UPDATE ni DELETE: es solo de añadir.
@@ -236,6 +245,13 @@ export type Database = {
         StaffMemberRow,
         Omit<StaffMemberRow, 'role' | 'created_at'> & { role?: string }
       >;
+      diet_drafts: Table<
+        DietDraftRow,
+        Omit<DietDraftRow, 'updated_at' | 'base_plan_id' | 'updated_by'> & {
+          base_plan_id?: string | null;
+          updated_by?: string | null;
+        }
+      >;
       // Solo lectura desde la app: lo escriben los triggers.
       change_log: Table<ChangeLogRow, never>;
       foods: Table<
@@ -365,6 +381,22 @@ export type Database = {
        * Restaurar en una sola transacción (0006). Antes eran varias peticiones sueltas y
        * podía quedarse a medias; además así el registro lo marca como 'restaurar'.
        */
+      /** Publica una dieta entera en una transacción (0008). */
+      publish_plan: {
+        Args: {
+          p_household: string;
+          p_plan_id: string;
+          p_plan: Json;
+          p_valid_from: string;
+          p_cells?: Json;
+          p_carry?: Json;
+        };
+        Returns: string;
+      };
+      archive_plan: {
+        Args: { p_plan_id: string };
+        Returns: undefined;
+      };
       restore_cell: {
         Args: {
           p_plan_id: string;
