@@ -4,6 +4,7 @@ import { MoreView } from '../more/MoreView';
 import { ShoppingView } from '../shopping/ShoppingView';
 import { WeekView } from '../week/WeekView';
 import { AppHeader } from './AppHeader';
+import { DietaNueva } from './DietaNueva';
 import { BottomNav } from './BottomNav';
 
 export function AppShell() {
@@ -32,6 +33,8 @@ export function AppShell() {
             : 'pt-[calc(5.25rem+env(safe-area-inset-top))]'
         }`}
       >
+        <DietaNueva />
+
         {tab === 'semana' && <WeekView />}
         {tab === 'hoy' && <WeekView onlyToday />}
         {tab === 'compra' && <ShoppingView />}

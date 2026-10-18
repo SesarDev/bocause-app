@@ -123,6 +123,75 @@ export function usePlanOf(householdId: string | null, onDate: IsoDateString = to
   });
 }
 
+/**
+ * Cuándo se publicó la dieta vigente y qué versión es.
+ *
+ * Va aparte de `usePlan` porque el `Plan` del dominio no sabe nada de versiones: eso es de
+ * la fila, no del documento. Lo necesita el aviso de "tu dieta se actualizó".
+ */
+export function usePlanMeta(onDate: IsoDateString = todayIn()) {
+  const householdId = useActiveHousehold();
+
+  return useQuery({
+    queryKey: [...keysFor(householdId).all, 'plan-meta', onDate] as const,
+    enabled: householdId !== null,
+    queryFn: async (): Promise<{ id: string; version: number; publishedAt: string } | null> => {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('id, version, published_at, valid_from')
+        .eq('household_id', householdId!)
+        .eq('status', 'active')
+        .lte('valid_from', onDate)
+        .or(`valid_to.is.null,valid_to.gte.${onDate}`)
+        .order('valid_from', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data === null) return null;
+      return {
+        id: data.id,
+        version: data.version,
+        // Las dietas sembradas (no publicadas desde la app) no tienen `published_at`: se
+        // usa su fecha de inicio, que es lo más parecido a "desde cuándo es esta".
+        publishedAt: data.published_at ?? data.valid_from,
+      };
+    },
+  });
+}
+
+/**
+ * Todas las versiones publicadas de un hogar, de la más nueva a la más vieja.
+ *
+ * Cada publicación deja una instantánea inmutable en `plans` (decisión 2 de PLAN.md), así
+ * que esto es el archivo de lo que comió esa casa: la dieta de hace tres meses sigue
+ * entera, con sus platos y sus raciones.
+ */
+export function usePlanVersions(householdId: string | null) {
+  return useQuery({
+    queryKey: [...keysFor(householdId).all, 'plan-versions'] as const,
+    enabled: householdId !== null,
+    queryFn: async (): Promise<
+      { plan: Plan; version: number; validFrom: string; validTo: string | null; status: string }[]
+    > => {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('household_id', householdId!)
+        .order('valid_from', { ascending: false });
+      if (error) throw error;
+
+      return (data ?? []).map((row) => ({
+        plan: toPlan(row),
+        version: row.version,
+        validFrom: row.valid_from,
+        validTo: row.valid_to,
+        status: row.status,
+      }));
+    },
+  });
+}
+
 /* ─────────────────────── Capas editables ─────────────────────── */
 
 export function useEditedBlocks(planId: string | undefined, scopes: ProfileDirectory | undefined) {

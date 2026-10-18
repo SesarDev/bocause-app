@@ -12,18 +12,65 @@ import { currentWeekStart } from '../../domain/dates';
 import { shortDateOf } from '../../domain/format';
 import { weekAdherence } from '../../domain/progress';
 import { buildBlockTitles, useChangeLog } from '../../data/changelog';
-import { useHouseholds } from '../../data/builder';
+import { resolveWeek } from '../../domain/resolve';
+import type { Plan } from '../../domain/schema';
+import { useHouseholds, useSetPlanStatus } from '../../data/builder';
 import {
   useEditedBlocks,
   useHouseholdWeeks,
   usePlan,
+  usePlanVersions,
   useProfileDirectory,
   useWeekChecks,
 } from '../../data/queries';
 import { setActiveHousehold } from '../../data/scope';
 import { ChangeLogList } from '../changelog/ChangeLogList';
+import { WeekPreview } from './WeekPreview';
 
-type Pestana = 'dieta' | 'historial' | 'seguimiento';
+type Pestana = 'dieta' | 'como-cliente' | 'historial' | 'seguimiento';
+
+/**
+ * Una versión publicada, leída. Se resuelve sin overrides ni bloques editados a propósito:
+ * esto es lo que ella publicó, no lo que el cliente hizo luego con ello.
+ */
+function VersionLeida({ plan, etiqueta }: { plan: Plan; etiqueta: string }) {
+  const weekStart = currentWeekStart();
+  const [quien, setQuien] = useState(plan.profiles[0]?.profileId ?? '');
+
+  const semana = useMemo(() => {
+    try {
+      return resolveWeek({ plan, profileId: quien, weekStart });
+    } catch {
+      return null;
+    }
+  }, [plan, quien, weekStart]);
+
+  return (
+    <div className="mt-3 border-t border-line pt-3">
+      <div className="flex flex-wrap gap-2">
+        {plan.profiles.map((perfil) => (
+          <button
+            key={perfil.profileId}
+            type="button"
+            onClick={() => setQuien(perfil.profileId)}
+            aria-pressed={perfil.profileId === quien}
+            className={`min-h-tap rounded-chip px-3 text-measure font-semibold ${
+              perfil.profileId === quien ? 'bg-slot text-slot-ink' : 'border border-line text-ink'
+            }`}
+          >
+            {perfil.displayName}
+          </button>
+        ))}
+      </div>
+
+      {semana === null ? (
+        <p className="mt-3 text-item text-ink-muted">Esa persona no estaba en esta versión.</p>
+      ) : (
+        <WeekPreview week={semana} aviso={`${etiqueta} · tal como se publicó`} />
+      )}
+    </div>
+  );
+}
 
 export function HouseholdDetail() {
   const { householdId = '' } = useParams();
@@ -44,6 +91,12 @@ export function HouseholdDetail() {
   const checks = useWeekChecks(weekStart, scopes);
   const { weeks } = useHouseholdWeeks(weekStart);
   const changeLog = useChangeLog();
+  const versiones = usePlanVersions(householdId === '' ? null : householdId);
+  const estado = useSetPlanStatus();
+
+  const [verVersion, setVerVersion] = useState<string | null>(null);
+  const [archivando, setArchivando] = useState<string | null>(null);
+  const [comoCliente, setComoCliente] = useState<string | null>(null);
 
   const grupos = useMemo(
     () => describeChanges(changeLog.data ?? [], buildBlockTitles(plan.data ?? null, blocks.data)),
@@ -83,6 +136,7 @@ export function HouseholdDetail() {
         {(
           [
             ['dieta', 'Dieta'],
+            ['como-cliente', 'Ver como cliente'],
             ['historial', 'Historial'],
             ['seguimiento', 'Seguimiento'],
           ] as const
@@ -103,25 +157,147 @@ export function HouseholdDetail() {
 
       {pestana === 'dieta' && (
         <div className="mt-4">
-          {household.plan === null ? (
-            <p className="text-item text-ink-muted">Este hogar no tiene dieta vigente.</p>
-          ) : (
-            <p className="text-item text-ink">
-              <strong className="font-semibold">{household.plan.name}</strong> · versión{' '}
-              {household.plan.version} · vigente desde {shortDateOf(household.plan.validFrom)}.
-            </p>
-          )}
-
           <Link
             to={`/admin/hogares/${householdId}/dieta`}
-            className="mt-4 inline-block min-h-tap rounded-block bg-slot px-4 py-2 text-item font-semibold text-slot-ink"
+            className="inline-block min-h-tap rounded-block bg-slot px-4 py-2 text-item font-semibold text-slot-ink"
           >
             Abrir el constructor
           </Link>
 
-          <p className="mt-4 max-w-prose text-measure text-ink-muted">
-            Las versiones anteriores en solo lectura llegan cuando haya más de una publicada.
+          <h2 className="mt-5 text-item font-bold text-ink">Versiones publicadas</h2>
+          <p className="mt-1 max-w-prose text-measure text-ink-muted">
+            Cada publicación deja una copia entera e intocable. Las anteriores se pueden mirar, pero
+            no cambiar: son lo que comió esta casa.
           </p>
+
+          {versiones.isPending && <p className="mt-3 text-item text-ink-muted">Cargando…</p>}
+
+          {!versiones.isPending && (versiones.data ?? []).length === 0 && (
+            <p className="mt-3 text-item text-ink-muted">
+              Todavía no se ha publicado ninguna dieta para este hogar.
+            </p>
+          )}
+
+          <ul className="mt-3 flex flex-col gap-2">
+            {(versiones.data ?? []).map((version) => {
+              const vigente = version.status === 'active' && version.validTo === null;
+              const abierta = verVersion === version.plan.id;
+
+              return (
+                <li key={version.plan.id} className="rounded-block border border-line p-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="flex-1 text-item text-ink">
+                      <strong className="font-semibold">Versión {version.version}</strong> ·{' '}
+                      {version.plan.name} · desde {shortDateOf(version.validFrom)}
+                      {version.validTo !== null && <> hasta {shortDateOf(version.validTo)}</>}
+                      {version.status === 'archived' && (
+                        <span className="ml-2 text-ink-muted">archivada</span>
+                      )}
+                      {vigente && <span className="ml-2 font-semibold text-ink">vigente</span>}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setVerVersion(abierta ? null : version.plan.id)}
+                      aria-expanded={abierta}
+                      className="min-h-tap rounded-block border border-line px-3 text-measure font-semibold text-ink"
+                    >
+                      {abierta ? 'Cerrar' : 'Ver'}
+                    </button>
+
+                    {version.status === 'active' ? (
+                      <button
+                        type="button"
+                        onClick={() => setArchivando(version.plan.id)}
+                        className="min-h-tap text-measure font-semibold text-ink-muted underline"
+                      >
+                        Archivar
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => estado.mutate({ planId: version.plan.id, status: 'active' })}
+                        className="min-h-tap text-measure font-semibold text-ink-muted underline"
+                      >
+                        Reactivar
+                      </button>
+                    )}
+                  </div>
+
+                  {archivando === version.plan.id && (
+                    <p className="mt-3 flex flex-wrap items-center gap-2 text-measure text-ink">
+                      {vigente
+                        ? 'Si la archivas, estas personas se quedan sin dieta en su móvil hasta que publiques otra.'
+                        : '¿Archivar esta versión?'}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          estado.mutate({ planId: version.plan.id, status: 'archived' });
+                          setArchivando(null);
+                        }}
+                        className="min-h-tap rounded-block border border-danger px-3 text-measure font-semibold text-danger"
+                      >
+                        Archivar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setArchivando(null)}
+                        className="min-h-tap text-measure font-semibold text-ink-muted underline"
+                      >
+                        No
+                      </button>
+                    </p>
+                  )}
+
+                  {abierta && (
+                    <VersionLeida plan={version.plan} etiqueta={`Versión ${version.version}`} />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {pestana === 'como-cliente' && (
+        <div className="mt-4">
+          <p className="max-w-prose text-measure text-ink-muted">
+            Su semana tal cual la tiene hoy en el móvil, con los cambios que haya hecho él. No se
+            puede tocar nada desde aquí: marcar comidas es suyo.
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {weeks.map((semana) => (
+              <button
+                key={semana.profileId}
+                type="button"
+                onClick={() => setComoCliente(semana.profileId)}
+                aria-pressed={semana.profileId === (comoCliente ?? weeks[0]?.profileId)}
+                className={`min-h-tap rounded-chip px-3 text-measure font-semibold ${
+                  semana.profileId === (comoCliente ?? weeks[0]?.profileId)
+                    ? 'bg-slot text-slot-ink'
+                    : 'border border-line text-ink'
+                }`}
+              >
+                {household.people.find((persona) => persona.slug === semana.profileId)
+                  ?.displayName ?? semana.profileId}
+              </button>
+            ))}
+          </div>
+
+          {weeks.length === 0 ? (
+            <p className="mt-4 text-item text-ink-muted">
+              Este hogar no tiene dieta vigente, así que no hay nada que ver.
+            </p>
+          ) : (
+            (() => {
+              const elegida = weeks.find((semana) => semana.profileId === comoCliente) ?? weeks[0]!;
+              const nombre =
+                household.people.find((persona) => persona.slug === elegida.profileId)
+                  ?.displayName ?? elegida.profileId;
+              return <WeekPreview week={elegida} aviso={`Vista de ${nombre} · solo lectura`} />;
+            })()
+          )}
         </div>
       )}
 

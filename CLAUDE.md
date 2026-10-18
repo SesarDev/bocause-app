@@ -29,6 +29,7 @@ Las reglas específicas de cada carpeta están en `src/data/`, `src/domain/`, `s
 ## Dominio
 
 - **Dieta viva:** cada publicación crea una versión en `plans` (`valid_from` en lunes) y cierra la anterior. Cada versión es una plantilla de 7 días. El original nunca se modifica.
+- **Archivar, no borrar:** una dieta publicada se archiva (`plans.status`) y se puede reactivar. Sin dieta vigente, el cliente ve "tu nutricionista está preparando tu dieta".
 - **Franjas del hogar actual:**
   - Cristina: desayuno, snack, snack2, comida y cena.
   - Andrés: desayuno, almuerzo, comida y cena.

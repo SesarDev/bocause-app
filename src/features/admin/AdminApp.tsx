@@ -6,9 +6,9 @@
  * Está pensada para escritorio (≥1024 px), al revés que la app del cliente. Usa los mismos
  * tokens de color y tipografía, así que hereda los dos temas sin nada extra.
  *
- * Biblioteca, Alimentos y Equivalencias ya tienen contenido (fase 15). Las demás siguen
- * siendo huecos con su estado vacío, que dice qué irá allí y en qué fase: un hueco mudo
- * parece un error.
+ * Todas las secciones tienen ya su pantalla. `Hueco` se queda por si vuelve a hacer falta
+ * abrir una a medias: un hueco que dice qué irá allí es mejor que uno mudo, que parece un
+ * error.
  */
 import type { ReactNode } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
@@ -22,6 +22,7 @@ import { HouseholdDetail } from './HouseholdDetail';
 import { HouseholdsView } from './HouseholdsView';
 import { LibraryView } from './LibraryView';
 import { MessagesView } from './MessagesView';
+import { RegistroView } from './RegistroView';
 
 type Seccion = {
   ruta: string;
@@ -73,7 +74,8 @@ const TODAS: Seccion[] = [
     ruta: 'registro',
     titulo: 'Registro',
     icono: 'entreno',
-    pendiente: 'Quién cambió qué y cuándo, en cada hogar. Fase 14.',
+    vista: <RegistroView />,
+    pendiente: '',
   },
 ];
 

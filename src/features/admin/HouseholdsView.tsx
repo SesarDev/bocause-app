@@ -180,6 +180,101 @@ function NuevaPersona({ householdId }: { householdId: string }) {
   );
 }
 
+/**
+ * Darle acceso a alguien que ya tiene perfil pero todavía no tiene cuenta.
+ *
+ * Pasa con los hogares sembrados y con cualquier persona creada antes de que existieran las
+ * cuentas: tiene su dieta, pero no puede entrar a verla. Es la misma alta que la de una
+ * persona nueva, conservando su perfil (y con él sus checks y su historial).
+ */
+function DarAcceso({
+  householdId,
+  persona,
+}: {
+  householdId: string;
+  persona: { slug: string; displayName: string; portionMultiplier: number };
+}) {
+  const crear = useCreateClientAccount();
+  const [abierto, setAbierto] = useState(false);
+  const [usuario, setUsuario] = useState(persona.slug);
+  const [password, setPassword] = useState('');
+
+  if (!abierto) {
+    return (
+      <p className="flex flex-wrap items-center gap-2 text-measure text-ink-muted">
+        <strong className="font-semibold text-ink">{persona.displayName}</strong> no tiene cuenta:
+        no puede entrar a ver su dieta.
+        <button
+          type="button"
+          onClick={() => setAbierto(true)}
+          className="min-h-tap font-semibold text-ink underline"
+        >
+          Darle acceso
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <form
+      className="flex flex-wrap items-center gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (password.length < 6) return;
+        crear.mutate(
+          {
+            householdId,
+            slug: persona.slug,
+            displayName: persona.displayName,
+            usuario,
+            password,
+            portionMultiplier: persona.portionMultiplier,
+          },
+          { onSuccess: () => setAbierto(false) },
+        );
+      }}
+    >
+      <span className="text-measure text-ink">{persona.displayName} entra como</span>
+      <input
+        value={usuario}
+        onChange={(event) => setUsuario(event.target.value)}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        className={`w-36 ${input}`}
+        aria-label={`Usuario de ${persona.displayName}`}
+      />
+      <input
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Contraseña"
+        autoComplete="off"
+        className={`w-36 ${input}`}
+        aria-label={`Contraseña de ${persona.displayName}`}
+      />
+      <button
+        type="submit"
+        disabled={password.length < 6 || crear.isPending}
+        className="min-h-tap rounded-block border border-line px-3 text-measure font-semibold text-ink disabled:opacity-40"
+      >
+        {crear.isPending ? 'Creando…' : 'Crear cuenta'}
+      </button>
+      <button
+        type="button"
+        onClick={() => setAbierto(false)}
+        className="min-h-tap text-measure font-semibold text-ink-muted underline"
+      >
+        Cancelar
+      </button>
+      {crear.isError && (
+        <span role="alert" className="w-full text-measure text-danger">
+          {crear.error instanceof Error ? crear.error.message : 'No se pudo crear la cuenta'}
+        </span>
+      )}
+    </form>
+  );
+}
+
 export function HouseholdsView() {
   const households = useHouseholds();
   const [busqueda, setBusqueda] = useState('');
@@ -271,6 +366,21 @@ export function HouseholdsView() {
                 Editar dieta
               </Link>
             </div>
+
+            {/* Quién puede entrar y quién no. Un perfil sin cuenta no es un error —se crean
+                así al sembrar un hogar— pero esa persona no puede ver su dieta, y eso hay
+                que verlo de un vistazo. */}
+            {household.people.some((persona) => persona.userId === null) && (
+              <ul className="mt-2 flex flex-col gap-1">
+                {household.people
+                  .filter((persona) => persona.userId === null)
+                  .map((persona) => (
+                    <li key={persona.id}>
+                      <DarAcceso householdId={household.id} persona={persona} />
+                    </li>
+                  ))}
+              </ul>
+            )}
 
             {abierto === household.id && <NuevaPersona householdId={household.id} />}
           </li>
