@@ -1,23 +1,36 @@
 /**
- * Sesión y vinculación con el perfil.
+ * Sesión y perfil.
  *
- * Entrar tiene dos pasos: primero el magic link identifica al usuario (quién eres para
- * Supabase) y después se elige el perfil del hogar (si eres Cristina o Andrés). El segundo
- * paso usa las funciones de 0002_claim_profile.sql, porque hasta tener perfil las políticas
- * de la base de datos no te dejan ni leer la lista.
+ * Se entra con **usuario y contraseña**, y quien entra ya es alguien: el perfil se lo
+ * asignó la nutricionista al dar de alta la cuenta (0010_cuentas.sql). No hay nada que
+ * elegir, ni lista de perfiles libres que ofrecer.
+ *
+ * Supabase identifica las cuentas por correo, así que "marta" viaja por dentro como
+ * `marta@bocause.local`. Ese correo no es un buzón: no se manda nada a esas direcciones.
  */
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
+import { brand } from '../config/brand';
 import { supabase } from './supabase';
 import { toProfile, type Profile } from './mappers';
 import { persister, queryClient } from './queryClient';
 import { setActiveHousehold } from './scope';
 
 export const authKeys = {
-  profiles: ['auth', 'available-profiles'] as const,
   myProfile: ['auth', 'my-profile'] as const,
 };
+
+/**
+ * El correo interno de un usuario.
+ *
+ * Si ya viene con arroba se respeta tal cual: las cuentas de antes de la 0010 tienen el
+ * correo de verdad de su dueño, y dejarlas fuera sería dejar a esas personas fuera.
+ */
+export function emailForUser(usuario: string, domain = brand.auth.userDomain): string {
+  const limpio = usuario.trim().toLocaleLowerCase('es-ES');
+  return limpio.includes('@') ? limpio : `${limpio}@${domain}`;
+}
 
 /** Sesión actual. undefined mientras se comprueba, null si no hay. */
 export function useSession(): { session: Session | null; loading: boolean } {
@@ -50,10 +63,14 @@ export function useSession(): { session: Session | null; loading: boolean } {
   return { session, loading };
 }
 
-export async function signInWithMagicLink(email: string): Promise<void> {
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.trim(),
-    options: { emailRedirectTo: window.location.origin },
+/**
+ * Entrar. La sesión se guarda y se renueva sola: en el móvil, de la cocina al súper, nadie
+ * quiere volver a escribir una contraseña.
+ */
+export async function signIn(usuario: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: emailForUser(usuario),
+    password,
   });
   if (error) throw error;
 }
@@ -70,32 +87,7 @@ export async function signOut(): Promise<void> {
   if (error) throw error;
 }
 
-export type AvailableProfile = {
-  id: string;
-  slug: string;
-  displayName: string;
-  taken: boolean;
-};
-
-/** Perfiles que este usuario puede ocupar. Solo tiene sentido con sesión iniciada. */
-export function useAvailableProfiles(enabled: boolean) {
-  return useQuery({
-    queryKey: authKeys.profiles,
-    enabled,
-    queryFn: async (): Promise<AvailableProfile[]> => {
-      const { data, error } = await supabase.rpc('available_profiles');
-      if (error) throw error;
-      return (data ?? []).map((row) => ({
-        id: row.id,
-        slug: row.slug,
-        displayName: row.display_name,
-        taken: row.taken,
-      }));
-    },
-  });
-}
-
-/** El perfil de este usuario, o null si todavía no ha elegido. */
+/** El perfil de esta cuenta, o null si la nutricionista no le ha asignado ninguno. */
 export function useMyProfile(enabled: boolean) {
   return useQuery({
     queryKey: authKeys.myProfile,
@@ -107,8 +99,8 @@ export function useMyProfile(enabled: boolean) {
     queryFn: async (): Promise<Profile | null> => {
       // getSession() lee la sesión del almacenamiento local. Antes esto usaba getUser(),
       // que va a la red: sin cobertura devolvía "no hay usuario", y aquí eso se confundía
-      // con "este usuario no tiene perfil". El resultado era mandar al selector de perfil
-      // a alguien que ya tenía el suyo, y dejarlo encerrado allí.
+      // con "esta cuenta no tiene perfil", que es la pantalla de "aún no te han dado de
+      // alta". A quien ya tenía su perfil se le negaba su propia dieta por un túnel.
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
 
@@ -117,42 +109,12 @@ export function useMyProfile(enabled: boolean) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, household_id, slug, display_name')
+        .select('id, user_id, household_id, slug, display_name, portion_multiplier')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
       return data ? toProfile(data) : null;
-    },
-  });
-}
-
-export function useClaimProfile() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (profileId: string): Promise<Profile> => {
-      const { data, error } = await supabase.rpc('claim_profile', { p_profile_id: profileId });
-      if (error) throw error;
-      return toProfile(data);
-    },
-    onSuccess: async () => {
-      // Con perfil ya se es miembro del hogar: ahora sí se puede leer todo lo demás.
-      await queryClient.invalidateQueries();
-    },
-  });
-}
-
-export function useReleaseProfile() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (): Promise<void> => {
-      const { error } = await supabase.rpc('release_my_profile');
-      if (error) throw error;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries();
     },
   });
 }

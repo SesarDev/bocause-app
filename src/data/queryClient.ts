@@ -33,8 +33,8 @@ export const queryClient = new QueryClient({
  * y se restauraría tal cual: vería la semana, los checks y la compra de otra persona hasta
  * que la red respondiera. Con la clave separada, cada usuario solo puede restaurar la suya.
  *
- * Se calcula en cada operación y no al crear el persister: al volver del enlace mágico, el
- * módulo se carga antes de que exista el token, y así el primer guardado ya va a su sitio.
+ * Se calcula en cada operación y no al crear el persister: el módulo se carga antes de que
+ * exista el token (al arrancar sin sesión), y así el primer guardado ya va a su sitio.
  */
 function scopedKey(key: string): string {
   return `${key}:${storedUserId() ?? 'anon'}`;

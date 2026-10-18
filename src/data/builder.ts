@@ -9,12 +9,15 @@
  * del cliente con el suyo. Por eso las consultas de siempre (`usePlan`, `useEditedBlocks`…)
  * sirven aquí sin tocarlas: para eso se separó el hogar activo en `scope.ts`.
  */
+import { createClient } from '@supabase/supabase-js';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plan } from '../domain/schema';
 import type { Block, TemplateCell, WeekOverride } from '../domain/schema';
 import type { CarryOverResult } from '../domain/carryOver';
+import { emailForUser } from './auth';
+import type { Database } from './database.types';
 import { consultaKeys, keysFor } from './keys';
-import { supabase } from './supabase';
+import { supabase, supabaseAnonKey, supabaseUrl } from './supabase';
 import type { ProfileDirectory } from './mappers';
 
 /* ─────────────────────── Hogares (vista de la nutricionista) ─────────────────────── */
@@ -102,6 +105,8 @@ export function useUpsertProfile() {
       displayName: string;
       claimEmail: string | null;
       portionMultiplier: number;
+      /** Cuenta a la que pertenece este perfil, si se acaba de crear. */
+      userId?: string | null;
     }) => {
       const { error } = await supabase.rpc('staff_upsert_profile', {
         p_household_id: vars.householdId,
@@ -109,8 +114,69 @@ export function useUpsertProfile() {
         p_display_name: vars.displayName,
         p_claim_email: vars.claimEmail,
         p_portion_multiplier: vars.portionMultiplier,
+        p_user_id: vars.userId ?? null,
       });
       if (error) throw error;
+    },
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: [...consultaKeys.all, 'households'] }),
+  });
+}
+
+/**
+ * Da de alta la **cuenta** de un cliente: usuario y contraseña, y el perfil ya enlazado.
+ *
+ * El alta va con la clave pública, no con la `service_role`, que no puede pisar un
+ * navegador. Eso obliga a un rodeo: `signUp` deja la sesión recién creada como sesión
+ * activa del cliente que la hizo, así que se usa **un cliente de Supabase aparte**, sin
+ * guardar sesión ni renovarla. Si no, la nutricionista se quedaría dentro de la cuenta de
+ * su paciente en mitad de la pantalla de hogares.
+ *
+ * Que no se mande ningún correo depende de una casilla del panel de Supabase
+ * ("Confirm email", apagada). Si estuviera encendida, la cuenta nacería sin confirmar y la
+ * persona no podría entrar: por eso se comprueba y se avisa en claro.
+ */
+export function useCreateClientAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (vars: {
+      householdId: string;
+      slug: string;
+      displayName: string;
+      usuario: string;
+      password: string;
+      portionMultiplier: number;
+    }) => {
+      const email = emailForUser(vars.usuario);
+
+      const aparte = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+
+      const { data, error } = await aparte.auth.signUp({ email, password: vars.password });
+      if (error) throw error;
+
+      const userId = data.user?.id;
+      if (userId === undefined) {
+        throw new Error('Supabase no devolvió la cuenta nueva. Inténtalo otra vez.');
+      }
+      if (data.session === null) {
+        throw new Error(
+          'La cuenta se ha creado pero pide confirmar un correo que no existe. Apaga ' +
+            '"Confirm email" en Supabase → Authentication → Sign In / Providers → Email.',
+        );
+      }
+
+      const { error: perfilError } = await supabase.rpc('staff_upsert_profile', {
+        p_household_id: vars.householdId,
+        p_slug: vars.slug,
+        p_display_name: vars.displayName,
+        p_claim_email: email,
+        p_portion_multiplier: vars.portionMultiplier,
+        p_user_id: userId,
+      });
+      if (perfilError) throw perfilError;
     },
     onSettled: () =>
       queryClient.invalidateQueries({ queryKey: [...consultaKeys.all, 'households'] }),

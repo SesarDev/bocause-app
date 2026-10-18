@@ -13,6 +13,16 @@ const anonKey = import.meta.env['VITE_SUPABASE_ANON_KEY'];
 export const supabaseConfigured = Boolean(url && anonKey);
 
 /**
+ * Los mismos datos de conexión, para quien necesite **otro** cliente.
+ *
+ * Solo hace falta en un sitio: dar de alta la cuenta de un cliente sin que `signUp` le robe
+ * la sesión a la nutricionista (`useCreateClientAccount`). Es la clave pública de siempre,
+ * la que ya viaja en el paquete; aquí no se expone nada nuevo.
+ */
+export const supabaseUrl = url ?? 'http://localhost:54321';
+export const supabaseAnonKey = anonKey ?? 'sin-configurar';
+
+/**
  * Id del usuario con sesión, leído de `localStorage` sin tocar la red.
  *
  * Hace falta de forma **síncrona** para separar la caché de IndexedDB por usuario: cuando
