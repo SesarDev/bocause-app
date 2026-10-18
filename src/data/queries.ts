@@ -94,6 +94,35 @@ export function usePlan(onDate: IsoDateString = todayIn()) {
   });
 }
 
+/**
+ * La dieta vigente de **otro** hogar, por su id.
+ *
+ * La necesita el constructor para "Duplicar de otro hogar": ahí se mira la dieta de un
+ * hogar que no es el activo, y `usePlan` siempre mira el activo. Solo la nutricionista verá
+ * algo: a un cliente, RLS le devuelve vacío.
+ */
+export function usePlanOf(householdId: string | null, onDate: IsoDateString = todayIn()) {
+  return useQuery({
+    queryKey: keysFor(householdId).plan(onDate),
+    enabled: householdId !== null,
+    queryFn: async (): Promise<Plan | null> => {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('household_id', householdId!)
+        .eq('status', 'active')
+        .lte('valid_from', onDate)
+        .or(`valid_to.is.null,valid_to.gte.${onDate}`)
+        .order('valid_from', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data ? toPlan(data) : null;
+    },
+  });
+}
+
 /* ─────────────────────── Capas editables ─────────────────────── */
 
 export function useEditedBlocks(planId: string | undefined, scopes: ProfileDirectory | undefined) {
