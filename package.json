@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "migrate": "node --env-file-if-exists=.env.local scripts/migrate.ts",
     "staff:add": "node --env-file-if-exists=.env.local scripts/staff-add.ts",
+    "user": "node --env-file-if-exists=.env.local scripts/user.ts",
     "seed:demo": "node --env-file-if-exists=.env.local --env-file=scripts/demo.env scripts/seed-supabase.ts",
     "library:seed": "node --env-file-if-exists=.env.local scripts/library-seed.ts"
   },

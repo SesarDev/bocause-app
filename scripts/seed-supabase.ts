@@ -186,11 +186,9 @@ console.log(
   `Plantilla: ${cells.length} celdas ${resetTemplate ? 'reiniciadas' : 'insertadas (las ya existentes se respetan)'}.`,
 );
 
-console.log('\n✓ Listo. Ya podéis entrar con el magic link y elegir perfil.');
-if (!plan.profiles.some((p) => process.env[`SEED_EMAIL_${p.profileId.toUpperCase()}`])) {
-  console.log(
-    '\nAviso: ningún perfil tiene correo asignado, así que cualquier usuario que se registre\n' +
-      'podría ocuparlos. Para reservarlos, define SEED_EMAIL_CRISTINA y SEED_EMAIL_ANDRES\n' +
-      'en .env.local y vuelve a ejecutar el seed.',
-  );
-}
+console.log('\n✓ Listo: el hogar, las personas y el plan ya están.');
+console.log(
+  '\nLos perfiles se han creado SIN cuenta: nadie puede entrar todavía como ellos, porque\n' +
+    'desde la 0010 ya no se elige perfil al entrar. Dale a cada uno su usuario y su\n' +
+    'contraseña desde /admin/hogares, o con `npm run user -- add <usuario> <contraseña>`.',
+);

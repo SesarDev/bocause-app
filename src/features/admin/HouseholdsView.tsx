@@ -11,7 +11,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { shortDateOf } from '../../domain/format';
-import { useCreateHousehold, useHouseholds, useUpsertProfile } from '../../data/builder';
+import { useCreateClientAccount, useCreateHousehold, useHouseholds } from '../../data/builder';
 
 const input = 'min-h-tap rounded-block border border-line bg-surface px-2 py-1 text-item text-ink';
 
@@ -54,38 +54,57 @@ function NuevoHogar() {
   );
 }
 
+/**
+ * Alta de una persona: su perfil **y su cuenta**.
+ *
+ * El usuario y la contraseña se los das tú y se los dices tú. No hay registro, no hay
+ * correo de confirmación y no hay "he olvidado mi contraseña": a cambio, nadie puede
+ * entrar y elegir ser quien no es.
+ */
 function NuevaPersona({ householdId }: { householdId: string }) {
-  const guardar = useUpsertProfile();
+  const crear = useCreateClientAccount();
   const [nombre, setNombre] = useState('');
-  const [correo, setCorreo] = useState('');
+  const [usuario, setUsuario] = useState('');
+  const [password, setPassword] = useState('');
   const [multiplicador, setMultiplicador] = useState('1');
+  const [hecho, setHecho] = useState<string | null>(null);
 
-  const slug = nombre
-    .trim()
-    .toLocaleLowerCase('es-ES')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  const comoSlug = (texto: string) =>
+    texto
+      .trim()
+      .toLocaleLowerCase('es-ES')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+  const slug = comoSlug(nombre);
+  // El usuario se propone a partir del nombre, pero se puede cambiar: en dos hogares puede
+  // haber dos Martas, y el usuario es único en toda la consulta.
+  const usuarioFinal = usuario.trim() === '' ? slug : comoSlug(usuario);
+  const cortaLaContrasena = password.length > 0 && password.length < 6;
 
   return (
     <form
       className="mt-2 flex flex-wrap items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault();
-        if (slug === '') return;
-        guardar.mutate(
+        if (slug === '' || password.length < 6) return;
+        crear.mutate(
           {
             householdId,
             slug,
             displayName: nombre.trim(),
-            claimEmail: correo.trim() === '' ? null : correo.trim(),
+            usuario: usuarioFinal,
+            password,
             portionMultiplier: Number(multiplicador) || 1,
           },
           {
             onSuccess: () => {
+              setHecho(`${nombre.trim()} ya puede entrar como "${usuarioFinal}".`);
               setNombre('');
-              setCorreo('');
+              setUsuario('');
+              setPassword('');
               setMultiplicador('1');
             },
           },
@@ -100,12 +119,23 @@ function NuevaPersona({ householdId }: { householdId: string }) {
         aria-label="Nombre de la persona"
       />
       <input
-        type="email"
-        value={correo}
-        onChange={(event) => setCorreo(event.target.value)}
-        placeholder="Correo (reserva el perfil)"
-        className={`w-56 ${input}`}
-        aria-label="Correo autorizado"
+        value={usuario}
+        onChange={(event) => setUsuario(event.target.value)}
+        placeholder={slug === '' ? 'Usuario' : `Usuario (${slug})`}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        className={`w-40 ${input}`}
+        aria-label="Usuario para entrar"
+      />
+      <input
+        type="text"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Contraseña"
+        autoComplete="off"
+        className={`w-40 ${input}`}
+        aria-label="Contraseña"
       />
       <label className="flex items-center gap-1 text-measure text-ink-muted">
         Ración
@@ -120,14 +150,30 @@ function NuevaPersona({ householdId }: { householdId: string }) {
       </label>
       <button
         type="submit"
-        disabled={slug === '' || guardar.isPending}
+        disabled={slug === '' || password.length < 6 || crear.isPending}
         className="min-h-tap rounded-block border border-line px-3 text-measure font-semibold text-ink disabled:opacity-40"
       >
-        Añadir persona
+        {crear.isPending ? 'Creando…' : 'Añadir persona'}
       </button>
-      {guardar.isError && (
-        <p role="alert" className="w-full text-measure text-danger">
-          {guardar.error instanceof Error ? guardar.error.message : 'No se pudo guardar'}
+
+      {/* La contraseña se ve mientras se escribe a propósito: la estás dictando en voz alta,
+          y una contraseña tapada que se teclea mal no se descubre hasta que alguien no puede
+          entrar. */}
+      {cortaLaContrasena && (
+        <p className="w-full text-measure text-ink-muted">
+          La contraseña necesita al menos 6 caracteres.
+        </p>
+      )}
+
+      {hecho !== null && !crear.isPending && (
+        <p role="status" className="w-full text-measure text-ink">
+          {hecho} Apúntalo: la contraseña no se puede volver a ver.
+        </p>
+      )}
+
+      {crear.isError && (
+        <p role="alert" className="w-full max-w-prose text-measure text-danger">
+          {crear.error instanceof Error ? crear.error.message : 'No se pudo crear la cuenta'}
         </p>
       )}
     </form>

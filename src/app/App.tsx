@@ -10,7 +10,6 @@ import { setActiveHousehold } from '../data/scope';
 import { ThemeProvider } from '../features/theme/ThemeProvider';
 import { AppShell } from '../features/shell/AppShell';
 import { LoginScreen } from '../features/auth/LoginScreen';
-import { ProfilePicker } from '../features/auth/ProfilePicker';
 import { SetupScreen } from '../features/auth/SetupScreen';
 import { useUiStore, type ProfileId } from '../stores/ui';
 
@@ -44,8 +43,7 @@ export function App() {
 
 /**
  * Puerta de /admin. Aparte de la del cliente a propósito: la nutricionista **no tiene
- * perfil en ningún hogar**, así que pasar por el selector de perfil la dejaría encerrada
- * con la lista vacía.
+ * perfil en ningún hogar**, así que la puerta del cliente la dejaría fuera.
  *
  * Esta comprobación es para saber qué pintar, no para proteger nada: quien abra /admin a la
  * fuerza no verá datos igualmente, porque lo que manda son las políticas RLS.
@@ -85,7 +83,7 @@ function AdminGate() {
 }
 
 /**
- * Decide qué pantalla toca: configurar, entrar, elegir perfil o la app.
+ * Decide qué pantalla toca: configurar, entrar, esperar a que te den de alta o la app.
  * Son cuatro estados y conviene que estén juntos y en orden, porque es el único sitio
  * donde se decide si alguien ve los datos del hogar.
  */
@@ -119,7 +117,7 @@ function Gate() {
 
   // Mientras no se sepa si hay perfil, no se decide nada. `isPending` también cubre la
   // consulta pausada por falta de red, que `isLoading` daba por terminada: con eso, un
-  // corte de cobertura mandaba al selector de perfil a quien ya tenía el suyo.
+  // corte de cobertura le decía "no tienes dieta aquí" a quien sí la tenía.
   if (profileQuery.isPending) {
     if (profileQuery.fetchStatus === 'paused') {
       return (
@@ -156,12 +154,50 @@ function Gate() {
   }
 
   if (!profileQuery.data) {
-    // Una nutricionista no tiene perfil en ningún hogar: el selector le saldría vacío, sin
-    // nada que elegir ni forma de salir. Se le ofrece su zona en vez de encerrarla.
-    return staff.data === true ? <StaffSinPerfil /> : <ProfilePicker />;
+    // Una nutricionista no tiene perfil en ningún hogar, pero sí sitio adonde ir.
+    if (staff.data === true) return <StaffSinPerfil />;
+
+    // Y una cuenta sin perfil tampoco se queda encerrada mirando una lista vacía: desde la
+    // 0010 el perfil lo asigna la nutricionista, así que aquí no hay nada que elegir.
+    return <SinPerfil onRetry={() => void profileQuery.refetch()} />;
   }
 
   return <AppShell />;
+}
+
+/**
+ * Cuenta sin perfil: ha entrado bien, pero nadie le ha asignado todavía a quién corresponde.
+ *
+ * Pasa entre que la nutricionista crea la cuenta y termina de rellenar la ficha, y pasaría
+ * siempre si alguien de fuera se inventa una cuenta. En los dos casos lo honesto es decirlo
+ * y dejar salir, no enseñar una lista de personas para que elija.
+ */
+function SinPerfil({ onRetry }: { onRetry: () => void }) {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-screen-sm flex-col justify-center px-6">
+      <section className="rounded-day bg-surface p-6">
+        <h1 className="text-dish font-bold text-ink">Todavía no tienes dieta aquí</h1>
+        <p className="mt-2 text-item text-ink-muted">
+          Esta cuenta existe, pero no está asociada a ninguna persona. Díselo a tu nutricionista: es
+          ella quien da de alta a cada uno.
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-6 min-h-tap w-full rounded-block bg-slot px-4 py-3 text-item font-semibold text-slot-ink"
+        >
+          Volver a comprobar
+        </button>
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="mt-3 min-h-tap w-full text-measure font-semibold text-ink-muted underline"
+        >
+          Salir y entrar con otro usuario
+        </button>
+      </section>
+    </main>
+  );
 }
 
 /** Staff que entra por la puerta del cliente: no tiene perfil, pero sí sitio adonde ir. */

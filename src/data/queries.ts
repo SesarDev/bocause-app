@@ -280,6 +280,8 @@ export function useShoppingItems(weekStart: IsoDateString) {
 export type WeekData = {
   plan: Plan | null;
   week: ResolvedWeek | null;
+  /** Si la dieta vigente incluye a esta persona. Falsa mientras no le hayan publicado una. */
+  enElPlan: boolean;
   isLoading: boolean;
   error: unknown;
   /** Se expone para poder reintentar desde el mensaje de error. */
@@ -314,7 +316,21 @@ export function useResolvedWeek(
   const error = planQuery.error ?? blocks.error ?? templateCells.error ?? overrides.error;
 
   const plan = planQuery.data ?? null;
-  const ready = plan !== null && profileSlug !== undefined && !isLoading;
+
+  /*
+   * Que haya dieta no quiere decir que sea tuya.
+   *
+   * A una persona recién dada de alta en un hogar que ya tenía dieta, el plan vigente no la
+   * incluye hasta que la nutricionista publique de nuevo. `resolveWeek` lanza una excepción
+   * si le piden un perfil que no está, y eso dejaba la pantalla en blanco: ahora se trata
+   * como "todavía no hay nada para ti", que es lo que de verdad pasa.
+   */
+  const enElPlan =
+    plan !== null &&
+    profileSlug !== undefined &&
+    plan.profiles.some((profile) => profile.profileId === profileSlug);
+
+  const ready = plan !== null && profileSlug !== undefined && !isLoading && enElPlan;
 
   return {
     planQuery,
@@ -329,6 +345,7 @@ export function useResolvedWeek(
           overrides: overrides.data ?? [],
         })
       : null,
+    enElPlan,
     isLoading,
     error,
   };

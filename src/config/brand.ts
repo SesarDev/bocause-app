@@ -43,6 +43,17 @@ export type BrandConfig = {
     privacy: string;
     terms: string;
   };
+  /**
+   * Dominio con el que se forman los correos internos de las cuentas.
+   *
+   * Supabase identifica a cada cuenta por un correo, pero aquí nadie escribe el suyo ni
+   * recibe nada: la nutricionista da de alta a "marta" y por dentro se guarda
+   * `marta@<userDomain>`. Es un apaño honesto y hay que saberlo: **no son buzones**, así
+   * que no vale para recuperar contraseñas ni para avisar de nada.
+   */
+  auth: {
+    userDomain: string;
+  };
   features: {
     /**
      * Chat interno entre cliente y nutricionista (fase 19). Si una consulta prefiere
@@ -78,6 +89,9 @@ export const brand: BrandConfig = {
   legal: {
     privacy: '',
     terms: '',
+  },
+  auth: {
+    userDomain: 'bocause.local',
   },
   features: {
     chat: true,

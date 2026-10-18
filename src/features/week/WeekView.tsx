@@ -66,7 +66,10 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const isHouse = activeProfile === 'casa';
   const profileSlug = isHouse ? undefined : (activeProfile ?? undefined);
 
-  const { plan, week, isLoading, error, planQuery } = useResolvedWeek(profileSlug, weekStart);
+  const { plan, week, enElPlan, isLoading, error, planQuery } = useResolvedWeek(
+    profileSlug,
+    weekStart,
+  );
   const household = useHouseholdWeeks(weekStart);
   const directory = useProfileDirectory();
   const checks = useWeekChecks(weekStart, directory);
@@ -203,8 +206,18 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   if (!plan) {
     return (
       <Message>
-        No hay ningún plan activo para esta semana. Ejecuta <code>npm run seed</code> para cargar el
-        de septiembre.
+        Tu nutricionista está preparando tu dieta. En cuanto la publique, aparece aquí.
+      </Message>
+    );
+  }
+
+  // Hay dieta en la casa, pero no para esta persona: la han dado de alta después de la
+  // última publicación. Decirlo es más honesto que enseñar una semana vacía.
+  if (!isHouse && !enElPlan) {
+    return (
+      <Message>
+        Tu nutricionista todavía no ha publicado tu dieta. La de quien vive contigo ya está; la tuya
+        llegará en la próxima publicación.
       </Message>
     );
   }

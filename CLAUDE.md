@@ -3,6 +3,7 @@
 PWA para seguir la dieta de la nutricionista. Se usa en Android, con una mano y a veces sin cobertura.
 La unidad es el **hogar**: varias personas que comparten comida y cena.
 Roles: cliente (perfil de un hogar) y nutricionista (`staff_members`, ve y edita todos los hogares).
+Se entra con **usuario y contraseña**, y el perfil lo asigna la nutricionista al crear la cuenta: nadie elige quién es.
 Hay una app y un Supabase por consulta. Lo que cambia entre clones está en `src/config/brand.ts` (ver `docs/CLONAR.md`). El plan v2 está en `docs/PLAN.md`.
 
 ## Stack (no cambiar sin preguntar)
@@ -13,7 +14,7 @@ Sin librería de arrastre: el intercambio va con un carrusel de scroll-snap, que
 ## Comandos
 
 Para terminar una tarea, todo esto debe pasar en verde: `npm run typecheck && npm run lint && npm test && npm run build`.
-Otros: `npm run seed:validate | migrate | seed:demo`, `npm run staff:add -- <correo>`, `npx supabase start | db reset | test db`.
+Otros: `npm run seed:validate | migrate | seed:demo`, `npm run user -- list|add|password|rename`, `npm run staff:add -- <usuario>`, `npx supabase start | db reset | test db`.
 
 ## Arquitectura
 
@@ -57,6 +58,7 @@ Las reglas específicas de cada carpeta están en `src/data/`, `src/domain/`, `s
   - 2 ingestas libres por semana.
   - Agua: 2-3 L al día.
 - **Chat:** un hilo privado por persona con la nutricionista, solo de añadir y sin IA. Se puede anclar a una comida. Detrás de `brand.features.chat`.
+- **Cuentas:** una cuenta, un perfil, y lo asigna la nutricionista. El usuario viaja por dentro como `usuario@brand.auth.userDomain`; ese correo **no es un buzón**, así que no hay recuperar contraseña ni avisos por correo.
 - **Calendario:** la semana empieza en lunes. Zona horaria `Europe/Madrid`.
 - No inventar alimentos, cantidades ni equivalencias.
 

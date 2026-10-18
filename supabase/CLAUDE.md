@@ -22,6 +22,13 @@
 - **Un hilo por persona, no por hogar.** El cliente solo ve el suyo: ni el de quien vive con él. La nutricionista ve todos.
 - `chat_reads` es `(profile_id, role)`: la marca de lectura de cada parte es suya.
 
+## Cuentas y perfiles (0010)
+
+- **Una cuenta, un perfil** (índice único parcial sobre `profiles.user_id`). Con dos, la persona tendría dos vidas: los checks, el chat y el registro cuelgan del perfil.
+- **Nadie elige quién es.** `claim_profile`, `available_profiles` y `release_my_profile` se borraron: dejar de llamarlas desde la app no basta, siguen siendo una puerta.
+- `staff_upsert_profile` enlaza la cuenta (`p_user_id`). Sin cuenta nueva conserva la que había: editar un nombre no puede dejar a alguien sin poder entrar.
+- `claim_email` ya no autoriza nada; ahora solo dice cuál es el correo interno de la cuenta.
+
 ## Transacciones
 
 - `publish_plan` (0008) toca cinco tablas: a medias dejaría dos dietas vigentes o una dieta sin plantilla.
