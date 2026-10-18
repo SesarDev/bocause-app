@@ -11,8 +11,9 @@ editor de bloques, lista de la compra, pulido, entreno, recetas y recomendacione
 **Hecho (fases 12-19):** base para varios hogares, rol de nutricionista y zona `/admin`,
 registro de cambios con triggers, catálogo + biblioteca + equivalencias, constructor de
 dietas con publicación y arrastre, panel de hogares, sustituciones y chat interno.
-Quedan sueltos los pendientes marcados dentro de cada fase: el Registro del panel, las
-versiones anteriores de una dieta en solo lectura y "Ver como cliente".
+Los pendientes que quedaban sueltos dentro de esas fases están cerrados: Registro del
+panel, versiones anteriores en solo lectura, "Ver como cliente", aviso al cliente de que
+su dieta cambió y archivar una dieta publicada.
 
 **Descartado:** el modo de arrastrar con `@dnd-kit`. El intercambio se queda con el
 carrusel de scroll-snap: con una mano funciona mejor y la app se ahorra una librería.

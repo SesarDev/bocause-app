@@ -9,7 +9,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ChangeEntry } from '../domain/describeChange';
 import type { Block, Plan } from '../domain/schema';
-import { keysFor } from './keys';
+import { useHouseholds } from './builder';
+import { consultaKeys, keysFor } from './keys';
 import { useActiveHousehold } from './scope';
 import { supabase } from './supabase';
 import { useProfiles } from './queries';
@@ -77,6 +78,61 @@ export function useChangeLog() {
     },
   });
 }
+
+/**
+ * El registro de **toda la consulta**, para la sección Registro del panel.
+ *
+ * Cada entrada viaja con su hogar, porque aquí se mezclan todos y "quién" no basta: hay
+ * Martas en dos casas. Lo que no trae son los títulos de los platos: cada hogar tiene su
+ * plan y traerlos todos sería descargarse la consulta entera para pintar una lista. Las
+ * frases salen igual de claras sin ellos ("cambió la cena del martes"), y con nombre se ven
+ * entrando en el hogar.
+ *
+ * RLS ya decide quién ve esto: a un cliente le devolvería solo lo suyo.
+ */
+export function useAllChanges(enabled: boolean) {
+  const { data: households } = useHouseholds();
+
+  return useQuery({
+    queryKey: [...consultaKeys.all, 'change-log'] as const,
+    enabled,
+    queryFn: async (): Promise<(ChangeEntry & { householdId: string })[]> => {
+      const { data, error } = await supabase
+        .from('change_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(LIMITE);
+      if (error) throw error;
+
+      const nombrePorUsuario = new Map(
+        (households ?? []).flatMap((household) =>
+          household.people
+            .filter((persona) => persona.userId !== null)
+            .map((persona) => [persona.userId!, persona.displayName] as const),
+        ),
+      );
+
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        txId: String(row.tx_id),
+        createdAt: row.created_at,
+        actorRole: row.actor_role,
+        actorName:
+          row.actor_user_id === null ? null : (nombrePorUsuario.get(row.actor_user_id) ?? null),
+        table: row.table_name as ChangeEntry['table'],
+        op: row.op,
+        cell: cellOf(row.cell),
+        beforeBlockId: blockIdOf(row.before),
+        afterBlockId: blockIdOf(row.after),
+        source: row.source,
+        householdId: row.household_id,
+      }));
+    },
+  });
+}
+
+/** Sin títulos: para el registro de toda la consulta, donde no se cargan los planes. */
+export const sinTitulos = () => null;
 
 /**
  * Título legible de cada bloque, mirando primero los bloques editados y luego los del plan

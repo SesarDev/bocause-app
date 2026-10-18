@@ -25,24 +25,24 @@ function tituloDelDia(dia: string): string {
 export function ChangeLogList({
   groups,
   onRestore,
+  labelOf,
   isLoading = false,
+  vacio = 'Todavía no hay cambios. Aquí aparecerá cada vez que alguien mueva una comida o edite un plato.',
 }: {
   groups: readonly ChangeGroup[];
   /** Si no se pasa, la lista es de solo lectura (ficha del hogar, fase 17). */
   onRestore?: (group: ChangeGroup) => void;
+  /** Coletilla de cada línea. En el registro de la consulta entera, el hogar. */
+  labelOf?: (group: ChangeGroup) => string | null;
   isLoading?: boolean;
+  vacio?: string;
 }) {
   if (isLoading) {
     return <p className="py-6 text-item text-ink-muted">Cargando el historial…</p>;
   }
 
   if (groups.length === 0) {
-    return (
-      <p className="py-6 text-item text-ink-muted">
-        Todavía no hay cambios. Aquí aparecerá cada vez que alguien mueva una comida o edite un
-        plato.
-      </p>
-    );
+    return <p className="py-6 text-item text-ink-muted">{vacio}</p>;
   }
 
   // Agrupar por día conserva el orden, porque los grupos ya vienen de más nuevo a más viejo.
@@ -70,6 +70,11 @@ export function ChangeLogList({
               >
                 <span className="flex-1 text-item text-ink">
                   <strong className="font-semibold">{actorLabel(group)}</strong> {group.text}
+                  {labelOf !== undefined && labelOf(group) !== null && (
+                    <span className="ml-2 rounded-chip bg-bg px-2 py-0.5 text-measure text-ink-muted">
+                      {labelOf(group)}
+                    </span>
+                  )}
                 </span>
 
                 <span className="text-measure text-ink-muted">{horaDe(group.createdAt)}</span>

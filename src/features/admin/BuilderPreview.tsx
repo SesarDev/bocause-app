@@ -1,19 +1,15 @@
 /**
- * "Ver como…": el borrador con los ojos del cliente.
+ * "Ver como…": el borrador con los ojos del cliente, antes de publicarlo.
  *
- * Usa los mismos componentes que la app del móvil (`DayCard`), no una maqueta parecida: lo
- * único que sirve para saber si una dieta se entiende es verla como se va a ver. Por eso va
- * dentro de un marco estrecho, con el ancho de un teléfono.
- *
- * Es una vista muerta: sin checks, sin menús y sin nada que escribir. Los contextos de
- * check y de sustitución se quedan vacíos a propósito (ambos aceptan `null`), así que las
- * casillas salen apagadas y no hay nada que tocar.
+ * Es el borrador tal cual, sin los ajustes de esa semana que haya hecho el cliente: lo que
+ * se está mirando es lo que se va a publicar, no lo que hay hoy en su móvil. Para eso está
+ * "Ver como cliente" en la ficha del hogar.
  */
 import { useMemo } from 'react';
-import { currentWeekStart, todayIn } from '../../domain/dates';
+import { currentWeekStart } from '../../domain/dates';
 import { resolveWeek } from '../../domain/resolve';
 import type { Plan } from '../../domain/schema';
-import { DayCard } from '../week/DayCard';
+import { WeekPreview } from './WeekPreview';
 
 export function BuilderPreview({
   plan,
@@ -25,7 +21,6 @@ export function BuilderPreview({
   onProfile: (profileId: string) => void;
 }) {
   const weekStart = currentWeekStart();
-  const hoy = todayIn();
 
   const semana = useMemo(() => {
     try {
@@ -66,22 +61,7 @@ export function BuilderPreview({
           Esa persona ya no está en la dieta. Elige otra arriba.
         </p>
       ) : (
-        /* El ancho de un móvil: una dieta que se lee bien en 1400 px puede no caber en 390. */
-        <div className="mt-4 w-full max-w-[26rem] rounded-day bg-bg p-3">
-          <div className="flex flex-col gap-3">
-            {semana.days.map((day) => (
-              <DayCard
-                key={day.day}
-                day={day}
-                profileId={semana.profileId}
-                isToday={day.date === hoy}
-                nextSlotKey={null}
-                onSlotMenu={() => undefined}
-                onTraining={() => undefined}
-              />
-            ))}
-          </div>
-        </div>
+        <WeekPreview week={semana} />
       )}
     </div>
   );

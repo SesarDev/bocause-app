@@ -25,7 +25,14 @@ import type { ProfileDirectory } from './mappers';
 export type HouseholdSummary = {
   id: string;
   name: string;
-  people: { id: string; slug: string; displayName: string; portionMultiplier: number }[];
+  people: {
+    id: string;
+    slug: string;
+    displayName: string;
+    portionMultiplier: number;
+    /** Cuenta con la que entra, si ya se la han creado. */
+    userId: string | null;
+  }[];
   /** La dieta vigente, si la hay. */
   plan: { id: string; name: string; validFrom: string; version: number } | null;
 };
@@ -38,7 +45,7 @@ export function useHouseholds() {
         supabase.from('households').select('id, name').order('name'),
         supabase
           .from('profiles')
-          .select('id, household_id, slug, display_name, portion_multiplier'),
+          .select('id, household_id, slug, display_name, portion_multiplier, user_id'),
         supabase
           .from('plans')
           .select('id, household_id, name, valid_from, version, status')
@@ -59,6 +66,7 @@ export function useHouseholds() {
             slug: profile.slug,
             displayName: profile.display_name,
             portionMultiplier: profile.portion_multiplier,
+            userId: profile.user_id,
           })),
         plan:
           (plans.data ?? [])
@@ -180,6 +188,30 @@ export function useCreateClientAccount() {
     },
     onSettled: () =>
       queryClient.invalidateQueries({ queryKey: [...consultaKeys.all, 'households'] }),
+  });
+}
+
+/**
+ * Archivar o recuperar una dieta publicada.
+ *
+ * Archivar, no borrar (decisión 7 de PLAN.md): la dieta se queda entera en `plans`, con su
+ * versión y sus fechas, y lo que ya comió esa casa sigue teniendo sentido. Lo que cambia es
+ * que deja de ser la vigente, así que el cliente pasa a ver "tu nutricionista está
+ * preparando tu dieta". Es la forma de poner a alguien en pausa sin perder su historia.
+ */
+export function useSetPlanStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (vars: { planId: string; status: 'active' | 'archived' }) => {
+      const { error } = await supabase
+        .from('plans')
+        .update({ status: vars.status })
+        .eq('id', vars.planId);
+      if (error) throw error;
+    },
+    // Toca lo que ve el cliente y lo que ve la ficha: se invalida todo.
+    onSettled: () => queryClient.invalidateQueries(),
   });
 }
 

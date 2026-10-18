@@ -11,6 +11,7 @@ import { buildBlockTitles, useChangeLog } from '../../data/changelog';
 import { NutritionistCard } from '../chat/NutritionistCard';
 import { useRestoreCell } from '../../data/mutations';
 import { useEditedBlocks, usePlan, useProfileDirectory, useProfiles } from '../../data/queries';
+import { useUiStore } from '../../stores/ui';
 import { ChangeLogList } from '../changelog/ChangeLogList';
 import { RecipeSheet } from '../recipes/RecipeSheet';
 import { SupplementList } from '../training/TrainingSheet';
@@ -38,7 +39,20 @@ export function MoreView() {
   const myProfile = useMyProfile(true);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [protocols, setProtocols] = useState<SupplementProtocol[] | null>(null);
-  const [verHistorial, setVerHistorial] = useState(false);
+  const [abiertoAqui, setAbiertoAqui] = useState(false);
+
+  /* El aviso de "tu dieta se actualizó" trae hasta aquí y abre el historial solo: hacer que
+     alguien busque la sección después de pulsar "ver qué cambió" es dejarlo a medias.
+     Se deriva del store en vez de copiarlo a estado con un efecto: copiar deja dos fuentes
+     de verdad para lo mismo. */
+  const pedido = useUiStore((state) => state.abrirHistorial);
+  const historialAbierto = useUiStore((state) => state.historialAbierto);
+  const verHistorial = abiertoAqui || pedido;
+
+  const cerrarHistorial = () => {
+    setAbiertoAqui(false);
+    historialAbierto();
+  };
 
   /* ── Historial de cambios ── */
   const scopes = useProfileDirectory();
@@ -78,7 +92,7 @@ export function MoreView() {
       restore.mutate({ planId: plan.id, weekStart, plan: plan2 });
     }
 
-    setVerHistorial(false);
+    cerrarHistorial();
   };
 
   const mine = plan?.profiles.find((profile) => profile.profileId === myProfile.data?.slug);
@@ -185,7 +199,7 @@ export function MoreView() {
         </p>
         <button
           type="button"
-          onClick={() => setVerHistorial(true)}
+          onClick={() => setAbiertoAqui(true)}
           className="mt-3 flex min-h-tap w-full items-center gap-3 rounded-block border border-line px-4 py-3 text-left"
         >
           <Icon name="semana" size={20} />
@@ -216,12 +230,7 @@ export function MoreView() {
         </button>
       </section>
 
-      <Sheet
-        open={verHistorial}
-        onClose={() => setVerHistorial(false)}
-        title="Historial de cambios"
-        tall
-      >
+      <Sheet open={verHistorial} onClose={cerrarHistorial} title="Historial de cambios" tall>
         <ChangeLogList groups={grupos} isLoading={changeLog.isPending} onRestore={restaurar} />
       </Sheet>
 

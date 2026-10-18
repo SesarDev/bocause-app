@@ -10,9 +10,13 @@ type UiState = {
   theme: Theme;
   tab: TabId;
   activeProfile: ProfileId | null;
+  /** Pide abrir el historial al llegar a Más. Lo usa el aviso de "tu dieta se actualizó". */
+  abrirHistorial: boolean;
   setTheme: (theme: Theme) => void;
   setTab: (tab: TabId) => void;
   setActiveProfile: (profile: ProfileId | null) => void;
+  verHistorial: () => void;
+  historialAbierto: () => void;
 };
 
 /**
@@ -50,4 +54,7 @@ export const useUiStore = create<UiState>((set) => ({
   },
   setTab: (tab) => set({ tab }),
   setActiveProfile: (activeProfile) => set({ activeProfile }),
+  abrirHistorial: false,
+  verHistorial: () => set({ tab: 'mas', abrirHistorial: true }),
+  historialAbierto: () => set({ abrirHistorial: false }),
 }));
