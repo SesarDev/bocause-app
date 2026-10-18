@@ -14,15 +14,23 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { DAY_NAMES } from '../../domain/dates';
-import { pruneUnusedBlocks } from '../../domain/draft';
-import { instantiate } from '../../domain/library';
+import { DAY_NAMES, currentWeekStart, todayIn } from '../../domain/dates';
+import { blankPlan, duplicatePlan, pruneUnusedBlocks } from '../../domain/draft';
+import { instantiate, toLibraryBlock } from '../../domain/library';
 import { isSharedSlot } from '../../domain/resolve';
 import type { Block, LibraryBlock, Plan, SlotKey, TemplateCell } from '../../domain/schema';
-import { useDraft, useHouseholds, useSaveDraft } from '../../data/builder';
-import { useLibraryBlocks } from '../../data/library';
-import { usePlan } from '../../data/queries';
+import {
+  useDiscardDraft,
+  useDraft,
+  useHouseholds,
+  useSaveDraft,
+  type HouseholdSummary,
+} from '../../data/builder';
+import { useFoods, useLibraryBlocks, useSaveLibraryBlock } from '../../data/library';
+import { usePlan, usePlanOf } from '../../data/queries';
 import { setActiveHousehold } from '../../data/scope';
+import { BuilderConfig } from './BuilderConfig';
+import { BuilderPreview } from './BuilderPreview';
 import { PublishPanel } from './PublishPanel';
 
 const DIAS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -80,7 +88,10 @@ export function BuilderView() {
   const planVigente = usePlan();
   const draft = useDraft(householdId === '' ? null : householdId);
   const saveDraft = useSaveDraft(householdId === '' ? null : householdId);
+  const discardDraft = useDiscardDraft(householdId === '' ? null : householdId);
   const library = useLibraryBlocks();
+  const saveLibrary = useSaveLibraryBlock();
+  const catalogo = useFoods();
 
   // El borrador se DERIVA de la consulta mientras nadie lo haya tocado, en vez de copiarse
   // a estado con un efecto: copiar deja dos fuentes de verdad y la segunda se queda vieja.
@@ -89,6 +100,9 @@ export function BuilderView() {
   const [seleccion, setSeleccion] = useState<{ day: number; fila: Fila } | null>(null);
   const [publicando, setPublicando] = useState(false);
   const [guardado, setGuardado] = useState<'guardado' | 'sin-guardar' | 'guardando'>('guardado');
+  const [pestana, setPestana] = useState<'cuadricula' | 'configuracion' | 'vista'>('cuadricula');
+  const [verComo, setVerComo] = useState<string | null>(null);
+  const [confirmarDescarte, setConfirmarDescarte] = useState(false);
 
   /* ── Autoguardado ── */
 
@@ -131,6 +145,55 @@ export function BuilderView() {
     // Se conservan los ids de bloque: así, al publicar, la comparación con la dieta anterior
     // sabe qué celdas no se han tocado (lo pide PLAN.md).
     tocar(structuredClone(planVigente.data));
+  };
+
+  const empezarEnBlanco = () => {
+    if (household === null) return;
+    tocar(
+      blankPlan({
+        id: crypto.randomUUID(),
+        name: `Dieta de ${household.name}`,
+        issuedOn: todayIn(),
+        // Provisional: la fecha de verdad se elige al publicar, y tiene que ser lunes.
+        validFrom: currentWeekStart(),
+        people: household.people.map((persona) => ({
+          profileId: persona.slug,
+          displayName: persona.displayName,
+        })),
+        foods: catalogo.data ?? [],
+      }),
+    );
+  };
+
+  const empezarDuplicando = (origen: Plan, mapping: Record<string, string | null>) => {
+    if (household === null) return;
+    tocar(
+      duplicatePlan(origen, {
+        id: crypto.randomUUID(),
+        name: `Dieta de ${household.name}`,
+        issuedOn: todayIn(),
+        mapping,
+        people: household.people.map((persona) => ({
+          profileId: persona.slug,
+          displayName: persona.displayName,
+        })),
+        newId: () => crypto.randomUUID(),
+      }),
+    );
+  };
+
+  /** Guardar lo que hay en una celda como bloque de biblioteca, para reutilizarlo. */
+  const guardarEnBiblioteca = (day: number, fila: Fila, nombre: string) => {
+    if (borrador === null) return;
+    const blockId = celdaDe(day, fila)?.blockId ?? null;
+    const block = blockId === null ? null : borrador.blocks.find((b) => b.id === blockId);
+    if (!block) return;
+
+    // La ración base es la de la primera persona que come de esa celda: la biblioteca
+    // guarda una sola, y al usarla se reparte con el multiplicador de cada cual.
+    const base = fila.scope === 'shared' ? (household?.people[0]?.slug ?? '') : fila.scope;
+
+    saveLibrary.mutate(toLibraryBlock(block, base, nombre, () => crypto.randomUUID()));
   };
 
   const filas = useMemo(() => (borrador === null ? [] : filasDe(borrador)), [borrador]);
@@ -218,30 +281,17 @@ export function BuilderView() {
 
   if (borrador === null) {
     return (
-      <section className="rounded-day bg-surface p-6">
-        <h1 className="text-dish font-bold text-ink">Dieta de {household?.name ?? '…'}</h1>
-        <p className="mt-2 max-w-prose text-item text-ink-muted">
-          No hay ningún borrador abierto. Lo que edites aquí no lo verá nadie hasta que publiques.
-        </p>
-
-        <div className="mt-5 flex flex-wrap gap-3">
-          <button
-            type="button"
-            disabled={!planVigente.data}
-            onClick={empezarDesdeLaActual}
-            className="min-h-tap rounded-block bg-slot px-4 text-item font-semibold text-slot-ink disabled:opacity-40"
-          >
-            Partir de la dieta actual
-          </button>
-        </div>
-
-        {!planVigente.data && !planVigente.isPending && (
-          <p className="mt-3 text-measure text-ink-muted">
-            Este hogar no tiene dieta vigente de la que partir. Empezar en blanco llega con el resto
-            del constructor.
-          </p>
+      <StartPanel
+        household={household}
+        otros={(households.data ?? []).filter(
+          (candidato) => candidato.id !== householdId && candidato.plan !== null,
         )}
-      </section>
+        hayDietaActual={planVigente.data != null}
+        cargandoDietaActual={planVigente.isPending}
+        onActual={empezarDesdeLaActual}
+        onBlanco={empezarEnBlanco}
+        onDuplicar={empezarDuplicando}
+      />
     );
   }
 
@@ -261,6 +311,46 @@ export function BuilderView() {
           {guardado === 'sin-guardar' && 'Sin guardar'}
         </span>
 
+        {/* Sin esto, la pantalla de empezar solo se ve una vez por hogar: con un borrador
+            abierto no hay forma de volver a elegir de dónde parte la dieta. */}
+        {confirmarDescarte ? (
+          <span className="flex flex-wrap items-center gap-2 text-measure text-ink">
+            ¿Seguro? Se pierde lo que no esté publicado.
+            <button
+              type="button"
+              onClick={() => {
+                if (temporizador.current !== null) clearTimeout(temporizador.current);
+                setConfirmarDescarte(false);
+                discardDraft.mutate(undefined, {
+                  onSuccess: () => {
+                    setEditado(null);
+                    setSeleccion(null);
+                    setPestana('cuadricula');
+                  },
+                });
+              }}
+              className="min-h-tap rounded-block border border-danger px-3 text-measure font-semibold text-danger"
+            >
+              Descartar
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmarDescarte(false)}
+              className="min-h-tap text-measure font-semibold text-ink-muted underline"
+            >
+              No
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmarDescarte(true)}
+            className="min-h-tap text-measure font-semibold text-ink-muted underline"
+          >
+            Descartar el borrador
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => setPublicando(true)}
@@ -270,7 +360,39 @@ export function BuilderView() {
         </button>
       </header>
 
-      <div className="mt-4 overflow-x-auto">
+      <nav aria-label="Partes de la dieta" className="mt-4 flex flex-wrap gap-2">
+        {(
+          [
+            ['cuadricula', 'Cuadrícula'],
+            ['configuracion', 'Configuración'],
+            ['vista', 'Ver como…'],
+          ] as const
+        ).map(([clave, titulo]) => (
+          <button
+            key={clave}
+            type="button"
+            onClick={() => setPestana(clave)}
+            aria-pressed={pestana === clave}
+            className={`min-h-tap rounded-chip px-4 text-item font-semibold ${
+              pestana === clave ? 'bg-slot text-slot-ink' : 'border border-line text-ink'
+            }`}
+          >
+            {titulo}
+          </button>
+        ))}
+      </nav>
+
+      {pestana === 'configuracion' && <BuilderConfig plan={borrador} onChange={tocar} />}
+
+      {pestana === 'vista' && (
+        <BuilderPreview
+          plan={borrador}
+          profileId={verComo ?? borrador.profiles[0]?.profileId ?? ''}
+          onProfile={setVerComo}
+        />
+      )}
+
+      <div className={`mt-4 overflow-x-auto ${pestana === 'cuadricula' ? '' : 'hidden'}`}>
         <table className="w-full border-collapse text-measure">
           <thead>
             <tr>
@@ -316,7 +438,7 @@ export function BuilderView() {
         </table>
       </div>
 
-      {seleccion !== null && (
+      {pestana === 'cuadricula' && seleccion !== null && (
         <CellPanel
           dia={seleccion.day}
           fila={seleccion.fila}
@@ -324,6 +446,10 @@ export function BuilderView() {
           library={library.data ?? []}
           onElegir={(bloque) => ponerBloque(seleccion.day, seleccion.fila, bloque)}
           onCopiar={(destinos) => copiarADias(seleccion.day, seleccion.fila, destinos)}
+          onGuardarEnBiblioteca={(nombre) =>
+            guardarEnBiblioteca(seleccion.day, seleccion.fila, nombre)
+          }
+          guardandoEnBiblioteca={saveLibrary.isPending}
           onCerrar={() => setSeleccion(null)}
         />
       )}
@@ -339,6 +465,162 @@ export function BuilderView() {
   );
 }
 
+/* ─────────────────────── Empezar ─────────────────────── */
+
+/**
+ * De dónde sale una dieta nueva: de la que ya tiene el hogar, de cero, o de la de otro
+ * hogar. Duplicar pide decir quién hace de quién: sin eso, la comida de una persona
+ * acabaría en el plato de otra sin que nadie lo haya dicho.
+ */
+function StartPanel({
+  household,
+  otros,
+  hayDietaActual,
+  cargandoDietaActual,
+  onActual,
+  onBlanco,
+  onDuplicar,
+}: {
+  household: HouseholdSummary | null;
+  otros: HouseholdSummary[];
+  hayDietaActual: boolean;
+  cargandoDietaActual: boolean;
+  onActual: () => void;
+  onBlanco: () => void;
+  onDuplicar: (origen: Plan, mapping: Record<string, string | null>) => void;
+}) {
+  const [origenId, setOrigenId] = useState<string | null>(null);
+  const [mapping, setMapping] = useState<Record<string, string | null>>({});
+  const origen = usePlanOf(origenId);
+
+  const personas = household?.people ?? [];
+
+  return (
+    <section className="rounded-day bg-surface p-6">
+      <h1 className="text-dish font-bold text-ink">Dieta de {household?.name ?? '…'}</h1>
+      <p className="mt-2 max-w-prose text-item text-ink-muted">
+        No hay ningún borrador abierto. Lo que edites aquí no lo verá nadie hasta que publiques.
+      </p>
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        <button
+          type="button"
+          disabled={!hayDietaActual}
+          onClick={onActual}
+          className="min-h-tap rounded-block bg-slot px-4 text-item font-semibold text-slot-ink disabled:opacity-40"
+        >
+          Partir de la dieta actual
+        </button>
+
+        <button
+          type="button"
+          disabled={personas.length === 0}
+          onClick={onBlanco}
+          className="min-h-tap rounded-block border border-line px-4 text-item font-semibold text-ink disabled:opacity-40"
+        >
+          Empezar en blanco
+        </button>
+
+        <button
+          type="button"
+          disabled={otros.length === 0}
+          onClick={() => setOrigenId(otros[0]?.id ?? null)}
+          className="min-h-tap rounded-block border border-line px-4 text-item font-semibold text-ink disabled:opacity-40"
+        >
+          Duplicar de otro hogar
+        </button>
+      </div>
+
+      {!hayDietaActual && !cargandoDietaActual && (
+        <p className="mt-3 text-measure text-ink-muted">
+          Este hogar todavía no tiene dieta vigente de la que partir.
+        </p>
+      )}
+
+      {personas.length === 0 && (
+        <p className="mt-3 text-measure text-danger">
+          Este hogar no tiene a nadie dentro. Añade las personas desde la ficha del hogar: una dieta
+          sin comensales no se puede repartir.
+        </p>
+      )}
+
+      {origenId !== null && (
+        <div className="mt-5 rounded-block border border-line p-4">
+          <h2 className="text-item font-bold text-ink">Duplicar de otro hogar</h2>
+
+          <label className="mt-2 flex flex-wrap items-center gap-2 text-measure text-ink">
+            Copiar la dieta de
+            <select
+              value={origenId}
+              onChange={(event) => {
+                setOrigenId(event.target.value);
+                setMapping({});
+              }}
+              className="min-h-tap rounded-block border border-line bg-surface px-2 text-item text-ink"
+            >
+              {otros.map((candidato) => (
+                <option key={candidato.id} value={candidato.id}>
+                  {candidato.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {origen.isPending && <p className="mt-3 text-measure text-ink-muted">Cargando…</p>}
+
+          {origen.data && (
+            <>
+              <p className="mt-3 text-measure font-semibold text-ink">Quién hace de quién</p>
+              <ul className="mt-1 flex flex-col gap-2">
+                {origen.data.profiles.map((perfil) => (
+                  <li key={perfil.profileId} className="flex flex-wrap items-center gap-2">
+                    <span className="text-item text-ink">{perfil.displayName}</span>
+                    <span aria-hidden="true" className="text-ink-muted">
+                      →
+                    </span>
+                    <select
+                      aria-label={`Quién hace de ${perfil.displayName}`}
+                      value={mapping[perfil.profileId] ?? ''}
+                      onChange={(event) =>
+                        setMapping((actual) => ({
+                          ...actual,
+                          [perfil.profileId]: event.target.value === '' ? null : event.target.value,
+                        }))
+                      }
+                      className="min-h-tap rounded-block border border-line bg-surface px-2 text-item text-ink"
+                    >
+                      <option value="">No copiar lo suyo</option>
+                      {personas.map((persona) => (
+                        <option key={persona.slug} value={persona.slug}>
+                          {persona.displayName}
+                        </option>
+                      ))}
+                    </select>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-2 max-w-prose text-measure text-ink-muted">
+                Lo que no asignes se queda fuera: su franja, sus platos y su ración dentro de los
+                compartidos. Las cantidades se copian tal cual, no se recalculan.
+              </p>
+
+              <button
+                type="button"
+                disabled={Object.values(mapping).every((destino) => destino === null)}
+                onClick={() => origen.data && onDuplicar(origen.data, mapping)}
+                className="mt-3 min-h-tap rounded-block bg-slot px-4 text-item font-semibold text-slot-ink disabled:opacity-40"
+              >
+                Duplicar esta dieta
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ─────────────────────── Panel de celda ─────────────────────── */
 
 function CellPanel({
@@ -348,6 +630,8 @@ function CellPanel({
   library,
   onElegir,
   onCopiar,
+  onGuardarEnBiblioteca,
+  guardandoEnBiblioteca,
   onCerrar,
 }: {
   dia: number;
@@ -356,10 +640,13 @@ function CellPanel({
   library: readonly LibraryBlock[];
   onElegir: (bloque: LibraryBlock | null) => void;
   onCopiar: (destinos: number[]) => void;
+  onGuardarEnBiblioteca: (nombre: string) => void;
+  guardandoEnBiblioteca: boolean;
   onCerrar: () => void;
 }) {
   const [busqueda, setBusqueda] = useState('');
   const [destinos, setDestinos] = useState<number[]>([]);
+  const [nombreBiblioteca, setNombreBiblioteca] = useState<string | null>(null);
 
   // Se ofrecen primero los bloques de esta franja, que es lo que casi siempre se quiere.
   const candidatos = useMemo(() => {
@@ -416,7 +703,7 @@ function CellPanel({
         ))}
       </ul>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-4">
         <button
           type="button"
           onClick={() => onElegir(null)}
@@ -424,7 +711,59 @@ function CellPanel({
         >
           Vaciar la celda
         </button>
+
+        {actual !== '' && nombreBiblioteca === null && (
+          <button
+            type="button"
+            onClick={() => setNombreBiblioteca(actual)}
+            className="min-h-tap text-measure font-semibold text-ink-muted underline"
+          >
+            Guardar en la biblioteca
+          </button>
+        )}
       </div>
+
+      {nombreBiblioteca !== null && (
+        <div className="mt-3 rounded-block border border-line p-3">
+          <label
+            className="block text-measure font-semibold text-ink"
+            htmlFor="nombre-en-biblioteca"
+          >
+            Con qué nombre se guarda
+          </label>
+          <p className="mt-1 max-w-prose text-measure text-ink-muted">
+            Se guarda la ración de{' '}
+            {fila.scope === 'shared' ? 'la primera persona del hogar' : 'esta persona'} como ración
+            base. Al usarlo en otra dieta se reparte con el multiplicador de cada cual.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              id="nombre-en-biblioteca"
+              value={nombreBiblioteca}
+              onChange={(event) => setNombreBiblioteca(event.target.value)}
+              className="min-h-tap w-full max-w-sm rounded-block border border-line bg-surface px-2 py-1 text-item text-ink"
+            />
+            <button
+              type="button"
+              disabled={nombreBiblioteca.trim() === '' || guardandoEnBiblioteca}
+              onClick={() => {
+                onGuardarEnBiblioteca(nombreBiblioteca.trim());
+                setNombreBiblioteca(null);
+              }}
+              className="min-h-tap rounded-block bg-slot px-3 text-measure font-semibold text-slot-ink disabled:opacity-40"
+            >
+              Guardar
+            </button>
+            <button
+              type="button"
+              onClick={() => setNombreBiblioteca(null)}
+              className="min-h-tap text-measure font-semibold text-ink-muted underline"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 border-t border-line pt-3">
         <p className="text-measure font-semibold text-ink">Copiar a otros días</p>

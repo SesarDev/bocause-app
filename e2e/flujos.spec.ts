@@ -61,6 +61,10 @@ test('entra con la sesión y ve su plan', async ({ app }) => {
 
 test('marca un alimento y se guarda', async ({ app }) => {
   const foto = await protege('checks');
+
+  // Por la vista Semana y no por Hoy: el domingo es el día libre del plan y no tiene ni un
+  // alimento que marcar, así que buscando en Hoy la prueba fallaba un día de cada siete.
+  await openTab(app, 'Semana');
   const check = app.getByRole('checkbox').first();
 
   // No se da por hecho que empiece sin marcar: en el hogar de verdad puede estar marcado
