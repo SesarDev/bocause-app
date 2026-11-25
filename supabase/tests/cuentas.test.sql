@@ -29,11 +29,11 @@ $$;
 insert into auth.users (instance_id, id, aud, role, email, created_at, updated_at)
 values
   ('00000000-0000-0000-0000-000000000000', '11111111-1111-4111-8111-111111111111',
-   'authenticated', 'authenticated', 'cristina@bocause.local', now(), now()),
+   'authenticated', 'authenticated', 'cristina@ejemplo.test', now(), now()),
   ('00000000-0000-0000-0000-000000000000', '33333333-3333-4333-8333-333333333333',
-   'authenticated', 'authenticated', 'nutri1@bocause.local', now(), now()),
+   'authenticated', 'authenticated', 'nutri1@ejemplo.test', now(), now()),
   ('00000000-0000-0000-0000-000000000000', '44444444-4444-4444-8444-444444444444',
-   'authenticated', 'authenticated', 'recienllegado@bocause.local', now(), now());
+   'authenticated', 'authenticated', 'recienllegado@ejemplo.test', now(), now());
 
 insert into households (id, name) values
   ('cccccccc-0000-4000-8000-000000000001', 'Casa de prueba');
@@ -64,7 +64,7 @@ select hasnt_function(
 
 -- ─────────────────── Una cuenta recién creada no ve nada ───────────────────
 
-select test_como('44444444-4444-4444-8444-444444444444', 'recienllegado@bocause.local');
+select test_como('44444444-4444-4444-8444-444444444444', 'recienllegado@ejemplo.test');
 
 select is(
   (select count(*) from profiles),
@@ -89,7 +89,7 @@ select throws_ok(
   'un cliente no puede crearse un perfil ni enlazárselo a su cuenta'
 );
 
-select test_como('33333333-3333-4333-8333-333333333333', 'nutri1@bocause.local');
+select test_como('33333333-3333-4333-8333-333333333333', 'nutri1@ejemplo.test');
 
 select lives_ok(
   $$select staff_upsert_profile(

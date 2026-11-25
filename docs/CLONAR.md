@@ -66,7 +66,7 @@ pierde. Hay un generador en `scratchpad/gen-icons.mjs` de la fase 1.
 2. Aplicar las migraciones de `supabase/migrations/` **en orden**.
 3. `.env.local` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 4. Para sembrar: añadir `SUPABASE_SERVICE_ROLE_KEY` y los correos de cada perfil, y
-   ejecutar `npm run seed`.
+   ejecutar `SEED_PLAN=<ruta al JSON del plan> npm run seed`. El plan real no se versiona.
 
 La clave `service_role` **nunca** lleva prefijo `VITE_` ni se sube al despliegue: se salta
 todas las políticas RLS y solo se usa desde tu equipo.

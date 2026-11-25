@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Hoja inferior. Es el patrón de la app para todo lo que se abre encima: selector de
@@ -76,7 +77,10 @@ export function Sheet({
 
   if (!open) return null;
 
-  return (
+  // En un portal sobre <body>: si la hoja se pinta dentro de la cabecera (el selector de
+  // perfil vive ahí), hereda su contexto de apilamiento (`fixed z-20`) y la barra inferior,
+  // que va después en el DOM con el mismo z, le tapa la última opción.
+  return createPortal(
     <div className="fixed inset-0 z-40 flex items-end justify-center">
       <button
         type="button"
@@ -110,6 +114,7 @@ export function Sheet({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

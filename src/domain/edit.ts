@@ -36,10 +36,6 @@ export function originOf(block: Block): string {
   return block.originBlockId ?? block.id;
 }
 
-export function isModifiedBlock(block: Block): boolean {
-  return !block.isOriginal || block.originBlockId !== undefined;
-}
-
 export type RestoreLevel = 'week' | 'template';
 
 export type RestoreOptions =

@@ -103,34 +103,6 @@ export function useCreateHousehold() {
   });
 }
 
-export function useUpsertProfile() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (vars: {
-      householdId: string;
-      slug: string;
-      displayName: string;
-      claimEmail: string | null;
-      portionMultiplier: number;
-      /** Cuenta a la que pertenece este perfil, si se acaba de crear. */
-      userId?: string | null;
-    }) => {
-      const { error } = await supabase.rpc('staff_upsert_profile', {
-        p_household_id: vars.householdId,
-        p_slug: vars.slug,
-        p_display_name: vars.displayName,
-        p_claim_email: vars.claimEmail,
-        p_portion_multiplier: vars.portionMultiplier,
-        p_user_id: vars.userId ?? null,
-      });
-      if (error) throw error;
-    },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: [...consultaKeys.all, 'households'] }),
-  });
-}
-
 /**
  * Da de alta la **cuenta** de un cliente: usuario y contraseña, y el perfil ya enlazado.
  *

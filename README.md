@@ -1,388 +1,181 @@
 # Bocause Dieta
 
-PWA para seguir la dieta que marca la nutricionista. La unidad es el **hogar**: hoy,
-Cristina y Andrés. Pensada para móvil: cocina, súper y a veces sin cobertura.
+PWA para seguir la dieta que pauta una nutricionista, pensada para usarse con una mano, en la
+cocina o en el súper, y a veces sin cobertura. Tiene dos caras: la app del cliente y un panel
+donde la nutricionista crea y publica las dietas de cada hogar.
 
-El contexto completo del proyecto está en [CLAUDE.md](CLAUDE.md) y el plan de trabajo por
-fases en [docs/PLAN.md](docs/PLAN.md).
+Desde octubre de 2026 la usa a diario un hogar real. El repositorio solo contiene datos
+ficticios: el plan de ejemplo está en [`data/plans/demo.json`](data/plans/demo.json).
 
-## Estructura
+## Capturas
 
-```
-src/app/         Composición de proveedores (TanStack Query, tema)
-src/config/      brand.ts: lo que cambia al clonar la app (ver docs/CLONAR.md)
-src/domain/      Lógica pura (esquemas Zod, resolución de semana, intercambios, compra)
-src/data/        Cliente de Supabase, queries, caché persistida, hogar activo y claves
-src/features/    Una carpeta por funcionalidad (shell, theme, week, checklist...)
-src/components/  Primitivas de UI propias
-src/stores/      Estado de interfaz con Zustand (tema, pestaña, perfil activo)
-src/styles/      tokens.css con la paleta y tipografía de marca
-src/sw.ts        Service worker propio (precaché ahora, Web Push en la fase 15)
-docs/pdfs/       Planes originales en PDF (fuente de la extracción de la fase 3)
-supabase/        Migraciones de Postgres
-```
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/semana.png" width="200" alt="Vista Semana en modo Casa: la comida compartida con la ración de cada persona y el total para cocinar"><br><sub>Semana, vista Casa</sub></td>
+    <td align="center"><img src="docs/screenshots/hoy.png" width="200" alt="Vista Hoy con el desayuno marcado como hecho y el snack a medias"><br><sub>Hoy, con checks</sub></td>
+    <td align="center"><img src="docs/screenshots/intercambio.png" width="200" alt="Hoja de intercambio con el carrusel de días y el aviso de que el plato es compartido"><br><sub>Intercambio entre días</sub></td>
+    <td align="center"><img src="docs/screenshots/compra.png" width="200" alt="Lista de la compra por secciones del súper, con el desglose por persona"><br><sub>Lista de la compra</sub></td>
+  </tr>
+</table>
 
-## Comandos
+**Panel de la nutricionista:** la cuadrícula del constructor de dietas y, al publicar, los
+conflictos con los cambios que había hecho el cliente.
 
-| Comando                 | Qué hace                                        |
-| ----------------------- | ----------------------------------------------- |
-| `npm run dev`           | Servidor de desarrollo en http://localhost:5173 |
-| `npm run build`         | Compila TypeScript y genera `dist/`             |
-| `npm run preview`       | Sirve el build de producción                    |
-| `npm run typecheck`     | TypeScript en los tres proyectos                |
-| `npm run lint`          | ESLint                                          |
-| `npm run format`        | Prettier (escribe)                              |
-| `npm run format:check`  | Prettier (solo comprueba)                       |
-| `npm test`              | Vitest una pasada                               |
-| `npm run test:watch`    | Vitest en modo vigilancia                       |
-| `npm run test:coverage` | Vitest con cobertura (mínimo 90% en `domain/`)  |
-| `npm run seed:validate` | Valida `data/plans/*.json` contra los esquemas  |
-| `npm run seed`          | Crea el hogar en Supabase e inserta el plan     |
-| `npm run migrate`       | Aplica las migraciones que falten               |
-| `npm run library:seed`  | Siembra el catálogo y la biblioteca de bloques  |
-| `npm run staff:add`     | Da de alta a una nutricionista                  |
+<img src="docs/screenshots/constructor.png" alt="Constructor de dietas: cuadrícula de la semana con una fila por franja de cada persona y la biblioteca de platos abierta">
 
-## Estado: fase 18 completada (desplegada y en uso)
+<img src="docs/screenshots/publicar.png" alt="Panel de publicación con dos conflictos entre la dieta nueva y los cambios del cliente">
 
-**Fase 1** dejó el andamiaje: stack completo (Tailwind v4, TanStack Query con caché
-persistida en IndexedDB, Zustand, Zod, Supabase, Vitest, vite-plugin-pwa), tema
-claro/oscuro/sistema sin parpadeo al recargar, manifest instalable con iconos maskable y el
-shell con cabecera y cuatro pestañas (Semana, Hoy, Compra, Más), todas con estado vacío.
+<sub>Tema oscuro:</sub><br>
+<img src="docs/screenshots/semana-oscuro.png" width="200" alt="Vista Semana en tema oscuro">
 
-**Fase 2** implementa toda la lógica de dominio en `src/domain/`, pura y con tests:
+## Qué hace
 
-| Módulo         | Qué resuelve                                                  |
-| -------------- | ------------------------------------------------------------- |
-| `dates.ts`     | Semanas de lunes a domingo en Europe/Madrid                   |
-| `resolve.ts`   | Qué come cada persona cada día: original → plantilla → semana |
-| `swap.ts`      | Intercambio por fila, misma franja y mismo scope              |
-| `edit.ts`      | Copia al escribir (`forkBlock`) y restauración                |
-| `freeMeals.ts` | Cupo de ingestas libres por semana                            |
-| `progress.ts`  | Checks por alimento, franjas completas y adherencia           |
-| `shopping.ts`  | Lista de la compra sumando a las dos personas                 |
-| `batch.ts`     | Sugerencias de batch cooking                                  |
+**Para el cliente**
 
-**Fase 3** extrae los dos PDF a `data/plans/2026-09.json`: 42 bloques, 188 alimentos y un
-catálogo de 71 entradas con su sección del súper. Las decisiones de extracción están en
-[docs/extraccion-informe.md](docs/extraccion-informe.md) y se comprueban solas con
-`npm run seed:validate` y con `src/domain/plan-real.test.ts`.
+- **Semana y Hoy:** qué come cada persona en cada comida, con sus raciones. La unidad es el
+  _hogar_: comida y cena se comparten, con una ración distinta para cada persona, y desayunos
+  y snacks son individuales.
+- **Check por alimento:** una comida queda hecha cuando están marcados todos sus alimentos.
+  También lleva la cuenta del agua, el aceite semanal y las ingestas libres.
+- **Intercambio de comidas entre días**, para esta semana o para todo el plan, con deshacer.
+  Va en un carrusel de scroll-snap en vez de arrastrar y soltar, porque con una mano funciona
+  mejor.
+- **Edición sin perder el original:** cambiar un plato crea una copia que apunta al de la
+  nutricionista, y "Restaurar original" siempre funciona.
+- **Sustituciones** dentro de los grupos de equivalencia que define la nutricionista, con la
+  cantidad ya convertida para cada persona.
+- **Lista de la compra** que suma lo que come todo el hogar, ordenada por secciones del súper.
+- **Chat privado** con la nutricionista, que se puede anclar a una comida concreta.
+- **Historial de cambios** en frases legibles: «Cliente B intercambió la comida del lunes y
+  del martes».
 
-**Fase 4** conecta Supabase: cliente tipado, consultas y mutaciones optimistas con TanStack
-Query, sincronización Realtime y las dos pantallas de entrada (magic link y "¿Quién eres?").
+**Para la nutricionista** (`/admin`)
 
-| Archivo                      | Qué hace                                                  |
-| ---------------------------- | --------------------------------------------------------- |
-| `src/data/database.types.ts` | Tipos de las tablas, escritos a partir de la migración    |
-| `src/data/mappers.ts`        | Filas de Postgres ↔ tipos del dominio, validando con Zod  |
-| `src/data/queries.ts`        | Lecturas y `useResolvedWeek`, el puente con la fase 5     |
-| `src/data/mutations.ts`      | Escrituras optimistas que se reanudan al recuperar la red |
-| `src/data/realtime.ts`       | Suscripción a las seis tablas que publica la migración    |
-| `src/data/auth.ts`           | Sesión, magic link y vinculación con el perfil            |
+- Hogares, personas y cuentas: es ella quien da de alta a cada cliente, y nadie elige quién es.
+- **Constructor de dietas** sobre un borrador que el cliente no ve, con vista previa "Ver
+  como…".
+- **Publicación con arrastre de cambios:** al publicar una dieta nueva, los ajustes que había
+  hecho el cliente se conservan, y cada conflicto se enseña celda a celda antes de confirmar.
+- Catálogo de alimentos, biblioteca de platos con escalado por persona y grupos de
+  equivalencia.
+- Seguimiento de la adherencia de cada persona, en modo de solo lectura.
 
-**Fase 5** es la vista Semana y la vista Hoy, con datos reales: barra de días pegajosa con
-anillo de progreso, siete tarjetas con el ritmo de colores del PDF (martes, jueves y sábado
-en amarillo), etiquetas de franja marinas con icono, pan y postre como subsecciones, bloques
-compartidos con su fondo y, el domingo, la tarjeta de las dos ingestas libres. El selector
-de perfil permite ver el plan de la otra persona o el de "Casa", que enseña solo comida y
-cena con las dos raciones y la suma para cocinar.
+## Stack
 
-**Fase 6** añade el registro diario: check por alimento con la franja atenuada y marcada
-"Hecho" al completarla (mantener pulsada la etiqueta marca la franja entera), avatar de
-quién ya lo ha marcado en la vista Casa, y en Hoy las tarjetas de comodín proteico, aceite
-con barra semanal hacia las 14 cucharadas y agua a golpe de vaso. Desde el menú de cada
-franja se marca una ingesta libre, con el cupo de dos por semana.
+React 19 · TypeScript (`strict`, `noUncheckedIndexedAccess`) · Vite · Tailwind CSS v4 ·
+TanStack Query persistido en IndexedDB · Zustand (solo estado de interfaz) · Zod · Supabase
+(Postgres, Auth y Realtime) · vite-plugin-pwa con service worker propio · Vitest · Playwright ·
+pgTAP.
 
-Cada uno marca lo suyo: viendo el plan de la otra persona los checks se ven pero no se
-tocan, igual que imponen las políticas de la base de datos.
+No usa librerías de componentes. Tampoco carga recursos de terceros (CDN, Google Fonts ni
+analítica): son datos de salud, y la tipografía va autoalojada.
 
-**Fase 7** añade el intercambio: desde el menú de la franja se abre una hoja con un carrusel
-de los siete días (scroll-snap, sin librerías), se elige destino y alcance ("Solo esta
-semana" o "Todo el plan") y se confirma. Los platos compartidos avisan de que el cambio
-afecta también a la otra persona. Después aparece un aviso "Intercambiado · Deshacer"
-durante seis segundos, y las celdas que ya no vienen del plan original llevan el distintivo
-"Modificado", con "Restaurar original" en su menú.
+## Decisiones técnicas
 
-El plan original preveía además un modo de arrastrar con `@dnd-kit` como alternativa al
-carrusel. **Se ha descartado:** el carrusel funciona mejor con una mano, no hay que acertar
-un objetivo mientras se arrastra y la app se ahorra una librería.
+**Offline-first de verdad.** La caché de TanStack Query se persiste en IndexedDB, separada por
+usuario, y las mutaciones son optimistas y **se reanudan** al volver la red. Una consulta que
+falla no se trata como "sin datos": el arranque distingue cargando, pausada sin red, error y
+respuesta. Confundir esos estados mandaba a alguien sin cobertura a la pantalla de "no tienes
+dieta".
 
-**Fase 8** es el editor de bloques, en hoja a pantalla casi completa: títulos de plato,
-añadir, quitar y reordenar secciones y alimentos, autocompletado contra el catálogo de
-alimentos y, en los platos compartidos, una columna por persona con "Copiar de…". Lo que
-cambias se resalta mientras editas y, al guardar, nace una copia que apunta al original
-(copy-on-write), aplicada a esta semana o a todo el plan. En las celdas vacías el menú
-ofrece "Crear comida aquí".
+**Lógica de dominio pura.** `src/domain/` no importa nada del proyecto, ni React ni Supabase.
+Ahí vive todo lo que tiene reglas: resolver la semana (cambio de esta semana → plantilla del
+plan → vacío), intercambiar, copiar al escribir, escalar raciones, sumar la compra y decidir qué
+cambios sobreviven a una publicación. Tiene una cobertura del 98 %.
 
-**Fase 9** cierra el hito B con la lista de la compra: se genera sumando lo que comen los
-dos, en los rangos "semana actual", "lo que queda" y "próxima semana", agrupada por sección
-del súper en orden de recorrido. Cada línea se despliega con el desglose por persona y de
-cuántos días viene. Regenerar **no pierde** lo ya marcado, "ya lo tengo" se guarda aparte de
-"comprado", se pueden añadir cosas a mano y compartir la lista como texto.
+**La seguridad está en la base de datos.** Todas las tablas tienen RLS, y las pruebas de
+permisos (pgTAP) se escriben **antes** que la migración y se ven fallar. Algunos ejemplos:
 
-**Fase 10** pule el MVP: esqueletos de carga en vez de un texto de "cargando", aviso de sin
-conexión que no tapa el contenido, errores de red con botón de reintentar, foco atrapado
-dentro de las hojas inferiores y repaso de contraste de los dos temas (todos los pares de
-tokens pasan AA). Añade además pruebas de extremo a extremo con Playwright de los cuatro
-flujos críticos: entrar, marcar un alimento, intercambiar y deshacer, y generar la compra.
+- El autor de un mensaje del chat lo firma un trigger con `auth.uid()`. Si lo mandara el
+  navegador, cualquiera podría escribir como si fuera la nutricionista.
+- Las escrituras de la nutricionista sobre perfiles van por funciones `security definer` que
+  comprueban `is_staff()` por dentro.
+- El registro de cambios lo escriben triggers, así que también queda lo que llega tarde, cuando
+  se reanuda una mutación hecha sin cobertura.
+- Ninguna función se puede ejecutar sin sesión, tampoco las que se creen en el futuro
+  ([`0011`](supabase/migrations/0011_funciones_sin_anon.sql)).
+- Quien se registra por libre, sin un perfil asignado por la nutricionista, no ve ni siquiera
+  el catálogo de la consulta ([`0012`](supabase/migrations/0012_biblioteca_solo_con_perfil.sql)).
 
-### Pruebas de extremo a extremo
+**Preparada para varios hogares.** RLS es la última defensa, no el filtro: toda consulta
+filtra por hogar de forma explícita, las claves de caché cuelgan del hogar activo y cada canal
+de Realtime lleva su filtro. Lo que cambia entre una consulta y otra (nombre, colores, dominio
+de las cuentas, funciones activas) está en [`src/config/brand.ts`](src/config/brand.ts).
+
+**Publicar sin pisar al cliente.** [`carryOver.ts`](src/domain/carryOver.ts) compara los
+cambios **por contenido**, no por id, porque los ids cambian entre versiones de una dieta.
+Además, un cambio que no se puede arrastrar se avisa siempre, aunque la nutricionista no haya
+tocado esa celda. Este último caso salió de un fallo real: un plato desaparecía en silencio.
+
+**Accesibilidad:** objetivos táctiles de 44 px como mínimo, contraste AA en los temas claro y
+oscuro, respeto a `prefers-reduced-motion` y foco atrapado dentro de las hojas inferiores.
+
+## Calidad
+
+| Qué                          | Cuánto                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| Tests unitarios (Vitest)     | 322 en 24 archivos, con un 98 % de cobertura en `src/domain/`            |
+| Pruebas de la base (pgTAP)   | 80 en 7 archivos: RLS, publicación, chat, cuentas, permisos              |
+| Extremo a extremo            | 4 flujos con Playwright: entrar, marcar, intercambiar y deshacer, compra |
+| Comprobaciones de cada tarea | `npm run typecheck && npm run lint && npm test && npm run build`         |
+
+## Arquitectura
 
 ```
-npm run test:e2e
+src/domain/      Lógica pura y esquemas Zod. No importa nada del proyecto.
+src/data/        Supabase: queries, mutaciones, Realtime, hogar activo y claves de caché.
+src/features/    Una carpeta por funcionalidad (week, swap, editor, shopping, chat, admin…).
+src/components/  Primitivas de interfaz propias.
+src/config/      brand.ts: lo que cambia al clonar la app para otra consulta.
+src/sw.ts        Service worker: precaché del shell de la app.
+supabase/        Migraciones de Postgres y pruebas pgTAP.
+scripts/         Siembra, migraciones, validación del plan y gestión de cuentas.
 ```
 
-Van **contra el Supabase real**, porque no hay un proyecto de pruebas. No entran en
-`npm test` por eso. Sin `SUPABASE_SERVICE_ROLE_KEY` en `.env.local` se saltan solas.
+Cada carpeta con reglas propias tiene su `CLAUDE.md` (`src/data/`, `src/domain/`,
+`src/features/editor/` y `supabase/`). El proyecto se ha desarrollado con Claude Code, y esos
+archivos son las reglas que sigue.
 
-**Esto se ha quedado corto y conviene saberlo.** Se escribieron con las tablas vacías, y
-hoy el hogar tiene semanas de uso real. Dos cosas cambiaron en la fase 12:
+## Puesta en marcha en local
 
-- Cada prueba **fotografía** la tabla antes de tocarla y la restaura al terminar, también si
-  falla a mitad (`fotografiar` / `restaurar` en `e2e/fixtures.ts`). No vale con borrar lo
-  creado: una prueba que escribe encima de una fila existente la deja cambiada, no creada,
-  y borrarla perdería el dato de verdad.
-- Las comprobaciones son **relativas a esa foto**, no cuentas absolutas. Contar "hay filas
-  en `checks`" dejó de probar nada en cuanto hubo checks reales: se cumplía siempre, aunque
-  la escritura fallara.
+Hace falta Node 24 y Docker.
 
-Aun así, **la prueba de la compra se salta casi siempre**: generar la lista haría `upsert`
-sobre las líneas reales del hogar y restaurarlas no sería fiable. Mientras la suite apunte
-al Supabase de casa, ese flujo no está cubierto. Lo que toca es un proyecto de Supabase de
-pruebas con su propio hogar sembrado; `docs/CLONAR.md` explica cómo se levanta uno.
-
-**Fase 11** llena la pestaña Más: protocolos de entreno con su pre/ETT/post (también se
-abren tocando el chip de entreno de cada día), las opciones del comodín con sus cantidades,
-las recetas del plan con la del cheat meal, las recomendaciones como tarjetas con iconos
-propios, y cerrar sesión.
-
-**Pendiente de la fase 11:** el editor de recetas. `docs/PLAN.md` lo pide, pero las recetas
-viven dentro de `plans.data`, que es inmutable, y no hay tabla donde guardar las que
-escribáis vosotros. Haría falta una migración nueva. Ahora mismo las recetas son de solo
-lectura y el plan solo trae una, así que el editor no tendría nada que editar todavía.
-
-Con esto la app ya se puede usar a diario, y desde octubre de 2026 está desplegada y en uso
-en los dos móviles.
-
-**Fase 12** abre la v2 (ver el `docs/PLAN.md` nuevo): no cambia nada visible, prepara la base
-para varios hogares y para clonar la app por consulta.
-
-| Qué                                      | Por qué                                                                                                                                                   |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/data/scope.ts` y `src/data/keys.ts` | El hogar activo, y claves de caché que cuelgan de él. Antes las consultas no filtraban por hogar: funcionaba porque RLS solo devuelve el tuyo.            |
-| Filtros explícitos en `queries.ts`       | RLS es la última defensa, no el filtro. Con el rol de nutricionista (fase 13), una consulta sin filtro mezclaría hogares sin dar ningún error.            |
-| `filter` en cada canal de Realtime       | Sin él llegan los cambios de todas las casas: refrescos constantes y actividad ajena a la vista.                                                          |
-| Caché de IndexedDB por usuario           | Sobrevive al cambio de sesión. Sin separar, quien entre después en ese móvil restauraría los datos del anterior.                                          |
-| `crypto.randomUUID()` entero             | Se recortaba a 8 caracteres. `blocks.id` es clave primaria **global** y se escribe con `upsert`: una colisión sobrescribiría el bloque de otro hogar.     |
-| `0003_plan_versions.sql`                 | `version`, `published_at` y `published_by` para la dieta viva. Y un trigger que mantiene `updated_at`, que solo se rellenaba al insertar (ver más abajo). |
-| `src/config/brand.ts` + `docs/CLONAR.md` | Clonar la app para otra consulta es cambiar datos, no buscar cadenas por el código.                                                                       |
-| Montserrat autoalojada                   | Venía de Google Fonts: un tercero veía la IP de cada móvil en cada arranque, en una app de datos de salud. Ahora va en el bundle y precacheada.           |
-
-**Fase 13** añade el rol de nutricionista y la zona `/admin`.
-
-| Qué                                  | Por qué                                                                                                                                                    |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/tests/rls.test.sql`        | 17 comprobaciones con pgTAP, escritas **antes** de la migración y vistas fallar. Una prueba de seguridad que nunca ha estado en rojo no demuestra nada.    |
-| `0004_staff.sql`                     | `staff_members`, `is_staff()`, y las políticas de lectura y escritura. Cierra además la escritura de `plans`, que cualquier miembro del hogar podía hacer. |
-| `0005_plan_version_autoassign.sql`   | Arregla un fallo de la 0003: el índice único `(household_id, version)` existía pero nadie asignaba la versión, así que publicar la segunda dieta fallaba.  |
-| `npm run staff:add -- correo`        | Ascender a nutricionista. No hay forma de hacerlo desde la app: la tabla no tiene políticas de escritura.                                                  |
-| React Router y `src/features/admin/` | `/admin` con carga diferida. El chunk del cliente **no** incluye ese código.                                                                               |
-| `vercel.json`                        | Reescritura a `index.html`. Sin ella `/admin` daba 404 en producción aunque funcionara en desarrollo.                                                      |
-| `npm run seed:demo`                  | Hogar de demostración con datos ficticios, para enseñar la app sin exponer la dieta de nadie.                                                              |
-
-**Fase 14** añade el registro de cambios, en Más → "Historial de cambios": quién movió qué y
-cuándo, en frases legibles («Andrés intercambió la comida del lunes y del martes»), agrupado
-por día, con "Restaurar original".
-
-| Qué                            | Por qué                                                                                                                                              |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `0006_change_log.sql`          | Lo escriben **triggers de Postgres**, no la app: así se registra también lo que llega tarde al reanudarse una mutación sin cobertura, y nada escapa. |
-| `tx_id`                        | Un intercambio escribe sus dos celdas en una sentencia. Agrupar por transacción es exacto; por marca de tiempo sería adivinar.                       |
-| RPC `restore_cell`             | Restaurar era varias peticiones sueltas y podía quedarse a medias. Ahora es atómico, y además el registro puede marcarlo como `restaurar`.           |
-| `src/domain/describeChange.ts` | Las frases, puras y con 16 tests. Los títulos entran por un `lookup`, así el dominio no sabe nada de Supabase.                                       |
-| `ChangeLogList`                | Fuera de la vista Más: la ficha del hogar (fase 17) enseñará la misma lista.                                                                         |
-
-**Fase 18** añade las sustituciones. En el plan, el nombre de un alimento se vuelve pulsable
-cuando la nutricionista ha definido equivalentes para él; al tocarlo se abre una hoja con las
-opciones **y su cantidad ya convertida**, la nota del grupo, y dos decisiones: **Para los dos
-/ Solo para mí** en los platos compartidos, y **Solo esta semana / Todo el plan**. Después, el
-alimento lleva un "En lugar de…".
-
-Lo que importa de `src/domain/substitute.ts` (15 tests):
-
-- **Cada persona convierte su ración.** En un plato compartido no comen lo mismo, así que la
-  conversión entra como función y no como cantidad ya calculada.
-- **"Solo para mí" parte el alimento en dos**: el original se queda con la ración del otro,
-  intacta. Hay un test que comprueba exactamente eso.
-- **La lista de la compra se entera**: compra garbanzos y deja de comprar lentejas.
-
-Tres fallos que solo aparecieron al probarlo de verdad contra la base:
-
-- **La sustitución se guardaba con el id del bloque original** y sin marcarla como copia,
-  saltándose el copy-on-write. "Restaurar original" se quedaba sin destino y el plato de la
-  nutricionista era irrecuperable.
-- Un equivalente que no estuviera en el catálogo se enseñaba con su **clave cruda**
-  (`pasta-integral`) a alguien que está decidiendo qué cena.
-- Volver al alimento de partida dejaba un **"Arroz integral en lugar de arroz integral"**.
-
-**Pendiente de la fase 18:** "Cambiar por otro de la biblioteca" en el menú del bloque.
-
-**Fase 17** es el panel de hogares. `/admin/hogares` lista los hogares con sus personas (y su
-multiplicador de ración), la dieta vigente y un buscador; desde ahí se crean hogares y
-personas, y se entra en la ficha de cada uno, con tres pestañas: **Dieta** (versión vigente y
-enlace al constructor), **Historial** (el registro de cambios de la fase 14) y **Seguimiento**
-(adherencia de la semana por persona, calculada con `progress.ts`).
-
-Dos cosas deliberadas:
-
-- **El seguimiento es de solo lectura.** Marcar comidas es del cliente: si la nutricionista
-  pudiera hacerlo por él, el seguimiento dejaría de significar nada.
-- **Crear hogares y personas va por RPC**, no por escritura directa, por el permiso **por
-  columna** que la 0002 puso sobre `profiles` y que alcanza también a la nutricionista.
-
-Y un aviso fijo que no es decorativo: _"Usa solo datos de prueba hasta completar la revisión
-legal"_. Aquí se guardan datos de salud y todavía no hay política de privacidad ni
-consentimiento; eso es el hito K.
-
-**Pendiente de la fase 17:** "Ver como cliente" (abrir la app del cliente en modo solo
-lectura) y consultar las versiones anteriores de una dieta. Lo primero necesita una bandera
-de solo lectura que recorra todas las mutaciones, y prefiero hacerlo con calma antes que a
-medias: una vista "de solo lectura" que deje escribir sin querer sería peor que no tenerla.
-
-**Fase 16** es el constructor de dietas y la publicación, la parte de más riesgo del
-proyecto. En `/admin/hogares` se elige un hogar y se abre su dieta: una cuadrícula de lunes a
-domingo, una fila por franja de cada persona y una por las compartidas. Cada celda se rellena
-desde la biblioteca, se vacía o se copia a otros días. **No hay intercambio entre días**:
-mover comidas es cosa del cliente. Todo ocurre sobre un borrador que se guarda solo y que el
-cliente no ve hasta que se publica.
-
-| Qué                            | Por qué                                                                                                                             |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `src/domain/carryOver.ts`      | Qué pasa con los cambios del cliente al publicar. 22 tests. Compara por **contenido y no por id**: entre versiones los ids cambian. |
-| `0008_publish.sql`             | `diet_drafts` y las RPC `publish_plan` y `archive_plan`. Publicar toca cinco tablas: va en una transacción y exige lunes.           |
-| `BuilderView` / `PublishPanel` | La cuadrícula y el panel que **enseña los conflictos antes de confirmar**, celda a celda.                                           |
-
-Lo que de verdad define esta fase son dos bugs que encontraron las pruebas, los dos del tipo
-"se pierde en silencio lo que alguien llevaba semanas ajustando":
-
-- **Un plato que ya no existe en la dieta nueva desaparecía sin avisar**, si la nutricionista
-  no había tocado esa celda. Ahora un cambio que no se puede arrastrar siempre sale como
-  conflicto.
-- **Leer la celda del cliente con `??` confundía un `blockId` nulo** —una celda que él vació
-  a propósito— con una fila ausente, así que la publicación se la volvía a llenar.
-
-Por defecto gana la nutricionista, pero nunca en silencio: el panel dice «el cliente tenía
-Huevos rotos airfryer; tú pones Carne a la plancha con verduras» y deja marcar "Mantener el
-suyo" en cada celda.
-
-**Pendiente de la fase 16:** empezar una dieta en blanco o duplicando la de otro hogar, la
-pestaña de configuración (franjas, entreno, suplementación, reglas) y "Ver como Cristina".
-El flujo principal —partir de la dieta actual, editar, publicar con arrastre— está completo.
-
-**Fase 15** llena tres de las seis secciones de administración: **Alimentos** (el catálogo,
-editable), **Biblioteca** (bloques prehechos con su ración base y vista previa del escalado)
-y **Equivalencias** (grupos de intercambio con su factor y vista previa).
-
-| Qué                     | Por qué                                                                                                                                               |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `0007_library.sql`      | `foods`, `library_blocks` y `equivalence_groups`. Son de la consulta, no de un hogar: hay un Supabase por consulta.                                   |
-| `src/domain/library.ts` | `instantiate`, `scalePortion`, `toLibraryBlock` y `equivalentsFor`, con 24 tests.                                                                     |
-| `npm run library:seed`  | Catálogo y biblioteca a partir del plan: 71 alimentos y 32 bloques distintos (de 42). **No** crea equivalencias: eso es criterio de la nutricionista. |
-
-Tres decisiones del escalado que importan en la cocina:
-
-- **Se redondea a lo que se puede pesar**: gramos y mililitros a múltiplos de 5, unidades a
-  medias. 85 g × 1,25 son 106,25 g, y eso en una báscula no existe.
-- **Nunca a cero**: una ración pequeña escalada hacia abajo sigue siendo algo.
-- **La medida casera no se multiplica.** «2 rebanadas» o «1/3 de bandeja» se conservan tal
-  cual y se marcan para repasar. Multiplicarlas sería inventar cantidades.
-
-Y dos cosas que el plan daba por hechas y no lo eran:
-
-- **27 de los 42 bloques no tienen ningún título** (los desayunos y snacks del PDF son una
-  lista de alimentos sin encabezado), así que el nombre de biblioteca no podía salir del
-  título: para esos se usan los primeros alimentos.
-- **Deduplicar por el bloque entero no servía.** La biblioteca guarda una sola ración base,
-  así que dos bloques que solo se diferencian en la ración de la _otra_ persona son la misma
-  entrada; deduplicar antes de reducir dejaba pares con el mismo nombre y rompía la
-  repetibilidad del script.
-
-**Pendiente de la fase 15:** editar el contenido de un bloque de biblioteca (añadir o quitar
-alimentos). `BlockEditor` trabaja con una ración por persona y necesita un modo "ración
-base"; se hace en la fase 16, donde el constructor lo reutiliza de todos modos, en vez de
-construirlo dos veces. Duplicar y archivar sí funcionan.
-
-Dos cosas de la fase 14 que solo se vieron al mirar la pantalla con datos de verdad:
-
-- **La mitad de los intercambios reales no se detectaban.** Si una de las dos celdas no
-  tenía cambio previo, su fila es un `INSERT` y el `before` es nulo, así que ese lado del
-  cruce no se puede comprobar. Ahora basta con que encajen los cruces que **sí** se conocen,
-  y si no se conoce ninguno se dice "cambió 2 comidas", que es menos vistoso y cierto.
-- **Los E2E le inventaban cambios al hogar.** El registro es de solo añadir, así que los
-  intercambios de las pruebas se quedaban en vuestro historial como si hubieran pasado. La
-  suite los borra ahora con la clave de servicio.
-
-Tres cosas aprendidas en la fase 13, que están en [CLAUDE.md](CLAUDE.md):
-
-- **RLS deniega los UPDATE en silencio**: no da error, simplemente no encuentra la fila. Una
-  prueba que espere una excepción pasa sin comprobar nada.
-- **Un permiso por columna alcanza también a la nutricionista**, porque también es
-  `authenticated`. Por eso sus escrituras sobre perfiles van por función `security definer`.
-- **Mejor añadir una política que reescribir la que ya funciona**: las permisivas se suman.
-
-### Base de datos en local
-
-```
-npx supabase start      # levanta Supabase con Docker
-npx supabase db reset   # aplica todas las migraciones desde cero
-npx supabase test db    # pgTAP
+```bash
+npm install
+npx supabase start          # Supabase local en Docker
+npx supabase db reset       # aplica todas las migraciones desde cero
+npx supabase status         # muestra la URL y las claves locales
 ```
 
-`db reset` es, de momento, lo único que comprueba que las migraciones se pueden aplicar en
-orden sobre una base vacía.
+Crea `.env.local` a partir de [`.env.example`](.env.example). Pon `VITE_SUPABASE_URL` y
+`VITE_SUPABASE_ANON_KEY` con los valores de `supabase status`, y la clave de servicio en
+`SUPABASE_SERVICE_ROLE_KEY`. Después:
 
-Dos hallazgos de la fase 12 que conviene recordar:
+```bash
+npm run seed:demo                          # hogar de ejemplo con el plan ficticio
+npm run user -- add nutri <contraseña>     # cuenta de nutricionista…
+npm run staff:add -- nutri@bocause.local   # …y su rol
+npm run dev                                # http://localhost:5173
+```
 
-- **`updated_at` mentía.** Tenía `default now()`, que solo se aplica al INSERTAR, y la app
-  nunca escribía esa columna: una fila modificada conservaba la fecha del primer día. Decía
-  cuándo nació, no cuándo se tocó. La 0003 añade el trigger. Importa ya, porque el registro
-  de cambios de la fase 14 y el "último cambio del cliente" de la 17 se apoyan en esa fecha.
-- **Los E2E habían envejecido mal** con el uso real: ver la sección de pruebas.
+Entra en `/admin` con esa cuenta y, en Hogares, da de alta a un cliente en el "Hogar demo". Ya
+puedes entrar como ese cliente.
 
-## Puesta en marcha
+Para levantar la app para otra consulta, con su propio Supabase, sigue
+[`docs/CLONAR.md`](docs/CLONAR.md).
 
-Hace falta una vez por proyecto de Supabase.
+## Estado
 
-1. **Variables de entorno.** Copia `.env.example` a `.env.local` y rellena `VITE_SUPABASE_URL`
-   y `VITE_SUPABASE_ANON_KEY` (Project Settings → API).
-2. **Esquema.** Aplica en orden `supabase/migrations/0001_init.sql` y
-   `0002_claim_profile.sql`. Lo más rápido es pegarlos en el SQL Editor del panel de
-   Supabase; con la CLI sería `npx supabase db push`.
-3. **Datos.** Añade a `.env.local` la clave `SUPABASE_SERVICE_ROLE_KEY` y, si queréis
-   reservar cada perfil a un correo, `SEED_EMAIL_CRISTINA` y `SEED_EMAIL_ANDRES`. Luego
-   `npm run seed`. Es repetible y no pisa lo que ya hayáis cambiado.
-4. **Auth.** En Authentication → URL Configuration pon `http://localhost:5173` como Site URL
-   y en Redirect URLs (y más adelante la URL de Vercel). El proveedor Email ya viene activo.
+En uso diario. Queda pendiente:
 
-Después, `npm run dev`, entra con tu correo y elige perfil.
+- **Notificaciones push:** las tablas ya existen, pero el service worker todavía no las
+  gestiona.
+- **Revisión legal** (política de privacidad y consentimiento) antes de usarla con más
+  pacientes. Hasta entonces, el panel avisa de que solo se usen datos de prueba.
 
-### Decisiones que conviene recordar
+## Más documentación
 
-- **Linter**: ESLint + Prettier, como pide `docs/PLAN.md`. El template de Vite venía con
-  Oxlint y se retiró.
-- **El tema se guarda en `localStorage`**, no en IndexedDB, porque el script antiparpadeo de
-  `index.html` tiene que leerlo de forma síncrona antes del primer pintado. Es preferencia de
-  interfaz, no dato de dominio.
-- **`src/domain/schema.ts` y `src/styles/tokens.css` están en `.prettierignore`**: vienen del
-  kit con el formato cuidado a mano.
-- **El dominio habla de "cristina" y "andres"; la base de datos, de UUIDs.** El plan sale del
-  PDF con slugs y las políticas RLS comparan `scope = my_profile_id()::text`. La traducción
-  vive en `src/data/mappers.ts` y es el único sitio donde se cruza esa frontera.
-- **`0002_claim_profile.sql` existe porque faltaba una pieza en la migración original**: sin
-  él, un usuario recién registrado no puede ni ver los perfiles para elegir el suyo.
-- **Quién eres se lee de la sesión guardada, no con `supabase.auth.getUser()`**, que va a la
-  red. Al desplegar apareció el fallo: sin cobertura, `getUser()` decía "no hay usuario",
-  `useMyProfile` lo traducía a "esta persona no tiene perfil" y la app mandaba al selector de
-  perfil a alguien que ya tenía el suyo, donde además no había nada que elegir. Regla
-  general: **una consulta que falla no es una respuesta**, y el `Gate` de `App.tsx` ahora
-  distingue los cuatro estados (cargando, pausada sin red, error y respuesta) en vez de
-  tratar "sin datos" como "no tiene perfil".
+- [`docs/DESARROLLO.md`](docs/DESARROLLO.md): el diario fase a fase, con las decisiones y los
+  fallos que aparecieron al probar con datos reales.
+- [`docs/PLAN.md`](docs/PLAN.md): el plan de la v2.
+- [`docs/CLONAR.md`](docs/CLONAR.md): cómo levantar la app para otra consulta.

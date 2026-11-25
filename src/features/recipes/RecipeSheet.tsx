@@ -3,7 +3,7 @@ import type { Recipe } from '../../domain/schema';
 
 /**
  * Una receta del plan, tal cual viene del PDF: ingredientes con sus pesos y los pasos.
- * Es de solo lectura; editar recetas necesitaría una tabla propia (ver README).
+ * Es de solo lectura; editar recetas necesitaría una tabla propia (ver docs/DESARROLLO.md).
  */
 export function RecipeSheet({ recipe, onClose }: { recipe: Recipe | null; onClose: () => void }) {
   return (

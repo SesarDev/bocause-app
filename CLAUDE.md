@@ -14,7 +14,7 @@ Sin librería de arrastre: el intercambio va con un carrusel de scroll-snap, que
 ## Comandos
 
 Para terminar una tarea, todo esto debe pasar en verde: `npm run typecheck && npm run lint && npm test && npm run build`.
-Otros: `npm run seed:validate | migrate | seed:demo`, `npm run user -- list|add|password|rename`, `npm run staff:add -- <usuario>`, `npx supabase start | db reset | test db`.
+Otros: `npm run seed:validate | migrate | seed:demo`, `npm run user -- list|add|password|rename`, `npm run staff:add -- <correo>`, `npx supabase start | db reset | test db`.
 
 ## Arquitectura
 
@@ -22,7 +22,7 @@ Otros: `npm run seed:validate | migrate | seed:demo`, `npm run user -- list|add|
 - `data/`: Supabase, queries, Realtime, `scope.ts` y `keys.ts`.
 - `features/`: una carpeta por funcionalidad. Importa de `domain/` y `data/`.
 - `components/`: primitivas propias.
-- `data/plans/*.json`: fuente original, solo lectura.
+- `data/plans/demo.json`: plan ficticio de ejemplo. Los planes reales son datos de salud y no entran en el repositorio.
 
 Las reglas específicas de cada carpeta están en `src/data/`, `src/domain/`, `src/features/editor/` y `supabase/` (`CLAUDE.md`).
 
@@ -81,5 +81,5 @@ Las reglas específicas de cada carpeta están en `src/data/`, `src/domain/`, `s
 - `localStorage` para datos de dominio.
 - Recursos de terceros (CDN, fuentes, scripts): son datos de salud.
 - Librerías de componentes completas.
-- Tocar `data/plans/*.json`, salvo en tareas de extracción.
+- Versionar dietas reales, PDF de la nutricionista o cualquier dato de salud de una persona.
 - Commits.

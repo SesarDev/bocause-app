@@ -129,7 +129,7 @@ test('genera la compra sumando a los dos', async ({ app }) => {
    * haría `upsert` sobre las líneas reales, les cambiaría `updated_at`, y entonces la
    * limpieza se las llevaría: perderían la compra de la semana. Saltar es lo correcto
    * mientras la suite apunte al Supabase de casa; lo que hace falta es un proyecto de
-   * pruebas aparte (ver README).
+   * pruebas aparte (ver docs/DESARROLLO.md).
    */
   const antes = (await (await admin('shopping_items?select=id')).json()) as unknown[];
   test.skip(

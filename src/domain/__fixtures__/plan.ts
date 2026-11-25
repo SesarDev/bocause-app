@@ -3,7 +3,7 @@
  * la misma forma que el plan de verdad (franjas distintas por persona, comida y cena
  * compartidas con raciones por persona, pan solo para uno, domingo vacío).
  *
- * Los datos reales se extraen en la fase 3 a data/plans/*.json.
+ * El plan completo de ejemplo, también ficticio, está en data/plans/demo.json.
  */
 import type { Block, Food, Plan, TemplateCell } from '../schema';
 

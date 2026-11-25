@@ -33,7 +33,7 @@ export type ProfileRow = {
   slug: string;
   display_name: string;
   theme: 'system' | 'light' | 'dark';
-  /** Correo autorizado a ocupar el perfil (0002_claim_profile.sql). */
+  /** Correo interno de la cuenta (usuario@dominio). Informativo desde la 0010. */
   claim_email: string | null;
   /** Cuánto come esta persona respecto a la ración base de la biblioteca (0004_staff.sql). */
   portion_multiplier: number;
@@ -366,19 +366,6 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
-      /** Perfiles que este usuario puede ocupar (ver 0002_claim_profile.sql). */
-      available_profiles: {
-        Args: Record<never, never>;
-        Returns: { id: string; slug: string; display_name: string; taken: boolean }[];
-      };
-      claim_profile: {
-        Args: { p_profile_id: string };
-        Returns: ProfileRow;
-      };
-      release_my_profile: {
-        Args: Record<never, never>;
-        Returns: undefined;
-      };
       /** ¿Quien pregunta es nutricionista? (0004_staff.sql) */
       is_staff: {
         Args: Record<never, never>;
@@ -400,6 +387,8 @@ export type Database = {
           p_display_name: string;
           p_claim_email?: string | null;
           p_portion_multiplier?: number;
+          /** Cuenta que se enlaza al perfil (0010). Sin ella se conserva la que había. */
+          p_user_id?: string | null;
         };
         Returns: ProfileRow;
       };

@@ -24,13 +24,6 @@ export type SwapCell = {
 
 export type SwapError = 'misma-celda' | 'franja-distinta' | 'scope-distinto' | 'ambas-vacias';
 
-export const SWAP_ERROR_TEXT: Record<SwapError, string> = {
-  'misma-celda': 'Es la misma celda.',
-  'franja-distinta': 'Solo se puede intercambiar dentro de la misma franja.',
-  'scope-distinto': 'No se puede intercambiar entre una comida compartida y una individual.',
-  'ambas-vacias': 'Las dos celdas están vacías.',
-};
-
 export type CellUpsert =
   { level: 'template'; row: TemplateCell } | { level: 'week'; row: WeekOverride };
 

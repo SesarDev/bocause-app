@@ -5,8 +5,8 @@
  *  1. Esquema Zod (src/domain/schema.ts): la forma del documento.
  *  2. Integridad referencial: ids únicos, celdas que apuntan a bloques que existen,
  *     foodKey que existen en el catálogo, scopes y perfiles coherentes.
- *  3. Expectativas de la extracción: lo que se comprobó a mano contra los PDF queda aquí
- *     escrito como comprobación, para que un cambio accidental en el JSON salte.
+ *  3. Expectativas por plan: lo que un plan concreto tiene a propósito queda aquí escrito
+ *     como comprobación, para que un cambio accidental en el JSON salte.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -111,61 +111,53 @@ function checkIntegrity(file: string, plan: PlanType): void {
   for (const block of huerfanos) fail(file, `Bloque sin celda en la plantilla: ${block.id}`);
 }
 
-/* ─────────────── Expectativas de la extracción ─────────────── */
+/* ─────────────── Expectativas del plan de ejemplo ─────────────── */
 
 /**
- * Lo verificado a mano contra los PDF de septiembre de 2026. Está aquí para que, si
- * alguien toca el JSON, salte en vez de pasar inadvertido. Ver docs/extraccion-informe.md.
+ * Lo que el plan de ejemplo tiene a propósito para ejercitar el modelo: raciones distintas
+ * en un plato compartido, pan y postre de una sola persona, domingo libre. Si alguien toca el
+ * JSON y lo rompe, salta aquí en vez de pasar inadvertido.
  */
 const EXPECTED: Record<
   string,
   (plan: PlanType, check: (ok: boolean, msg: string) => void) => void
 > = {
-  '2026-09': (plan, check) => {
+  demo: (plan, check) => {
     const block = (id: string) => plan.blocks.find((b) => b.id === id);
     const items = (id: string) => block(id)?.sections.flatMap((s) => s.items) ?? [];
     const sections = (id: string, kind: string) =>
       block(id)?.sections.filter((s) => s.kind === kind) ?? [];
 
-    // El jamón de la cena del lunes es lo único que cambia de cantidad entre los dos.
-    const jamon = items('cena-0-shared').find((i) => i.foodKey === 'jamon-serrano');
-    check(
-      jamon?.portions['cristina']?.rawG === 60,
-      'Cena del lunes: Cristina debe tener 60 g de jamón',
-    );
-    check(
-      jamon?.portions['andres']?.rawG === 30,
-      'Cena del lunes: Andrés debe tener 30 g de jamón',
-    );
+    // Plato compartido con raciones distintas: la merluza de la cena del lunes.
+    const merluza = items('cena-0-shared').find((i) => i.foodKey === 'merluza');
+    check(merluza?.portions['cristina']?.rawG === 150, 'Cena del lunes: 150 g de merluza para A');
+    check(merluza?.portions['andres']?.rawG === 200, 'Cena del lunes: 200 g de merluza para B');
 
-    // Pan en la cena: solo Andrés, martes, miércoles y jueves.
+    // Pan en la comida: solo B, de lunes a miércoles.
     for (let day = 0; day <= 6; day++) {
-      const pan = sections(`cena-${day}-shared`, 'pan');
-      const esperado = day >= 1 && day <= 3;
+      const pan = sections(`comida-${day}-shared`, 'pan');
+      const esperado = day <= 2;
       check(
         pan.length > 0 === esperado,
-        `Cena del día ${day}: ${esperado ? 'debe' : 'no debe'} llevar sección de pan`,
+        `Comida del día ${day}: ${esperado ? 'debe' : 'no debe'} llevar sección de pan`,
       );
       for (const item of pan.flatMap((s) => s.items)) {
         check(
           Object.keys(item.portions).join() === 'andres',
-          `El pan de la cena del día ${day} es solo de Andrés`,
+          `El pan de la comida del día ${day} es solo de B`,
         );
       }
     }
 
-    // Pan en la comida: solo Cristina y solo el jueves.
+    // Pan en la cena: solo A y solo el viernes.
     for (let day = 0; day <= 6; day++) {
-      const pan = sections(`comida-${day}-shared`, 'pan');
+      const pan = sections(`cena-${day}-shared`, 'pan');
       check(
-        pan.length > 0 === (day === 3),
-        `Comida del día ${day}: ${day === 3 ? 'debe' : 'no debe'} llevar sección de pan`,
+        pan.length > 0 === (day === 4),
+        `Cena del día ${day}: ${day === 4 ? 'debe' : 'no debe'} llevar sección de pan`,
       );
       for (const item of pan.flatMap((s) => s.items)) {
-        check(
-          Object.keys(item.portions).join() === 'cristina',
-          'El pan de la comida del jueves es solo de Cristina',
-        );
+        check(Object.keys(item.portions).join() === 'cristina', 'El pan de la cena es solo de A');
       }
     }
 
@@ -175,29 +167,12 @@ const EXPECTED: Record<
     }
     check(plan.rules.freeMealsPerWeek === 2, 'La regla son 2 ingestas libres por semana');
 
-    // Entrenos.
-    const training = (id: string) => plan.profiles.find((p) => p.profileId === id)?.training;
-    check(
-      training('cristina')?.filter(Boolean).length === 1,
-      'Cristina entrena un único día (lunes, gimnasio)',
-    );
-    check(
-      training('andres')?.[0] !== null &&
-        training('andres')?.[2] === 'Running' &&
-        training('andres')?.[5] === 'Caminar',
-      'Andrés: gimnasio el lunes, running el miércoles y caminar el sábado',
-    );
-
-    // Comodín: Andrés dobla a Cristina salvo en la whey.
+    // Comodín: B dobla a A salvo en la whey.
     const comodin = (id: string) => plan.profiles.find((p) => p.profileId === id)?.comodin ?? [];
     const whey = (id: string) => comodin(id).find((o) => o.id === 'comodin-whey');
     check(
       whey('cristina')?.amount === whey('andres')?.amount,
       'La whey del comodín es igual para los dos',
-    );
-    check(
-      comodin('cristina').length === 6 && comodin('andres').length === 6,
-      'Cada perfil tiene 6 opciones de comodín',
     );
 
     // Comida y cena comparten plato: mismos alimentos para los dos.

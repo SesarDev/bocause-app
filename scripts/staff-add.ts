@@ -6,8 +6,8 @@
  * de escritura (ver 0004_staff.sql). Solo se entra por aquí, con la clave service_role, que
  * únicamente está en el portátil de quien administra.
  *
- * La persona tiene que haber entrado al menos una vez con su enlace mágico: este script no
- * crea cuentas, solo asciende una que ya existe. Si creara la cuenta, un correo mal escrito
+ * La cuenta tiene que existir ya (`npm run user -- add`): este script no crea cuentas,
+ * solo asciende una que ya existe. Si creara la cuenta, un correo mal escrito
  * dejaría un usuario fantasma con acceso a todo.
  */
 import { createClient } from '@supabase/supabase-js';

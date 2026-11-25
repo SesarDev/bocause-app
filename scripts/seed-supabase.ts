@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Plan } from '../src/domain/schema.ts';
 import type { Database } from '../src/data/database.types.ts';
 
-const PLAN_FILE = process.env['SEED_PLAN'] ?? 'data/plans/2026-09.json';
+const PLAN_FILE = process.env['SEED_PLAN'] ?? 'data/plans/demo.json';
 const HOUSEHOLD_NAME = process.env['SEED_HOUSEHOLD_NAME'] ?? 'Casa';
 
 /**
@@ -63,6 +63,21 @@ function fail(message: string, error: unknown): never {
 }
 
 const plan = Plan.parse(JSON.parse(readFileSync(PLAN_FILE, 'utf8')));
+
+// El plan del repositorio es ficticio. Sembrado sin más caería en el hogar de verdad y le
+// cambiaría la dieta vigente; solo entra por `npm run seed:demo`, que trae su propio hogar.
+if (plan.id === 'demo' && !process.env['SEED_HOUSEHOLD_NAME']) {
+  console.error(
+    [
+      'El plan de ejemplo no se siembra en un hogar real.',
+      '',
+      '  Hogar de demostración:  npm run seed:demo',
+      '  Plan de verdad:         SEED_PLAN=<ruta al JSON> npm run seed',
+    ].join('\n'),
+  );
+  process.exit(1);
+}
+
 const planId = PLAN_ID ?? plan.id;
 console.log(
   `Plan: ${plan.name} (${planId}${planId === plan.id ? '' : `, del archivo ${plan.id}`}) · ` +
@@ -103,7 +118,8 @@ if (existingProfiles.error) fail('No se pudieron leer los perfiles', existingPro
 const profileIdBySlug = new Map(existingProfiles.data.map((row) => [row.slug, row.id]));
 
 for (const profile of plan.profiles) {
-  // El correo autorizado a ocupar el perfil (ver 0002_claim_profile.sql).
+  // Correo interno de la cuenta de esa persona. Desde la 0010 es informativo: quién entra
+  // en qué perfil lo decide `user_id`.
   const email = process.env[`SEED_EMAIL_${profile.profileId.toUpperCase()}`] ?? null;
   const displayName = displayNameOf(profile.profileId, profile.displayName);
 

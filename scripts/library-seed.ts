@@ -23,7 +23,7 @@ import { createClient } from '@supabase/supabase-js';
 import { LibraryBlock, Plan, type Portion, type Section } from '../src/domain/schema.ts';
 import type { Database } from '../src/data/database.types.ts';
 
-const PLAN_FILE = process.env['SEED_PLAN'] ?? 'data/plans/2026-09.json';
+const PLAN_FILE = process.env['SEED_PLAN'] ?? 'data/plans/demo.json';
 const BASE_PROFILE = process.env['LIBRARY_BASE_PROFILE'] ?? 'cristina';
 
 const url = process.env['VITE_SUPABASE_URL'];

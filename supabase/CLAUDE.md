@@ -6,6 +6,7 @@
 - **`staff_members`:** sin políticas de INSERT, UPDATE ni DELETE. Solo se escribe con `service_role` (`npm run staff:add`). Comprobarlo cada vez que se toque.
 - **Escrituras de staff sobre `profiles` y `households`:** van por RPC `security definer` (`staff_upsert_profile`, `staff_create_household`). La 0002 limita `profiles` a la columna `theme`, y ese permiso por columna también bloquea a la nutricionista.
 - **`plans`:** solo lo escribe staff.
+- **El registro con la clave pública sigue abierto**, porque el alta de clientes desde /admin usa `signUp`. Por eso nada se lee solo por ser `authenticated`: hace falta perfil o ser staff (0012). Ninguna función se ejecuta sin sesión (0011).
 - **Políticas nuevas:** añadir una nueva antes que reescribir la que funciona. Solo se reescribe para quitar permiso.
 
 ## Registro de cambios (`change_log`)

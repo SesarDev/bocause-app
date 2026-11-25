@@ -20,6 +20,7 @@ import {
   useEditedBlocks,
   useHouseholdWeeks,
   useProfileDirectory,
+  useProfiles,
   useResolvedWeek,
   useTemplateCells,
   useWeekChecks,
@@ -78,6 +79,20 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   const templateCells = useTemplateCells(plan?.id, directory);
   const editedBlocks = useEditedBlocks(plan?.id, directory);
   const myProfile = useMyProfile(true);
+  const { data: profiles } = useProfiles();
+
+  /**
+   * Nombre visible de una persona. Manda el de `profiles`, que es el que edita la
+   * nutricionista y el que enseña la cabecera; el de dentro del plan es el del día en que se
+   * publicó y puede ser otro (en el hogar demo, el de la dieta de la que se copió).
+   */
+  const nombreDe = useCallback(
+    (slug: string) =>
+      profiles?.find((profile) => profile.slug === slug)?.displayName ??
+      plan?.profiles.find((profile) => profile.profileId === slug)?.displayName ??
+      slug,
+    [profiles, plan],
+  );
 
   const setCheck = useSetCheck();
   const applyCells = useApplyCells();
@@ -132,9 +147,9 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
               profile.profileId !== week.profileId &&
               checkIndexes.get(profile.profileId)?.has(date, slot, itemId),
           )
-          .map((profile) => profile.displayName),
+          .map((profile) => nombreDe(profile.profileId)),
     };
-  }, [week, checkIndexes, editable, toggle, plan]);
+  }, [week, checkIndexes, editable, toggle, plan, nombreDe]);
 
   /* ── Sustituir un alimento por un equivalente (fase 18) ── */
 
@@ -239,9 +254,7 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
   if (isHouse) {
     const people = household.weeks.map((weekOf) => ({
       profileId: weekOf.profileId,
-      displayName:
-        plan.profiles.find((profile) => profile.profileId === weekOf.profileId)?.displayName ??
-        weekOf.profileId,
+      displayName: nombreDe(weekOf.profileId),
     }));
     const days = onlyToday ? [todayIndex] : [0, 1, 2, 3, 4, 5, 6];
 
@@ -268,9 +281,8 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
 
   const freeUsed = countFreeMeals(week);
   const days = onlyToday ? week.days.filter((day) => day.day === todayIndex) : week.days;
-  const otherName = plan.profiles.find(
-    (profile) => profile.profileId !== week.profileId,
-  )?.displayName;
+  const other = plan.profiles.find((profile) => profile.profileId !== week.profileId);
+  const otherName = other ? nombreDe(other.profileId) : undefined;
 
   /**
    * Bloques SIN filtrar por persona. La vista enseña solo lo tuyo, pero para editar un
@@ -292,7 +304,10 @@ export function WeekView({ onlyToday = false }: { onlyToday?: boolean }) {
     (slot.cell.scope === 'shared'
       ? plan.profiles
       : plan.profiles.filter((profile) => profile.profileId === slot.cell.scope)
-    ).map((profile) => ({ profileId: profile.profileId, displayName: profile.displayName }));
+    ).map((profile) => ({
+      profileId: profile.profileId,
+      displayName: nombreDe(profile.profileId),
+    }));
 
   const doSaveBlock = (block: Block, level: SwapLevel) => {
     if (!editorSlot) return;

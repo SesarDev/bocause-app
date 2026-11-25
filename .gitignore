@@ -43,3 +43,6 @@ supabase/.temp/
 /playwright-report/
 /blob-report/
 /.playwright/
+
+# Claude Code: los ajustes locales son de cada equipo
+.claude/settings.local.json

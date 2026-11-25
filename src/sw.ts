@@ -1,5 +1,5 @@
 // Service worker propio (estrategia injectManifest). De momento solo precachea el shell;
-// el manejo de push y notificationclick llega en la fase 15.
+// el manejo de push y notificationclick está pendiente.
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import type { PrecacheEntry } from 'workbox-precaching';
 

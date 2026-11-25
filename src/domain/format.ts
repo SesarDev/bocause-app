@@ -2,7 +2,7 @@
  * Formateo de cantidades para la pantalla. Es lógica pura y se testea como tal: decidir
  * qué número se enseña y cuál se calla tiene más reglas de las que parece.
  */
-import type { DayIndex, IsoDateString } from './dates';
+import type { IsoDateString } from './dates';
 import { dayIndexOf, DAY_NAMES } from './dates';
 import { quantityOf, type Unit } from './shopping';
 import type { FoodItem, Portion, ProfileId } from './schema';
@@ -99,8 +99,4 @@ export function shortDateOf(date: IsoDateString): string {
   const [, month, day] = date.split('-');
   const monthName = MONTHS[Number(month) - 1] ?? '';
   return `${Number(day)} de ${monthName}`;
-}
-
-export function dayIndexFrom(date: IsoDateString): DayIndex {
-  return dayIndexOf(date);
 }

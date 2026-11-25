@@ -131,17 +131,6 @@ export function substituteItem(
   return tocado ? { ...block, sections } : block;
 }
 
-/**
- * Deshace una sustitución concreta, devolviendo el alimento a lo que era.
- *
- * No recalcula cantidades: la ración de la que se partió no se guarda, así que lo honesto
- * es devolver el alimento al original del plan, que es lo que hace "Restaurar original" de
- * la celda. Esto sirve para quitar el cambio cuando la celda tiene varios.
- */
-export function isSubstituted(item: FoodItem): boolean {
-  return item.replaces !== undefined;
-}
-
 /** Texto para la interfaz: "En lugar de lentejas". */
 export function replacedLabel(item: FoodItem): string | null {
   return item.replaces === undefined ? null : `En lugar de ${item.replaces.label.toLowerCase()}`;

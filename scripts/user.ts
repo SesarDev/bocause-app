@@ -2,7 +2,7 @@
  * Cuentas: crear, cambiar contraseña y renombrar usuarios.
  *
  *   npm run user -- list
- *   npm run user -- add nutri1 bocause123
+ *   npm run user -- add nutri1 <contraseña>
  *   npm run user -- password marta nuevaclave
  *   npm run user -- rename alguien@correo.com andres
  *
